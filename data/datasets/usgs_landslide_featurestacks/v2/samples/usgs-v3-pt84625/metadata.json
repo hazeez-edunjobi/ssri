@@ -1,0 +1,48 @@
+{
+  "sample_id": "usgs-v3-pt84625",
+  "latitude": 35.0255470760049,
+  "longitude": -84.1167839908636,
+  "bbox_wgs84": [
+    -84.1257839908636,
+    35.0165470760049,
+    -84.1077839908636,
+    35.0345470760049
+  ],
+  "labels": {
+    "landslide": 1,
+    "subsidence": null,
+    "liquefaction": null
+  },
+  "provenance": {
+    "role": "inventory_presence",
+    "dataset_name": "usgs_landslide_inventories_us",
+    "dataset_version": "3.0",
+    "spatial_block": "b17_-43",
+    "quality_flags": [
+      "confidence=5",
+      "ls_type=Debris Subsidence"
+    ]
+  },
+  "feature_shape": [
+    13,
+    68,
+    57
+  ],
+  "channel_names": [
+    "elevation",
+    "slope",
+    "plan_curvature",
+    "profile_curvature",
+    "twi",
+    "relative_relief",
+    "valley_depth",
+    "ndvi",
+    "ndwi",
+    "clay_mineral_ratio",
+    "iron_oxide_index",
+    "gravity",
+    "magnetics"
+  ],
+  "created_at": "2026-09-09T00:02:15.562055+00:00",
+  "spatial_block": "b17_-43"
+}

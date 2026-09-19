@@ -1,0 +1,61 @@
+[tool.poetry]
+name = "ssri-model"
+version = "0.1.0"
+description = "SSRI ML model package"
+authors = ["SSRI Team"]
+readme = "README.md"
+packages = [{ include = "ssri_model", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+torch = "^2.0"
+numpy = "^2.0"
+python-dotenv = "^1.0"
+earthengine-api = "^1.4"
+rasterio = "^1.4"
+requests = "^2.32"
+scipy = "^1.14"
+whitebox = "^2.3"
+matplotlib = "^3.9"
+fastapi = "^0.115"
+uvicorn = { version = "^0.34", extras = ["standard"] }
+redis = "^5.0"
+celery = { version = "^5.4", extras = ["redis"] }
+sqlalchemy = "^2.0"
+psycopg = { version = "^3.2", extras = ["binary"] }
+boto3 = "^1.43.89"
+netcdf4 = "^1.7.4"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+httpx = "^0.28"
+black = "^24.0"
+ruff = "^0.8"
+mypy = "^1.13"
+fakeredis = "^2.26"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["torch.*", "ee.*", "rasterio.*", "whitebox.*", "scipy.*", "matplotlib.*", "fastapi.*", "starlette.*", "uvicorn.*", "redis.*", "celery.*", "sqlalchemy.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: optional tests requiring external PostgreSQL/Redis (SSRI_INTEGRATION_TESTS=1)",
+]

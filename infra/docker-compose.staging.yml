@@ -1,0 +1,36 @@
+# Staging overrides for SSRI Compose stack
+#
+# Usage (staging / local ops qualification):
+#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.staging.yml up -d
+#
+# Enables:
+# - Lease recovery sweeper always on (not profile-gated)
+# - Published Postgres/Redis ports for host-side integration tests
+
+services:
+  postgres:
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+
+  redis:
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+
+  recovery:
+    # Always start in staging (clears the optional "recovery" profile gate).
+    profiles: []
+    environment:
+      SSRI_LEASE_RECOVERY_ENABLED: "true"
+      SSRI_LEASE_RECOVERY_INTERVAL_SECONDS: ${SSRI_LEASE_RECOVERY_INTERVAL_SECONDS:-60}
+      SSRI_API_ENVIRONMENT: ${SSRI_API_ENVIRONMENT:-staging}
+
+  api:
+    environment:
+      SSRI_API_ENVIRONMENT: ${SSRI_API_ENVIRONMENT:-staging}
+      # Fixtures refused unless explicitly allowed for a named qualification run.
+      SSRI_ALLOW_FIXTURE_CHECKPOINTS: ${SSRI_ALLOW_FIXTURE_CHECKPOINTS:-false}
+
+  worker:
+    environment:
+      SSRI_API_ENVIRONMENT: ${SSRI_API_ENVIRONMENT:-staging}
+      SSRI_ALLOW_FIXTURE_CHECKPOINTS: ${SSRI_ALLOW_FIXTURE_CHECKPOINTS:-false}

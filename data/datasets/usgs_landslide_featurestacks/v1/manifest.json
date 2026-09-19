@@ -1,0 +1,304 @@
+{
+  "dataset_name": "usgs_landslide_featurestacks",
+  "version": "v1",
+  "created_at": "2026-09-08T23:26:34.954745+00:00",
+  "source_catalog": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\data\\catalogs\\usgs_landslide_v3\\catalog.jsonl",
+  "n_requested": 80,
+  "n_built": 15,
+  "n_failed": 65,
+  "failed": [
+    {
+      "sample_id": "pseudo-absence-a6a8c3fc41",
+      "error": "Failed to load DEM from C:\\Users\\LENOVO\\AppData\\Local\\Temp\\tmpmgr_e4xb\\dem.tif: 'C:\\Users\\LENOVO\\AppData\\Local\\Temp\\tmpmgr_e4xb\\dem.tif' not recognized as being in a supported file format."
+    },
+    {
+      "sample_id": "pseudo-absence-c2c1910589",
+      "error": "OpenTopography request failed for COP30: HTTPSConnectionPool(host='portal.opentopography.org', port=443): Max retries exceeded with url: /API/globaldem?demtype=COP30&south=43.78455685479115&north=43.80255685479115&west=-82.02022675559421&east=-82.00222675559421&outputFormat=GTiff&API_Key=***REDACTED*** (Caused by NameResolutionError(\"HTTPSConnection(host='portal.opentopography.org', port=443): Failed to resolve 'portal.opentopography.org' ([Errno 11002] getaddrinfo failed)\"))"
+    },
+    {
+      "sample_id": "pseudo-absence-651fff32e0",
+      "error": "OpenTopography request failed for COP30: HTTPSConnectionPool(host='portal.opentopography.org', port=443): Max retries exceeded with url: /API/globaldem?demtype=COP30&south=27.312155170224283&north=27.330155170224284&west=-101.13562659013289&east=-101.11762659013289&outputFormat=GTiff&API_Key=***REDACTED*** (Caused by NameResolutionError(\"HTTPSConnection(host='portal.opentopography.org', port=443): Failed to resolve 'portal.opentopography.org' ([Errno 11002] getaddrinfo failed)\"))"
+    },
+    {
+      "sample_id": "pseudo-absence-12a23300ff",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=45.049274808660044&north=45.067274808660045&west=-120.57640765591181&east=-120.55840765591181&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt196729",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=41.4782&north=41.4962&west=-109.7633&east=-109.7453&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-04383f303e",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=35.354457144001216&north=35.37245714400122&west=-88.07725905465475&east=-88.05925905465475&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-d77210b986",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=49.09870179542129&north=49.11670179542129&west=-110.07356916328463&east=-110.05556916328463&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt79624",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=43.8675527140001&north=43.8855527140001&west=-69.979460631&east=-69.961460631&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-bca0b44cdc",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=27.805494416012895&north=27.823494416012895&west=-116.41389588350545&east=-116.39589588350545&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt31058",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=37.600352529&north=37.618352529&west=-121.944912387&east=-121.926912387&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt90298",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=40.0571000000001&north=40.0751000000001&west=-99.04429999999991&east=-99.0262999999999&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-9bc9c3b520",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=41.66829798081386&north=41.68629798081386&west=-124.38510161552142&east=-124.36710161552142&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-058e1b9193",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=32.80264911162274&north=32.82064911162274&west=-85.4947461645644&east=-85.4767461645644&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt196647",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=38.724311&north=38.742311&west=-106.1960315&east=-106.1780315&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-d04ce80ca5",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=34.37920692437264&north=34.39720692437264&west=-106.94328383694325&east=-106.92528383694325&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt24138",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=39.9826400000001&north=40.000640000000104&west=-121.28979&east=-121.27179&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt191510",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=43.477&north=43.495&west=-91.2222&east=-91.2042&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-2ec6c9ab73",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=37.330087884540475&north=37.348087884540476&west=-84.86784208278011&east=-84.84984208278011&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt90993",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=41.9901012801305&north=42.008101280130504&west=-120.307121240857&east=-120.289121240857&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt191468",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=40.5057000000001&north=40.5237000000001&west=-79.8633&east=-79.8453&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt76524",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=45.485006100999996&north=45.503006101&west=-116.327013383&east=-116.30901338299999&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt26966",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=38.0164858390001&north=38.0344858390001&west=-122.228294702&east=-122.210294702&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-c83abac0d2",
+      "error": "Failed to read Earth Engine band names: Image.select: Parameter 'input' is required and may not be null."
+    },
+    {
+      "sample_id": "usgs-v3-pt200064",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=48.0277264314625&north=48.0457264314625&west=-122.26004630681&east=-122.24204630681&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt23238",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=36.0493054480001&north=36.0673054480001&west=-111.906048805&east=-111.888048805&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt23299",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=31.925443248&north=31.943443248&west=-109.284895867&east=-109.266895867&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-24f12b7f1b",
+      "error": "Failed to read Earth Engine band names: Image.select: Parameter 'input' is required and may not be null."
+    },
+    {
+      "sample_id": "pseudo-absence-a2339ef049",
+      "error": "Failed to read Earth Engine band names: Image.select: Parameter 'input' is required and may not be null."
+    },
+    {
+      "sample_id": "usgs-v3-pt191050",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=41.7295&north=41.7475&west=-111.8222&east=-111.8042&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-3ad600c932",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=43.44684885886936&north=43.46484885886936&west=-91.76697853550162&east=-91.74897853550162&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt193419",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=43.0187073930001&north=43.0367073930001&west=-110.818080601&east=-110.800080601&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-ac3cb5d125",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=46.07036080683616&north=46.088360806836164&west=-110.02432383308214&east=-110.00632383308213&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-eb62bbf615",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=44.2288100636175&north=44.2468100636175&west=-98.31718937962926&east=-98.29918937962925&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt196604",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=41.3901&north=41.4081&west=-122.2137&east=-122.1957&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-7abf158792",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=49.18462236541551&north=49.20262236541551&west=-72.33538603430938&east=-72.31738603430938&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt91613",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=45.1380746592337&north=45.1560746592337&west=-120.215441631091&east=-120.197441631091&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-79749e84d2",
+      "error": "Failed to read Earth Engine band names: Image.select: Parameter 'input' is required and may not be null."
+    },
+    {
+      "sample_id": "pseudo-absence-418bfd7559",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=33.334610252302234&north=33.352610252302235&west=-101.6498378897165&east=-101.6318378897165&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt84625",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=35.0165470760049&north=35.0345470760049&west=-84.1257839908636&east=-84.1077839908636&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-90eec65368",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=27.074256441095557&north=27.092256441095557&west=-90.9092402661878&east=-90.8912402661878&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-6580d3f098",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=42.98305525520976&north=43.001055255209764&west=-70.25284797998923&east=-70.23484797998923&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt200170",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=47.985066957296&north=48.003066957296&west=-121.848366132981&east=-121.830366132981&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt199876",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=48.0918545067336&north=48.1098545067336&west=-121.871347151656&east=-121.853347151656&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-a805ed2dc5",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=45.52710866224981&north=45.54510866224981&west=-102.69153793111006&east=-102.67353793111006&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-6a92a897cd",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=48.580333831871386&north=48.598333831871386&west=-123.66624411581438&east=-123.64824411581438&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-164cd083d2",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=44.96150657441123&north=44.97950657441123&west=-93.38188770407247&east=-93.36388770407247&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt81152",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=40.3093530000001&north=40.3273530000001&west=-92.0949139999999&east=-92.0769139999999&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-21b52489ae",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=38.66066535803954&north=38.67866535803954&west=-122.40256216961778&east=-122.38456216961778&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-0e449e1319",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=38.34670448291172&north=38.36470448291172&west=-110.66772296777599&east=-110.64972296777599&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-11915718bc",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=39.63046685229607&north=39.64846685229607&west=-89.30829595032806&east=-89.29029595032806&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt92198",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=42.9568966144917&north=42.9748966144917&west=-123.821532363152&east=-123.803532363152&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt193605",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=32.8155308850001&north=32.8335308850001&west=-117.245419628&east=-117.22741962799999&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-9ad9bcabe5",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=37.6573129682856&north=37.6753129682856&west=-93.71924153093322&east=-93.70124153093322&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-3bcdb40357",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=34.904077342931174&north=34.922077342931175&west=-115.8636600015579&east=-115.8456600015579&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt206005",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=39.4138255290001&north=39.4318255290001&west=-77.98312240599991&east=-77.9651224059999&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-1a09615e33",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=26.302648080815057&north=26.320648080815058&west=-90.88197662143854&east=-90.86397662143854&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt87298",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=35.520421951064996&north=35.538421951065&west=-81.878595575438&east=-81.860595575438&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "pseudo-absence-784dfbe3e7",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=36.264243575406454&north=36.282243575406454&west=-93.9050025072854&east=-93.8870025072854&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt91585",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=42.0136535041283&north=42.0316535041283&west=-119.491282177501&east=-119.473282177501&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt73755",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=39.777850229&north=39.795850229&west=-105.345515829&east=-105.327515829&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt78425",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=38.6525180000001&north=38.6705180000001&west=-84.675937&east=-84.657937&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt90612",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=41.173335433&north=41.191335433&west=-74.528265246&east=-74.510265246&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt272545",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=40.043373082&north=40.061373082&west=-80.6960796869999&east=-80.6780796869999&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt82127",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=35.7358990498059&north=35.7538990498059&west=-78.8907776556185&east=-78.8727776556185&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    },
+    {
+      "sample_id": "usgs-v3-pt81058",
+      "error": "OpenTopography request failed for COP30: 401 Client Error: 401 for url: https://portal.opentopography.org/API/globaldem?demtype=COP30&south=40.039143&north=40.057143&west=-91.5341509999999&east=-91.5161509999999&outputFormat=GTiff&API_Key=***REDACTED*** body='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><error>Error: API maximum rate limit reached. (50 API calls/24hrs)</error>'"
+    }
+  ],
+  "splits": {
+    "train": [
+      "pseudo-absence-f490da4c10",
+      "usgs-v3-pt90590",
+      "pseudo-absence-d99b800e0f",
+      "usgs-v3-pt79831",
+      "pseudo-absence-12b896518c",
+      "usgs-v3-pt77075",
+      "pseudo-absence-d0752fc2f6",
+      "pseudo-absence-acd1f72c6b",
+      "usgs-v3-pt192136",
+      "pseudo-absence-b84a5b3e20"
+    ],
+    "validation": [
+      "usgs-v3-pt193549",
+      "pseudo-absence-20ea0f6acb"
+    ],
+    "test": [
+      "usgs-v3-pt23259",
+      "usgs-v3-pt252128",
+      "pseudo-absence-60ce037389"
+    ]
+  },
+  "split_strategy": "spatial_block_2deg",
+  "label_semantics": {
+    "landslide": "1=USGS inventory presence; 0=documented pseudo-absence",
+    "subsidence": "missing (nodata / mask=0)",
+    "liquefaction": "missing (nodata / mask=0)"
+  },
+  "gravity_source": "WGM2012 Bouguer (CONUS GeoTIFF clip; not EIGEN-6C4)",
+  "magnetic_source": "EMAG2v3 UC 4km (CONUS GeoTIFF clip)",
+  "channel_count": 13,
+  "resolution_m": 30.0
+}

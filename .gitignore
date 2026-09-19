@@ -1,0 +1,66 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / Frontend
+node_modules/
+.next/
+out/
+.nuxt/
+dist/
+*.tsbuildinfo
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+credentials/*.json
+
+# Large geophysics downloads / processed rasters (keep provenance JSON)
+data/geophysics/raw/
+data/geophysics/processed/*.tif
+data/geophysics/processed/*.tiff
+
+# Catalog raw downloads / extracts / full inventories (keep manifests only)
+# GitHub rejects files >100MB; USGS CSVs / catalog.jsonl are far larger.
+data/catalogs/**/raw/
+data/catalogs/**/extracted/
+data/catalogs/**/*.csv
+data/catalogs/**/catalog.jsonl
+model/data/catalogs/
+
+# Docker (local overrides)
+docker-compose.override.yml

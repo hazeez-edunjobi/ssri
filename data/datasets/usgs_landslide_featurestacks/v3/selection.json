@@ -1,0 +1,4679 @@
+{
+  "created_at": "2026-09-09T01:01:01.492565+00:00",
+  "catalog": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\data\\catalogs\\usgs_landslide_v3\\catalog.jsonl",
+  "version": "v3",
+  "n_positives_requested": 120,
+  "n_absences_requested": 120,
+  "n_positives": 120,
+  "n_absences": 120,
+  "seed": 7,
+  "min_absence_km": 15.0,
+  "max_absence_km": 100.0,
+  "min_inter_absence_km": 5.0,
+  "min_positive_separation_km": 2.0,
+  "half_side_deg": 0.009,
+  "start_date": "2023-01-01",
+  "end_date": "2023-12-31",
+  "resolution_m": 30.0,
+  "reuse_from": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\data\\datasets\\usgs_landslide_featurestacks\\v2",
+  "absence_semantics": "Documented pseudo-absences: offsets from inventory positives, \u226515.0 km from ALL CONUS USGS catalog points, \u22655.0 km apart. Not field-confirmed.",
+  "points": [
+    {
+      "sample_id": "usgs-v3-pt79679",
+      "latitude": 43.7867772320001,
+      "longitude": -70.6717563989999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-36",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Spread"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-5a5579ee53",
+      "latitude": 41.38710174249057,
+      "longitude": -100.59479059087583,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90270",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-51"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-754e7e75f3",
+      "latitude": 37.9167124282387,
+      "longitude": -119.85530610448397,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196706",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-60"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt77244",
+      "latitude": 38.032291,
+      "longitude": -86.4207029999999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-44",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-166c4355ca",
+      "latitude": 45.33296945818825,
+      "longitude": -117.5502089811106,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt75587",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-59"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-1641a5a79b",
+      "latitude": 39.73029250050422,
+      "longitude": -111.74723946619676,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196710",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-56"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-840b5017e5",
+      "latitude": 43.17080140290517,
+      "longitude": -103.77567538873399,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90279",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-52"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-f796457c03",
+      "latitude": 36.47225090331481,
+      "longitude": -122.0158818456006,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196334",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-62"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90362",
+      "latitude": 42.5453000000001,
+      "longitude": -98.085,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-50",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Bedrock Rotational Slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt193730",
+      "latitude": 39.876739935,
+      "longitude": -106.27508537,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-54",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=rock_fall"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-02c2aa7ef5",
+      "latitude": 44.38421748472151,
+      "longitude": -93.23216353551132,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt80827",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-47"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-8b6fca5271",
+      "latitude": 31.668603066272627,
+      "longitude": -110.705388955868,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt23885",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b15_-56"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-deefb4a5f6",
+      "latitude": 32.488185299674576,
+      "longitude": -109.61139410099737,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt24130",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b16_-55"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-d5829f5a84",
+      "latitude": 34.75899064608568,
+      "longitude": -112.01740081958181,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt23431",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b17_-57"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-68a2c6de36",
+      "latitude": 31.781016072081492,
+      "longitude": -112.90887788572823,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt24121",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b15_-57"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt83966",
+      "latitude": 36.1747373897005,
+      "longitude": -81.8199183403062,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-41",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt81175",
+      "latitude": 36.2085670000001,
+      "longitude": -89.453234,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-45",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt203314",
+      "latitude": 39.289178168,
+      "longitude": -77.785144985,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-39",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt193692",
+      "latitude": 47.0655034800001,
+      "longitude": -91.5990435159999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b23_-46",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=rock_fall"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-38014e0cfc",
+      "latitude": 39.0963133712471,
+      "longitude": -82.20066271033302,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt248578",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-42"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt192649",
+      "latitude": 31.931841078,
+      "longitude": -90.2950758919999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b15_-46",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=mudslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-8cf26005f2",
+      "latitude": 40.09450493973807,
+      "longitude": -121.16193471198211,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt24137",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-61"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt194407",
+      "latitude": 34.3405442100001,
+      "longitude": -118.339396524,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b17_-60",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt190850",
+      "latitude": 35.2507000000001,
+      "longitude": -88.1659999999999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b17_-45",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=rock_fall"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-7d14cc0383",
+      "latitude": 47.04731321112267,
+      "longitude": -118.36488365736423,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193233",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b23_-60"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt224895",
+      "latitude": 37.9480912170001,
+      "longitude": -82.319428156,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-42",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90251",
+      "latitude": 40.7911,
+      "longitude": -95.9107999999999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-48",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Earth Rotational Slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt39321",
+      "latitude": 40.6852994060001,
+      "longitude": -124.162387879,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-63",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=earth flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-517e53b4b2",
+      "latitude": 39.76443872826181,
+      "longitude": -81.27712998413173,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt211627",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-41"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-641c8aa134",
+      "latitude": 47.027762553417105,
+      "longitude": -120.95162189959359,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196682",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b23_-61"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90618",
+      "latitude": 39.890152205,
+      "longitude": -74.677364159,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-38",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90885",
+      "latitude": 43.77809276132,
+      "longitude": -117.821189594358,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-59",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-e0bd4f12d3",
+      "latitude": 39.447688948988926,
+      "longitude": -106.96120402312563,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193730",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-54"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-3a39337502",
+      "latitude": 40.830189302361966,
+      "longitude": -91.33647860965924,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt81152",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-46"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90464",
+      "latitude": 41.835,
+      "longitude": -103.5706,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-52",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Bedrock Fall"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-86f62c7137",
+      "latitude": 40.46540981634896,
+      "longitude": -93.15644886242875,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt81152",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-47"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-d680d7f8ed",
+      "latitude": 34.08605049493996,
+      "longitude": -117.72652135871655,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193581",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b17_-59"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt82104",
+      "latitude": 35.5915099301224,
+      "longitude": -82.3144533554916,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b17_-42",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Slide - translational"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-92bfdfd872",
+      "latitude": 35.70544632988006,
+      "longitude": -112.12560189434022,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt22404",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b17_-57"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt24121",
+      "latitude": 31.9721571100001,
+      "longitude": -112.680076393,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b15_-57",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt193404",
+      "latitude": 42.810379604,
+      "longitude": -73.93702161,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-37",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=mudslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-8ab80e01e7",
+      "latitude": 46.065934101316536,
+      "longitude": -69.18943133394684,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt79805",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b23_-35"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt22733",
+      "latitude": 36.9307393510001,
+      "longitude": -113.785755387,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-57",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90993",
+      "latitude": 41.9991012801305,
+      "longitude": -120.298121240857,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-61",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-53a6cd4b8f",
+      "latitude": 39.02559390247101,
+      "longitude": -74.55719533948269,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90618",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-38"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt91150",
+      "latitude": 42.2499524233066,
+      "longitude": -120.32037611082,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-61",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-56970e79e5",
+      "latitude": 45.16995564749966,
+      "longitude": -68.09867401291135,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt79803",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-35"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-217207d7ba",
+      "latitude": 44.07328353920355,
+      "longitude": -117.43224258685218,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90885",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-59"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-371b939dd9",
+      "latitude": 46.41117310898585,
+      "longitude": -69.99255997156438,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt79848",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b23_-35"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-c49036b59d",
+      "latitude": 31.998176260397983,
+      "longitude": -111.33247067996635,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt22998",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b15_-56"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt79805",
+      "latitude": 45.7117111150001,
+      "longitude": -69.738896631,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-35",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Rotational"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt248578",
+      "latitude": 38.5379195940001,
+      "longitude": -82.1061574669999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-42",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-e51e3ef0ca",
+      "latitude": 43.962862785549014,
+      "longitude": -68.99173568570792,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt79624",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-35"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-f9dbd577c0",
+      "latitude": 43.10889483589922,
+      "longitude": -110.45828214764173,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193419",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-56"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt196682",
+      "latitude": 46.843,
+      "longitude": -121.75,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b23_-61",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=rock fall, rock and ice avalanche"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt191510",
+      "latitude": 43.486,
+      "longitude": -91.2132,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-46",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=mudslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt196667",
+      "latitude": 40.5319,
+      "longitude": -112.1488,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-57",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=rock avalanche"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt80827",
+      "latitude": 45.0598246870001,
+      "longitude": -92.8227645539999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-47",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt196648",
+      "latitude": 39.164951,
+      "longitude": -107.8469,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-54",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=rock slide and rock avalanche"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-bc01b25e26",
+      "latitude": 36.45069144316756,
+      "longitude": -90.69495526292455,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt81180",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-46"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt81041",
+      "latitude": 40.420693,
+      "longitude": -91.7521629999999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-46",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt199797",
+      "latitude": 47.8413126468847,
+      "longitude": -121.656292343925,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b23_-61",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Earth or debris Slide-Undifferentiated"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-9f05a4c94e",
+      "latitude": 40.021931447391225,
+      "longitude": -90.60093922759528,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt81040",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-46"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-66378069c9",
+      "latitude": 45.48832230859915,
+      "longitude": -71.14702428381379,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt79855",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-36"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt92816",
+      "latitude": 42.7072200528139,
+      "longitude": -124.457969949006,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-63",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt22998",
+      "latitude": 32.3339319950001,
+      "longitude": -110.763492763,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b16_-56",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt79549",
+      "latitude": 37.432849,
+      "longitude": -84.279911,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-43",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-d74c00682c",
+      "latitude": 39.706489543341185,
+      "longitude": -97.7568083206347,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90472",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-49"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90593",
+      "latitude": 40.906134238,
+      "longitude": -75.074614444,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-38",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Rockfall"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt284010",
+      "latitude": 39.338311402,
+      "longitude": -81.26126261,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-41",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt91256",
+      "latitude": 45.821376048022,
+      "longitude": -123.493954377704,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-62",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt79157",
+      "latitude": 38.7662780000001,
+      "longitude": -84.0595079999999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-43",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-17b95fec36",
+      "latitude": 32.237705608796595,
+      "longitude": -109.79217785847875,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt23295",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b16_-55"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt31762",
+      "latitude": 37.828820942,
+      "longitude": -122.094134301,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-62",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=shallow landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-b57cde49b4",
+      "latitude": 45.267492059440706,
+      "longitude": -119.20455047605095,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt98001",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-60"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt73482",
+      "latitude": 40.12452842,
+      "longitude": -105.382753769,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-53",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=debris flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt79848",
+      "latitude": 46.0597560420001,
+      "longitude": -68.978258903,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b23_-35",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt73650",
+      "latitude": 39.670464317,
+      "longitude": -105.311310537,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-53",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=debris flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-a31e2f39ec",
+      "latitude": 36.5472398447716,
+      "longitude": -112.03318060648247,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt22343",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-57"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt79858",
+      "latitude": 44.8201694750001,
+      "longitude": -70.535911453,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-36",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt23397",
+      "latitude": 35.3169715610001,
+      "longitude": -111.606946869,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b17_-56",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt196729",
+      "latitude": 41.4872,
+      "longitude": -109.7543,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-55",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=mine collapse"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-647399e38d",
+      "latitude": 39.57854490232234,
+      "longitude": -107.41413094012515,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196648",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-54"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt92280",
+      "latitude": 44.6943659524301,
+      "longitude": -124.062711539544,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-63",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-f8e5d25942",
+      "latitude": 32.09302971764693,
+      "longitude": -89.83365184171788,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt192649",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b16_-45"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt79690",
+      "latitude": 43.710567805,
+      "longitude": -70.6304744399999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-36",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Spread/Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-87321e6c72",
+      "latitude": 31.17458016779258,
+      "longitude": -90.11837829421555,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt192649",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b15_-46"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt24130",
+      "latitude": 32.669255118,
+      "longitude": -109.873036523,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b16_-55",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-0b027641ac",
+      "latitude": 40.755622348770004,
+      "longitude": -121.35872811129205,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196639",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-61"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-2bfe1fdfc0",
+      "latitude": 43.056140529085404,
+      "longitude": -110.28102742272085,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193419",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-56"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-a359fbb496",
+      "latitude": 39.81483341435758,
+      "longitude": -77.13076339406084,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt203314",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-39"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-940e2aa61d",
+      "latitude": 44.86236045444552,
+      "longitude": -121.54561155362738,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt91319",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-61"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-6812ac83bd",
+      "latitude": 43.25917540772188,
+      "longitude": -118.42297654403002,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90885",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-60"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt81180",
+      "latitude": 36.5528850000001,
+      "longitude": -90.041935,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-46",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide/slump"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-7f60990cfc",
+      "latitude": 42.72921100732894,
+      "longitude": -72.98499346138757,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt192136",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-37"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-8220ce555c",
+      "latitude": 39.25122688306663,
+      "longitude": -82.0561207669268,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt248578",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-42"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-a9b3b3eb9c",
+      "latitude": 40.793619620631496,
+      "longitude": -75.88339501978658,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90593",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-38"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt79624",
+      "latitude": 43.8765527140001,
+      "longitude": -69.970460631,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-35",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt196573",
+      "latitude": 35.9098,
+      "longitude": -84.8607,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b17_-43",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=mine collapse"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt105755",
+      "latitude": 44.5913127378844,
+      "longitude": -122.357074044968,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-62",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt23295",
+      "latitude": 31.9439046040001,
+      "longitude": -109.300898985,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b15_-55",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt79803",
+      "latitude": 44.6229429160001,
+      "longitude": -67.7160316929999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-34",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Unknown"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-4c4baa1f17",
+      "latitude": 35.90877261237613,
+      "longitude": -112.10675126445322,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt22404",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b17_-57"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt24137",
+      "latitude": 39.9851,
+      "longitude": -121.28246,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-61",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=debris flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt193183",
+      "latitude": 48.379985,
+      "longitude": -116.551955,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b24_-59",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=mudslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt81004",
+      "latitude": 38.2127780000001,
+      "longitude": -92.6949999999999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-47",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-4964208dbf",
+      "latitude": 39.40952907930131,
+      "longitude": -77.64869842454976,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt203314",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-39"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-8a7a571305",
+      "latitude": 36.64940768008574,
+      "longitude": -114.55427200463596,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt22733",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-58"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-cbbc5d9227",
+      "latitude": 40.4487569056,
+      "longitude": -111.6071969820928,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196667",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-56"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-1a59254cff",
+      "latitude": 40.327579792626544,
+      "longitude": -111.84185186974922,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196667",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-56"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-22e69fe68c",
+      "latitude": 37.96510116183789,
+      "longitude": -119.79046253288656,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196706",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-60"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt193549",
+      "latitude": 46.500538627,
+      "longitude": -116.366123199,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b23_-59",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=mudslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-a4d158d819",
+      "latitude": 43.423404009076506,
+      "longitude": -69.6930913446196,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt79624",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-35"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt75587",
+      "latitude": 44.9627918090001,
+      "longitude": -116.782620994,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-59",
+        "quality_flags": [
+          "confidence=8"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-e702ef6ed2",
+      "latitude": 45.85017948568877,
+      "longitude": -69.44993367567717,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt79805",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-35"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-a8753b1b35",
+      "latitude": 37.5525731440652,
+      "longitude": -121.55364817089406,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196334",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-61"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-42efa285da",
+      "latitude": 37.91428380614717,
+      "longitude": -92.48430439003764,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt81088",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-47"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt23885",
+      "latitude": 31.3640831380001,
+      "longitude": -110.289753611,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b15_-56",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt23305",
+      "latitude": 31.9274861320001,
+      "longitude": -109.268410612,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b15_-55",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-6e450749c6",
+      "latitude": 36.42196923695647,
+      "longitude": -90.35819227824138,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt81180",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-46"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-b16d36dd83",
+      "latitude": 41.47465689260258,
+      "longitude": -75.74701198781254,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90498",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-38"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-854124a5c8",
+      "latitude": 40.15738089021691,
+      "longitude": -121.50275587581689,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt24137",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-61"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt23431",
+      "latitude": 35.295007974,
+      "longitude": -111.615093092,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b17_-56",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt98001",
+      "latitude": 45.7300395849681,
+      "longitude": -118.141460667844,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-60",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt199970",
+      "latitude": 48.2388047114621,
+      "longitude": -121.78317170708,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b24_-61",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Earth or debris Slide-Undifferentiated"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-a3e0c02d19",
+      "latitude": 43.055087577688916,
+      "longitude": -90.6752318535495,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt191510",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-46"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt79915",
+      "latitude": 45.9339407690001,
+      "longitude": -69.064849696,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-35",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Combination"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt91566",
+      "latitude": 42.1004915883207,
+      "longitude": -119.725367889651,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-60",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt79855",
+      "latitude": 44.8136502420001,
+      "longitude": -70.5046113609999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-36",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt189982",
+      "latitude": 36.1184000000001,
+      "longitude": -117.9722,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-59",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=mudslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-c161c6678e",
+      "latitude": 36.79840614728435,
+      "longitude": -111.33742380395489,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt22343",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-56"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt196334",
+      "latitude": 36.9319141300001,
+      "longitude": -121.772098085,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-61",
+        "quality_flags": [
+          "confidence=8"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-a1280a5163",
+      "latitude": 42.514041701048875,
+      "longitude": -73.98786041746979,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193404",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-37"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-c52e898385",
+      "latitude": 37.65780639873348,
+      "longitude": -91.2650739048468,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt81029",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-46"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-aaac62a268",
+      "latitude": 31.64783342580057,
+      "longitude": -110.29333954342155,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt23885",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b15_-56"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt200579",
+      "latitude": 47.5189225870001,
+      "longitude": -122.395423544,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b23_-62",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-61687cc2c5",
+      "latitude": 38.78891251793575,
+      "longitude": -86.19383906356192,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt77285",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-44"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-fe178c6b14",
+      "latitude": 39.35964206576911,
+      "longitude": -111.37636867741128,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196710",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-56"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-cf62dd2c47",
+      "latitude": 38.03677067416404,
+      "longitude": -119.76419082237607,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196706",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-60"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-3f5891c025",
+      "latitude": 45.529212993883306,
+      "longitude": -69.80806755467279,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt79805",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-35"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90486",
+      "latitude": 40.9457206050001,
+      "longitude": -73.92016108,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-37",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Rockslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-4a08b4d93e",
+      "latitude": 32.27995602025544,
+      "longitude": -117.14533227256577,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt191906",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b16_-59"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-075ccd99bd",
+      "latitude": 46.4010101885887,
+      "longitude": -116.11342616098153,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193549",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b23_-59"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-6aa12575eb",
+      "latitude": 43.67260895971806,
+      "longitude": -71.34710567168683,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt79679",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-36"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt191658",
+      "latitude": 39.2859894160001,
+      "longitude": -77.549635066,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-39",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt193233",
+      "latitude": 46.95593447,
+      "longitude": -118.709883838,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b23_-60",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-2382222269",
+      "latitude": 35.46428842092488,
+      "longitude": -112.5507838855462,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt23431",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b17_-57"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-8b6b6e79d9",
+      "latitude": 39.6556495657424,
+      "longitude": -104.52776290198342,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt73650",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-53"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-6b0dd196c4",
+      "latitude": 43.594839950736194,
+      "longitude": -116.40791172724417,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt76709",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-59"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-fd178bb2aa",
+      "latitude": 35.95524014747207,
+      "longitude": -85.59892445600721,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196573",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b17_-43"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt81069",
+      "latitude": 39.1227430000001,
+      "longitude": -91.0106709999999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-46",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-022c6397e2",
+      "latitude": 31.716779433606057,
+      "longitude": -113.12890648465799,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt24121",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b15_-57"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-7867b95983",
+      "latitude": 37.66643844625758,
+      "longitude": -118.72888291666038,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196706",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-60"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-f3563fe4af",
+      "latitude": 36.96282920918233,
+      "longitude": -120.72117286918223,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196334",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-61"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-cfe1052be7",
+      "latitude": 40.96163164653409,
+      "longitude": -123.51784515265999,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt39321",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-62"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-bdba2f386f",
+      "latitude": 40.189654568823634,
+      "longitude": -79.65841137946946,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt280654",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-40"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt23261",
+      "latitude": 35.7664563800001,
+      "longitude": -113.372697351,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b17_-57",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt81088",
+      "latitude": 37.930664,
+      "longitude": -92.011713,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-47",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt191295",
+      "latitude": 33.712,
+      "longitude": -115.3871,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b16_-58",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-aefeaef44d",
+      "latitude": 33.54063971707577,
+      "longitude": -114.99428136838546,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt191295",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b16_-58"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-17a202cb8f",
+      "latitude": 43.08385929801574,
+      "longitude": -102.77719651196502,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90279",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-52"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-af0751aa35",
+      "latitude": 41.39487039457034,
+      "longitude": -120.17318044991379,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90993",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-61"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-5001c9067e",
+      "latitude": 32.786632988349076,
+      "longitude": -116.307448998842,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt191906",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b16_-59"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt81029",
+      "latitude": 37.7957410000001,
+      "longitude": -92.243983,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-47",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt280654",
+      "latitude": 39.3997009490001,
+      "longitude": -79.987635954,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-40",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-f770da37ca",
+      "latitude": 38.94028570124254,
+      "longitude": -82.90160985593809,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt248578",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-42"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt81242",
+      "latitude": 36.065190789345,
+      "longitude": -79.1183862647482,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-40",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Rock Slide - translational"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90472",
+      "latitude": 40.0508,
+      "longitude": -97.4089,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-49",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Bedrock Rotational Slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt81409",
+      "latitude": 35.9097247511768,
+      "longitude": -78.7583294707995,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b17_-40",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Weathered rock Slide - rotational"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt88910",
+      "latitude": 35.7710608910882,
+      "longitude": -81.9865421798819,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b17_-41",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-8e716d04b8",
+      "latitude": 45.60910830046558,
+      "longitude": -119.19411431651174,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt98001",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-60"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt196575",
+      "latitude": 41.4091,
+      "longitude": -122.1879,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-62",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=debris flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt191906",
+      "latitude": 32.5755,
+      "longitude": -116.9016,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b16_-59",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt200168",
+      "latitude": 48.1930201047964,
+      "longitude": -122.172808583735,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b24_-62",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Earth or debris Slide-Undifferentiated"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-d8f0a6fd17",
+      "latitude": 44.28929691267101,
+      "longitude": -115.50408872802085,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt76709",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-58"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-4f15f2fb48",
+      "latitude": 44.98333063194487,
+      "longitude": -115.89127911084432,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt75587",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-58"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-3154f6f058",
+      "latitude": 39.50068301235182,
+      "longitude": -108.06879543784208,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt196648",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-55"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt193632",
+      "latitude": 40.504194415,
+      "longitude": -111.413457085,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-56",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=rock_fall"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-c6d1883d76",
+      "latitude": 46.51727588005074,
+      "longitude": -119.15939818473929,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193233",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b23_-60"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-dba95058b8",
+      "latitude": 40.155156030738056,
+      "longitude": -76.50942789188616,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt192205",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-39"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-35b2c100e6",
+      "latitude": 43.08649342577527,
+      "longitude": -71.51460651446536,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt192136",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-36"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90498",
+      "latitude": 41.0193173700001,
+      "longitude": -75.064707599,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-38",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Rockfall"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-8e5445c6d2",
+      "latitude": 43.88598375885265,
+      "longitude": -118.7849605215637,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90885",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-60"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-1b5aa63aa6",
+      "latitude": 41.3053137381162,
+      "longitude": -74.09947358085351,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90498",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-38"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt211627",
+      "latitude": 40.1549712130001,
+      "longitude": -80.684248678,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-41",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt92633",
+      "latitude": 43.2747075675734,
+      "longitude": -123.354984456703,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-62",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-5eb737e264",
+      "latitude": 37.957641000302445,
+      "longitude": -91.57915008712186,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt81088",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-46"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-37aedd02ef",
+      "latitude": 39.55864326137608,
+      "longitude": -76.7957392199133,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt192205",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-39"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-31aed334d3",
+      "latitude": 41.8314159323542,
+      "longitude": -120.1973132630249,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt91566",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-61"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt196639",
+      "latitude": 41.374987,
+      "longitude": -122.154568,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-62",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt27227",
+      "latitude": 38.0025951580001,
+      "longitude": -122.255636236,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-62",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=shallow landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-965ce01c96",
+      "latitude": 39.87375921124552,
+      "longitude": -91.97958629577339,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt81152",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-46"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-c97e23cd29",
+      "latitude": 47.63431832110405,
+      "longitude": -118.77714704453331,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193233",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b23_-60"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt192274",
+      "latitude": 48.3163000000001,
+      "longitude": -115.5805,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b24_-58",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=other"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-37f4e26d3f",
+      "latitude": 39.216175416955565,
+      "longitude": -106.73952297262105,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193730",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-54"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt77160",
+      "latitude": 37.298322,
+      "longitude": -86.738803,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-44",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-1960e3f685",
+      "latitude": 46.60015260379528,
+      "longitude": -115.84927217201556,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193549",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b23_-58"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt196706",
+      "latitude": 37.7389,
+      "longitude": -119.6143,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-60",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=rock fall"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-72d08ec234",
+      "latitude": 44.024484503019565,
+      "longitude": -117.65465553147915,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90885",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-59"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt193419",
+      "latitude": 43.0277073930001,
+      "longitude": -110.809080601,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-56",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt193010",
+      "latitude": 41.296315,
+      "longitude": -78.646944288,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-40",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-e0f67a79d0",
+      "latitude": 40.36506917336818,
+      "longitude": -92.34605565343335,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt81152",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-47"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt77125",
+      "latitude": 37.1617220000001,
+      "longitude": -84.339713,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-43",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt196710",
+      "latitude": 39.4675,
+      "longitude": -111.2248,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-56",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=mine collapse"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-dac75600c7",
+      "latitude": 48.45364252826363,
+      "longitude": -117.7801144038012,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193183",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b24_-59"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-289839fe5f",
+      "latitude": 42.33904302230484,
+      "longitude": -103.93029956050528,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90464",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-52"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-e1461ee086",
+      "latitude": 44.67470473640971,
+      "longitude": -68.05628451215352,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt79803",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b22_-35"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-69bd45e123",
+      "latitude": 35.72839424183016,
+      "longitude": -81.30933656772608,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt88910",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b17_-41"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-53ec55d321",
+      "latitude": 39.423367350639474,
+      "longitude": -77.51698448507645,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt203314",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b19_-39"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-976d05868a",
+      "latitude": 43.2468226974478,
+      "longitude": -69.19121965885492,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt79624",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-35"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-eeec8150e0",
+      "latitude": 41.83206602262783,
+      "longitude": -100.69590568660445,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90270",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-51"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-f3e52da9ea",
+      "latitude": 40.38325339669857,
+      "longitude": -100.70853302033326,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90384",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-51"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt81152",
+      "latitude": 40.3183530000001,
+      "longitude": -92.0859139999999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-47",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt76709",
+      "latitude": 44.082567985,
+      "longitude": -115.673139667,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-58",
+        "quality_flags": [
+          "confidence=8"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-9476ffa1af",
+      "latitude": 31.964325898622896,
+      "longitude": -110.48422315481446,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt22998",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b15_-56"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-12d7993f2d",
+      "latitude": 37.40394238520808,
+      "longitude": -90.20801627128857,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt81180",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-46"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt200121",
+      "latitude": 48.1582583400714,
+      "longitude": -122.367032316981,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b24_-62",
+        "quality_flags": [
+          "confidence=8",
+          "ls_type=Earth or debris Slide-Undifferentiated"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt22404",
+      "latitude": 36.0804919390001,
+      "longitude": -111.873127292,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-56",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-c5a89e476b",
+      "latitude": 41.10900925293596,
+      "longitude": -99.86627161841405,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt90270",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b20_-50"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90590",
+      "latitude": 39.9746103850001,
+      "longitude": -75.035790272,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-38",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90279",
+      "latitude": 42.8917000000001,
+      "longitude": -103.55,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-52",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Bedrock Rotational Slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90384",
+      "latitude": 40.3814,
+      "longitude": -101.1947,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-51",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Bedrock Lateral Spreads"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt105416",
+      "latitude": 42.049007797822,
+      "longitude": -124.259142804633,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-63",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90270",
+      "latitude": 41.4658000000001,
+      "longitude": -100.0181,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-51",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Earth Rotational Slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt87459",
+      "latitude": 35.4829886041686,
+      "longitude": -81.7932136752594,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b17_-41",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt192205",
+      "latitude": 40.0988,
+      "longitude": -76.7762999999999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-39",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90319",
+      "latitude": 42.5656000000001,
+      "longitude": -97.8785999999999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-49",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Bedrock Rotational Slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-a206c5b6ca",
+      "latitude": 43.70282208516392,
+      "longitude": -116.56870246267916,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt76709",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b21_-59"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt22343",
+      "latitude": 36.468267247,
+      "longitude": -111.83882074,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b18_-56",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-9ae4b59ed7",
+      "latitude": 46.78187146948241,
+      "longitude": -116.64345511670571,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt193549",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b23_-59"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt23907",
+      "latitude": 33.3261180980001,
+      "longitude": -112.097521014,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b16_-57",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Debris Flow"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt193581",
+      "latitude": 34.228262638,
+      "longitude": -117.50694761,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b17_-59",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=rock_fall"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-5e8e55200d",
+      "latitude": 37.43816420784694,
+      "longitude": -122.72292795695442,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt31762",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b18_-62"
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-42f4268ccc",
+      "latitude": 35.113747780373785,
+      "longitude": -89.14178808444697,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt190850",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b17_-45"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt77285",
+      "latitude": 38.055346,
+      "longitude": -86.290005,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b19_-44",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt192136",
+      "latitude": 43.2288,
+      "longitude": -72.4510999999999,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b21_-37",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=rock_fall"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "pseudo-absence-17b55ef995",
+      "latitude": 32.455239987623585,
+      "longitude": -112.70852518703751,
+      "landslide": 0,
+      "provenance": {
+        "role": "pseudo_absence",
+        "method": "offset_from_inventory_positive_full_inventory_buffer",
+        "anchor_sample_id": "usgs-v3-pt24121",
+        "min_distance_km": 15.0,
+        "max_distance_km": 100.0,
+        "min_inter_absence_km": 5.0,
+        "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+        "quality_flags": [
+          "pseudo_absence=true",
+          "not_field_confirmed_absence=true",
+          "land_biased_offset=true",
+          "full_inventory_exclusion_buffer=true"
+        ],
+        "spatial_block": "b16_-57"
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt81040",
+      "latitude": 40.3099300000001,
+      "longitude": -91.575082,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-46",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=landslide"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt91319",
+      "latitude": 44.7688302674586,
+      "longitude": -121.284315855994,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b22_-61",
+        "quality_flags": [
+          "confidence=5"
+        ],
+        "min_separation_km": 2.0
+      }
+    },
+    {
+      "sample_id": "usgs-v3-pt90268",
+      "latitude": 41.2778000000001,
+      "longitude": -99.2406,
+      "landslide": 1,
+      "provenance": {
+        "role": "inventory_presence",
+        "dataset_name": "usgs_landslide_inventories_us",
+        "dataset_version": "3.0",
+        "spatial_block": "b20_-50",
+        "quality_flags": [
+          "confidence=5",
+          "ls_type=Earth Rotational Slide"
+        ],
+        "min_separation_km": 2.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+{'sample_id': 'usgs-v3-pt1', 'latitude': 61.7025213310001, 'longitude': -149.232519064, 'labels': {'landslide': 1, 'subsidence': None, 'liquefaction': None}}
+count=251344

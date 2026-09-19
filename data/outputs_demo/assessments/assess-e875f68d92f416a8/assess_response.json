@@ -1,0 +1,89 @@
+{
+  "assessment_id": "assess-e875f68d92f416a8",
+  "hazard_profiles": [
+    {
+      "hazard_type": "subsidence",
+      "point_estimate": 0.34,
+      "susceptibility_score": 0.34,
+      "credible_interval_80": [
+        0.2685,
+        0.41150000000000003
+      ],
+      "credible_interval_95": [
+        0.22950000000000004,
+        0.4505
+      ],
+      "domain_similarity_score": 0.81,
+      "confidence_tier": "High",
+      "primary_drivers": [
+        "slope",
+        "profile_curvature",
+        "relative_relief",
+        "ndvi",
+        "gravity"
+      ]
+    },
+    {
+      "hazard_type": "landslide",
+      "point_estimate": 0.82,
+      "susceptibility_score": 0.82,
+      "credible_interval_80": [
+        0.7484999999999999,
+        0.8915
+      ],
+      "credible_interval_95": [
+        0.7094999999999999,
+        0.9305
+      ],
+      "domain_similarity_score": 0.81,
+      "confidence_tier": "High",
+      "primary_drivers": [
+        "slope",
+        "profile_curvature",
+        "relative_relief",
+        "ndvi",
+        "gravity"
+      ]
+    },
+    {
+      "hazard_type": "sinkhole",
+      "point_estimate": 0.21,
+      "susceptibility_score": 0.21,
+      "credible_interval_80": [
+        0.13849999999999998,
+        0.2815
+      ],
+      "credible_interval_95": [
+        0.09949999999999999,
+        0.3205
+      ],
+      "domain_similarity_score": 0.81,
+      "confidence_tier": "High",
+      "primary_drivers": [
+        "slope",
+        "profile_curvature",
+        "relative_relief",
+        "ndvi",
+        "gravity"
+      ]
+    }
+  ],
+  "explanation": "subsidence: median susceptibility 0.340 (high); primary contributing features: slope, profile_curvature, relative_relief, ndvi, gravity. landslide: median susceptibility 0.820 (high); primary contributing features: slope, profile_curvature, relative_relief, ndvi, gravity. sinkhole: median susceptibility 0.210 (high); primary contributing features: slope, profile_curvature, relative_relief, ndvi, gravity. This explanation is derived from model attribution and uncertainty outputs; it is not a field geological validation.",
+  "model_version": "ssri-model",
+  "spatial_output_url": null,
+  "notes": [
+    "Confidence tiers use configurable calibration parameters, not scientifically validated thresholds.",
+    "aoi_source=point",
+    "acquisition_bbox=(3.3692, 6.5144, 3.3891999999999998, 6.5344)",
+    "domain_similarity_calibrated=true",
+    "request_id=presentation-verify",
+    "checkpoint_sha256=3a8b2fbbde1810ec939f89bf0c17dbfcde046b930d8b4a525dfe70ec6b73fbdf",
+    "requested_by=development"
+  ],
+  "request_id": "presentation-verify",
+  "checkpoint_sha256": "3a8b2fbbde1810ec939f89bf0c17dbfcde046b930d8b4a525dfe70ec6b73fbdf",
+  "checkpoint_dataset_name": null,
+  "checkpoint_dataset_version": null,
+  "is_fixture_checkpoint": false,
+  "domain_similarity_calibrated": true
+}

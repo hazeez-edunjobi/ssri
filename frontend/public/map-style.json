@@ -1,0 +1,21 @@
+{
+  "version": 8,
+  "sources": {
+    "ssri-empty": {
+      "type": "geojson",
+      "data": {
+        "type": "FeatureCollection",
+        "features": []
+      }
+    }
+  },
+  "layers": [
+    {
+      "id": "ssri-background",
+      "type": "background",
+      "paint": {
+        "background-color": "#0B1220"
+      }
+    }
+  ]
+}

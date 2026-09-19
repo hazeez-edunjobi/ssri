@@ -1,0 +1,111 @@
+{
+  "package_version": "0.1.0",
+  "created_at": "2026-09-08T23:53:21.919266+00:00",
+  "aoi": {
+    "bbox_wgs84": {
+      "min_lon": -116.375123199,
+      "min_lat": 46.491538627,
+      "max_lon": -116.357123199,
+      "max_lat": 46.509538627
+    }
+  },
+  "crs": "EPSG:32611",
+  "projection": {
+    "transform": [
+      30.0,
+      0.0,
+      547939.5425729303,
+      0.0,
+      -30.0,
+      5150864.006294762,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "width": 47,
+    "height": 67
+  },
+  "resolution_m": 30.0,
+  "acquisition": {
+    "start_date": "2023-01-01",
+    "end_date": "2023-12-31"
+  },
+  "sources": {
+    "dem": "COP30",
+    "gravity_provider": "wgm2012_bouguer",
+    "magnetic_provider": "emag2v3_uc4km"
+  },
+  "channels": [
+    {
+      "index": 1,
+      "name": "elevation",
+      "description": "Digital elevation model height in meters"
+    },
+    {
+      "index": 2,
+      "name": "slope",
+      "description": "Terrain slope in degrees"
+    },
+    {
+      "index": 3,
+      "name": "plan_curvature",
+      "description": "Plan curvature describing lateral convexity/concavity"
+    },
+    {
+      "index": 4,
+      "name": "profile_curvature",
+      "description": "Profile curvature describing vertical convexity/concavity"
+    },
+    {
+      "index": 5,
+      "name": "twi",
+      "description": "Topographic Wetness Index"
+    },
+    {
+      "index": 6,
+      "name": "relative_relief",
+      "description": "Relative Relief Index (local elevation range)"
+    },
+    {
+      "index": 7,
+      "name": "valley_depth",
+      "description": "Valley depth below local ridge envelope"
+    },
+    {
+      "index": 8,
+      "name": "ndvi",
+      "description": "Normalized Difference Vegetation Index"
+    },
+    {
+      "index": 9,
+      "name": "ndwi",
+      "description": "Normalized Difference Water Index"
+    },
+    {
+      "index": 10,
+      "name": "clay_mineral_ratio",
+      "description": "Clay mineral ratio (B11/B12)"
+    },
+    {
+      "index": 11,
+      "name": "iron_oxide_index",
+      "description": "Iron oxide index (B4/B2)"
+    },
+    {
+      "index": 12,
+      "name": "gravity",
+      "description": "WGM2012 Complete Spherical Bouguer anomaly (mGal; regional ~2')"
+    },
+    {
+      "index": 13,
+      "name": "magnetics",
+      "description": "EMAG2v3 4 km upward-continued total-field anomaly (nT; regional ~2')"
+    }
+  ],
+  "tensor_shape": [
+    13,
+    67,
+    47
+  ],
+  "nodata": -9999.0
+}

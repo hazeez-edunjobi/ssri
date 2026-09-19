@@ -1,0 +1,912 @@
+{
+  "created_at": "2026-09-09T01:01:02.403900+00:00",
+  "n_points": 240,
+  "n_positives": 120,
+  "n_absences": 120,
+  "class_balance": {
+    "positive_fraction": 0.5,
+    "negative_fraction": 0.5
+  },
+  "n_spatial_blocks": 104,
+  "blocks": [
+    "b15_-46",
+    "b15_-55",
+    "b15_-56",
+    "b15_-57",
+    "b16_-45",
+    "b16_-55",
+    "b16_-56",
+    "b16_-57",
+    "b16_-58",
+    "b16_-59",
+    "b17_-40",
+    "b17_-41",
+    "b17_-42",
+    "b17_-43",
+    "b17_-45",
+    "b17_-56",
+    "b17_-57",
+    "b17_-59",
+    "b17_-60",
+    "b18_-40",
+    "b18_-41",
+    "b18_-42",
+    "b18_-43",
+    "b18_-44",
+    "b18_-45",
+    "b18_-46",
+    "b18_-47",
+    "b18_-56",
+    "b18_-57",
+    "b18_-58",
+    "b18_-59",
+    "b18_-60",
+    "b18_-61",
+    "b18_-62",
+    "b19_-38",
+    "b19_-39",
+    "b19_-40",
+    "b19_-41",
+    "b19_-42",
+    "b19_-43",
+    "b19_-44",
+    "b19_-46",
+    "b19_-47",
+    "b19_-49",
+    "b19_-53",
+    "b19_-54",
+    "b19_-55",
+    "b19_-56",
+    "b19_-60",
+    "b19_-61",
+    "b19_-62",
+    "b20_-37",
+    "b20_-38",
+    "b20_-39",
+    "b20_-40",
+    "b20_-41",
+    "b20_-46",
+    "b20_-47",
+    "b20_-48",
+    "b20_-49",
+    "b20_-50",
+    "b20_-51",
+    "b20_-52",
+    "b20_-53",
+    "b20_-55",
+    "b20_-56",
+    "b20_-57",
+    "b20_-61",
+    "b20_-62",
+    "b20_-63",
+    "b21_-35",
+    "b21_-36",
+    "b21_-37",
+    "b21_-46",
+    "b21_-49",
+    "b21_-50",
+    "b21_-52",
+    "b21_-56",
+    "b21_-59",
+    "b21_-60",
+    "b21_-61",
+    "b21_-62",
+    "b21_-63",
+    "b22_-34",
+    "b22_-35",
+    "b22_-36",
+    "b22_-47",
+    "b22_-58",
+    "b22_-59",
+    "b22_-60",
+    "b22_-61",
+    "b22_-62",
+    "b22_-63",
+    "b23_-35",
+    "b23_-46",
+    "b23_-58",
+    "b23_-59",
+    "b23_-60",
+    "b23_-61",
+    "b23_-62",
+    "b24_-58",
+    "b24_-59",
+    "b24_-61",
+    "b24_-62"
+  ],
+  "block_counts": {
+    "b21_-36": {
+      "train": 4,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 2
+    },
+    "b20_-51": {
+      "train": 5,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 3
+    },
+    "b18_-60": {
+      "train": 4,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 3
+    },
+    "b19_-44": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 1
+    },
+    "b22_-59": {
+      "train": 4,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 3
+    },
+    "b19_-56": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b21_-52": {
+      "train": 4,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 3
+    },
+    "b18_-62": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b21_-50": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b19_-54": {
+      "train": 5,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 3
+    },
+    "b22_-47": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b15_-56": {
+      "train": 5,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 4
+    },
+    "b16_-55": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b17_-57": {
+      "train": 5,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 4
+    },
+    "b15_-57": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b18_-41": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b18_-45": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b19_-39": {
+      "train": 6,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 4
+    },
+    "b23_-46": {
+      "train": 0,
+      "validation": 1,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b19_-42": {
+      "train": 4,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 3
+    },
+    "b15_-46": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b20_-61": {
+      "train": 6,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 5
+    },
+    "b17_-60": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b17_-45": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b23_-60": {
+      "train": 4,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 3
+    },
+    "b18_-42": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b20_-48": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b20_-63": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b19_-41": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b23_-61": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 1
+    },
+    "b19_-38": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 1
+    },
+    "b21_-59": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b20_-46": {
+      "train": 4,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 2
+    },
+    "b20_-52": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b20_-47": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b17_-59": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b17_-42": {
+      "train": 0,
+      "validation": 0,
+      "test": 1,
+      "pos": 1,
+      "neg": 0
+    },
+    "b21_-37": {
+      "train": 0,
+      "validation": 4,
+      "test": 0,
+      "pos": 2,
+      "neg": 2
+    },
+    "b23_-35": {
+      "train": 0,
+      "validation": 3,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b18_-57": {
+      "train": 0,
+      "validation": 2,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b21_-61": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b22_-35": {
+      "train": 6,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 4
+    },
+    "b21_-35": {
+      "train": 0,
+      "validation": 4,
+      "test": 0,
+      "pos": 1,
+      "neg": 3
+    },
+    "b21_-56": {
+      "train": 0,
+      "validation": 3,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b21_-46": {
+      "train": 0,
+      "validation": 2,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b20_-57": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b18_-46": {
+      "train": 6,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 5
+    },
+    "b22_-36": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 1
+    },
+    "b21_-63": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 0
+    },
+    "b16_-56": {
+      "train": 0,
+      "validation": 0,
+      "test": 1,
+      "pos": 1,
+      "neg": 0
+    },
+    "b18_-43": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 0
+    },
+    "b19_-49": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 0,
+      "neg": 1
+    },
+    "b20_-38": {
+      "train": 5,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 3
+    },
+    "b22_-62": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 0
+    },
+    "b19_-43": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b22_-60": {
+      "train": 0,
+      "validation": 3,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b20_-53": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b19_-53": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b17_-56": {
+      "train": 0,
+      "validation": 2,
+      "test": 0,
+      "pos": 2,
+      "neg": 0
+    },
+    "b20_-55": {
+      "train": 0,
+      "validation": 0,
+      "test": 1,
+      "pos": 1,
+      "neg": 0
+    },
+    "b22_-63": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b16_-45": {
+      "train": 0,
+      "validation": 0,
+      "test": 1,
+      "pos": 0,
+      "neg": 1
+    },
+    "b22_-61": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b21_-60": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b17_-43": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b15_-55": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 0
+    },
+    "b22_-34": {
+      "train": 0,
+      "validation": 0,
+      "test": 1,
+      "pos": 1,
+      "neg": 0
+    },
+    "b19_-61": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b24_-59": {
+      "train": 0,
+      "validation": 2,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b19_-47": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b18_-58": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 0,
+      "neg": 1
+    },
+    "b20_-56": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b23_-59": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b18_-61": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b18_-47": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 1
+    },
+    "b24_-61": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b18_-59": {
+      "train": 0,
+      "validation": 1,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b18_-56": {
+      "train": 0,
+      "validation": 0,
+      "test": 3,
+      "pos": 2,
+      "neg": 1
+    },
+    "b23_-62": {
+      "train": 0,
+      "validation": 1,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b19_-60": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 0,
+      "neg": 1
+    },
+    "b20_-37": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b16_-59": {
+      "train": 0,
+      "validation": 0,
+      "test": 3,
+      "pos": 1,
+      "neg": 2
+    },
+    "b19_-46": {
+      "train": 0,
+      "validation": 0,
+      "test": 2,
+      "pos": 1,
+      "neg": 1
+    },
+    "b20_-62": {
+      "train": 0,
+      "validation": 0,
+      "test": 3,
+      "pos": 2,
+      "neg": 1
+    },
+    "b20_-40": {
+      "train": 0,
+      "validation": 2,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b16_-58": {
+      "train": 0,
+      "validation": 2,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b19_-40": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b18_-40": {
+      "train": 0,
+      "validation": 0,
+      "test": 1,
+      "pos": 1,
+      "neg": 0
+    },
+    "b20_-49": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b17_-40": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b17_-41": {
+      "train": 0,
+      "validation": 0,
+      "test": 3,
+      "pos": 2,
+      "neg": 1
+    },
+    "b24_-62": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 2,
+      "neg": 0
+    },
+    "b22_-58": {
+      "train": 3,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 2
+    },
+    "b19_-55": {
+      "train": 0,
+      "validation": 0,
+      "test": 1,
+      "pos": 0,
+      "neg": 1
+    },
+    "b20_-39": {
+      "train": 0,
+      "validation": 0,
+      "test": 2,
+      "pos": 1,
+      "neg": 1
+    },
+    "b20_-41": {
+      "train": 0,
+      "validation": 0,
+      "test": 1,
+      "pos": 1,
+      "neg": 0
+    },
+    "b21_-62": {
+      "train": 0,
+      "validation": 1,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b19_-62": {
+      "train": 0,
+      "validation": 0,
+      "test": 1,
+      "pos": 1,
+      "neg": 0
+    },
+    "b24_-58": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b18_-44": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 0
+    },
+    "b23_-58": {
+      "train": 1,
+      "validation": 0,
+      "test": 0,
+      "pos": 0,
+      "neg": 1
+    },
+    "b20_-50": {
+      "train": 2,
+      "validation": 0,
+      "test": 0,
+      "pos": 1,
+      "neg": 1
+    },
+    "b21_-49": {
+      "train": 0,
+      "validation": 0,
+      "test": 1,
+      "pos": 1,
+      "neg": 0
+    },
+    "b16_-57": {
+      "train": 0,
+      "validation": 0,
+      "test": 2,
+      "pos": 1,
+      "neg": 1
+    }
+  },
+  "multi_split_blocks": [],
+  "split_counts": {
+    "train": 179,
+    "validation": 33,
+    "test": 28
+  },
+  "split_class_counts": {
+    "train": {
+      "positives": 85,
+      "negatives": 94
+    },
+    "validation": {
+      "positives": 17,
+      "negatives": 16
+    },
+    "test": {
+      "positives": 18,
+      "negatives": 10
+    }
+  },
+  "geographic_extent": {
+    "all": {
+      "min_lat": 31.17458016779258,
+      "max_lat": 48.45364252826363,
+      "min_lon": -124.457969949006,
+      "max_lon": -67.7160316929999
+    },
+    "train": {
+      "min_lat": 31.17458016779258,
+      "max_lat": 48.3163000000001,
+      "min_lon": -124.457969949006,
+      "max_lon": -68.05628451215352
+    },
+    "validation": {
+      "min_lat": 33.54063971707577,
+      "max_lat": 48.45364252826363,
+      "min_lon": -123.354984456703,
+      "max_lon": -68.978258903
+    },
+    "test": {
+      "min_lat": 32.09302971764693,
+      "max_lat": 44.6229429160001,
+      "min_lon": -123.51784515265999,
+      "max_lon": -67.7160316929999
+    }
+  },
+  "nearest_train_test_km": {
+    "n": 28,
+    "min": 17.05599031090793,
+    "median": 65.84934906858535,
+    "mean": 82.05988446635976
+  },
+  "absence_to_inventory_km": {
+    "n": 120,
+    "min": 15.261794612573873,
+    "median": 41.052999445585314,
+    "below_exclusion_buffer": 0
+  },
+  "pseudo_absence_methodology": {
+    "type": "documented_pseudo_absence",
+    "method": "offset_from_inventory_positive_full_inventory_buffer",
+    "min_distance_km": 15.0,
+    "not_field_confirmed": true,
+    "rationale": "Presence-only inventory; absences are synthetic offsets outside a buffer of all CONUS USGS points to reduce contamination and ocean/DEM-void failures from uniform CONUS draws."
+  }
+}
