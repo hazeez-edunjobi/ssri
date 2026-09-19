@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Git
+.git/
+.gitignore
+
+# Tests and dev
+tests/
+
+# Documentation
+README.md

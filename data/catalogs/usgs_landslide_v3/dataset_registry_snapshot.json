@@ -1,0 +1,73 @@
+[
+  {
+    "dataset_id": "usgs_landslide_inventories_us_v3",
+    "provider": "USGS",
+    "role": "source",
+    "hazards": [
+      "landslide"
+    ],
+    "url": "https://doi.org/10.5066/P14AJF8I",
+    "license": "CC0-1.0",
+    "status": "INGEST_READY",
+    "blocker": null,
+    "local_path": null,
+    "notes": "Public CSV/GPKG on ScienceBase. Ingest via ssri_model.ingestion.usgs_landslide after download."
+  },
+  {
+    "dataset_id": "bgs_mass_movement_uk",
+    "provider": "British Geological Survey",
+    "role": "source",
+    "hazards": [
+      "landslide",
+      "subsidence"
+    ],
+    "url": "https://www.bgs.ac.uk/datasets/",
+    "license": "UNKNOWN_REQUIRES_REVIEW",
+    "status": "BLOCKED",
+    "blocker": "BGS national mass-movement / GeoSure products typically require account registration and license acceptance; automated anonymous download is not available. Manual acquisition + license review required.",
+    "local_path": null,
+    "notes": ""
+  },
+  {
+    "dataset_id": "iffi_italian_landslide_inventory",
+    "provider": "ISPRA / IFFI",
+    "role": "source",
+    "hazards": [
+      "landslide"
+    ],
+    "url": "https://www.projectiffi.isprambiente.it/",
+    "license": "UNKNOWN_REQUIRES_REVIEW",
+    "status": "BLOCKED",
+    "blocker": "IFFI access is portal-mediated; bulk redistribution terms must be confirmed before automated ingest. No anonymous bulk dump wired yet.",
+    "local_path": null,
+    "notes": ""
+  },
+  {
+    "dataset_id": "nasa_coolr_global_landslide_catalog",
+    "provider": "NASA GSFC / COOLR",
+    "role": "target",
+    "hazards": [
+      "landslide"
+    ],
+    "url": "https://maps.nccs.nasa.gov/resilience/landslides.html",
+    "license": "CHECK_PROVIDER_TERMS",
+    "status": "CANDIDATE",
+    "blocker": null,
+    "local_path": null,
+    "notes": "Global Landslide Catalog / COOLR is a candidate African-subset transfer evaluation source. Integration pending download + Africa filter."
+  },
+  {
+    "dataset_id": "lagos_insar_ohenhen_shirzaei",
+    "provider": "Figshare DOI 10.7294/19738957",
+    "role": "target",
+    "hazards": [
+      "subsidence"
+    ],
+    "url": "https://doi.org/10.7294/19738957",
+    "license": "CC0-1.0 (dataset v1; confirm version)",
+    "status": "BENCHMARK_ONLY",
+    "blocker": "Qualified as BENCHMARK-ONLY continuous VLM / risk codes \u2014 not SSRI multi-class {landslide,subsidence,liquefaction} label.tif without an approved scientific mapping protocol.",
+    "local_path": null,
+    "notes": ""
+  }
+]

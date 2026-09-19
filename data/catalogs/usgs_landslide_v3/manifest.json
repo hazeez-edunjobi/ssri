@@ -1,0 +1,19 @@
+{
+  "dataset_name": "usgs_landslide_inventories_us",
+  "dataset_version": "3.0",
+  "doi": "10.5066/P14AJF8I",
+  "license": "CC0-1.0",
+  "landing_page": "https://www.sciencebase.gov/catalog/item/671eef1fd34ed0f827ea9f12",
+  "hazard_type": "landslide",
+  "domain_role": "source",
+  "sample_count": 251344,
+  "label_semantics": {
+    "landslide": "1 = inventory presence; 0 unused in raw inventory ingest",
+    "subsidence": "missing (None) \u2014 USGS landslide inventory does not annotate subsidence",
+    "liquefaction": "missing (None) \u2014 USGS landslide inventory does not annotate liquefaction"
+  },
+  "status": "INGESTED",
+  "notes": [
+    "source_csv=us_ls_v3_point.csv"
+  ]
+}

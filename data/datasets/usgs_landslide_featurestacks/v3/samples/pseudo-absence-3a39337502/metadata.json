@@ -1,0 +1,54 @@
+{
+  "sample_id": "pseudo-absence-3a39337502",
+  "latitude": 40.830189302361966,
+  "longitude": -91.33647860965924,
+  "bbox_wgs84": [
+    -91.34547860965924,
+    40.821189302361965,
+    -91.32747860965924,
+    40.839189302361966
+  ],
+  "labels": {
+    "landslide": 0,
+    "subsidence": null,
+    "liquefaction": null
+  },
+  "provenance": {
+    "role": "pseudo_absence",
+    "method": "offset_from_inventory_positive_full_inventory_buffer",
+    "anchor_sample_id": "usgs-v3-pt81152",
+    "min_distance_km": 15.0,
+    "max_distance_km": 100.0,
+    "min_inter_absence_km": 5.0,
+    "inventory_exclusion_scope": "all_conus_usgs_catalog_points",
+    "quality_flags": [
+      "pseudo_absence=true",
+      "not_field_confirmed_absence=true",
+      "land_biased_offset=true",
+      "full_inventory_exclusion_buffer=true"
+    ],
+    "spatial_block": "b20_-46"
+  },
+  "feature_shape": [
+    13,
+    68,
+    52
+  ],
+  "channel_names": [
+    "elevation",
+    "slope",
+    "plan_curvature",
+    "profile_curvature",
+    "twi",
+    "relative_relief",
+    "valley_depth",
+    "ndvi",
+    "ndwi",
+    "clay_mineral_ratio",
+    "iron_oxide_index",
+    "gravity",
+    "magnetics"
+  ],
+  "created_at": "2026-09-09T01:15:08.686524+00:00",
+  "spatial_block": "b20_-46"
+}

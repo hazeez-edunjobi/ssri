@@ -1,0 +1,14 @@
+# Keep build context lean and secret-free
+.env
+.env.*
+!.env.example
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+outputs/
+*.pt
+*.tif
+credentials/
+**/earth-engine*.json

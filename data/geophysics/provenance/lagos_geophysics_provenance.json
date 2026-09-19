@@ -1,0 +1,77 @@
+{
+  "gravity": {
+    "dataset": "WGM2012 Complete Spherical Bouguer anomaly",
+    "provider": "Bureau Gravim\u00e9trique International (BGI)",
+    "citation_doi": "https://doi.org/10.18168/bgi.23",
+    "source_url_original": "http://webftp.omp.obs-mip.fr/bgi/wgm_grid/data/WGM2012_Bouguer_ponc_2min.grd",
+    "source_url_obtained": "https://web.archive.org/web/20170708002547if_/http://webftp.omp.obs-mip.fr/bgi/wgm_grid/data/WGM2012_Bouguer_ponc_2min.grd",
+    "note": "Official BGI FTP hostname no longer resolves; obtained via Internet Archive snapshot of the authoritative BGI distribution.",
+    "license": "Academic/research use per BGI WGM2012 disclaimer (no warranty; BGI not responsible for consequences of use).",
+    "units": "mGal",
+    "native_resolution": "2 arc-minutes",
+    "crs_assigned": "EPSG:4326",
+    "anomaly_definition": "Complete spherical Bouguer anomaly",
+    "processed": {
+      "source": "WGM2012_Bouguer_ponc_2min.grd",
+      "output": "data/geophysics/processed/lagos_gravity_wgm2012_bouguer.tif",
+      "shape": [
+        60,
+        60
+      ],
+      "bounds": [
+        2.5,
+        5.5,
+        4.5,
+        7.5
+      ],
+      "crs": "EPSG:4326",
+      "nodata": -9999.0,
+      "valid_min": 125.0639419555664,
+      "valid_max": 300.28912353515625,
+      "valid_count": 3600,
+      "nodata_count": 0,
+      "dtype": "float32"
+    },
+    "scientific_limitation": "Regional ~2' grid; bilinear resampling onto SSRI 30 m UTM does not create new geophysical information."
+  },
+  "magnetics": {
+    "dataset": "EMAG2v3 4 km upward-continued magnetic anomaly",
+    "provider": "NOAA / NCEI",
+    "citation_doi": "https://doi.org/10.7289/V5H70CVX",
+    "source_url": "https://www.ngdc.noaa.gov/geomag/data/EMAG2/EMAG2_V3_20170530/EMAG2_V3_20170530_UpCont.tif",
+    "version": "EMAG2_V3_20170530",
+    "units": "nT",
+    "native_resolution": "2 arc-minutes",
+    "crs_assigned": "EPSG:4326",
+    "nodata": 99999,
+    "anomaly_definition": "Scalar total-field lithospheric magnetic anomaly at continuous 4 km altitude above the WGS84 ellipsoid",
+    "processed": {
+      "source": "EMAG2_V3_20170530_UpCont.tif",
+      "output": "data/geophysics/processed/lagos_magnetic_emag2v3_uc4km.tif",
+      "shape": [
+        60,
+        60
+      ],
+      "bounds": [
+        2.5,
+        5.5,
+        4.5,
+        7.5
+      ],
+      "crs": "EPSG:4326",
+      "nodata": 99999.0,
+      "valid_min": -64.01475524902344,
+      "valid_max": 55.447689056396484,
+      "valid_count": 3543,
+      "nodata_count": 57,
+      "dtype": "float32"
+    },
+    "scientific_limitation": "Regional ~2' grid; bilinear resampling onto SSRI 30 m UTM does not create new geophysical information."
+  },
+  "aoi_bounds_wgs84": {
+    "min_lon": 2.5,
+    "min_lat": 5.5,
+    "max_lon": 4.5,
+    "max_lat": 7.5
+  }
+}
