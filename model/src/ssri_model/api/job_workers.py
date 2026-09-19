@@ -87,3 +87,58 @@ def run_batch_job(
             error_code="BATCH_FAILED",
             error_message="Batch job failed.",
         )
+
+
+def run_training_job(
+    *,
+    job_service: JobService,
+    job_id: str,
+    payload: dict,
+) -> None:
+    """Execute a manual Stage 2.5 training job."""
+    from ssri_model.manual_training.exceptions import ManualTrainingError
+    from ssri_model.manual_training.registry import ModelRegistry
+    from ssri_model.manual_training.runner import run_manual_training
+    from ssri_model.manual_training.storage import TrainingStorage
+
+    output_root = str(payload.get("output_root") or "outputs/service")
+    storage = TrainingStorage(output_root)
+    registry = ModelRegistry(storage)
+    try:
+        result = run_manual_training(
+            storage=storage,
+            registry=registry,
+            dataset_id=str(payload["dataset_id"]),
+            run_id=str(payload["run_id"]),
+            job_id=job_id,
+            epochs=int(payload.get("epochs", 20)),
+            batch_size=int(payload.get("batch_size", 4)),
+            learning_rate=float(payload.get("learning_rate", 1e-3)),
+            seed=int(payload.get("seed", 42)),
+            early_stopping_patience=payload.get("early_stopping_patience"),
+            model_name=payload.get("model_name"),
+            device=str(payload.get("device", "cpu")),
+        )
+        job_service.mark_completed(job_id, result=result)
+    except ManualTrainingError as exc:
+        storage.write_progress(
+            str(payload.get("run_id") or "unknown"),
+            {
+                "phase": "failed",
+                "message": exc.message,
+                "error_code": exc.code,
+            },
+        )
+        job_service.mark_failed(
+            job_id,
+            error_code=exc.code,
+            error_message=exc.message,
+        )
+    except Exception:
+        job_service.mark_failed(
+            job_id,
+            error_code="TRAINING_FAILED",
+            error_message=(
+                "Training failed unexpectedly. See server logs for technical details."
+            ),
+        )

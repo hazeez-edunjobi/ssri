@@ -17,7 +17,7 @@ from ssri_model.api.dependencies import (
     create_app_state,
 )
 from ssri_model.api.errors import register_exception_handlers
-from ssri_model.api.routes import assess, auth_keys, batch, health, inference, jobs, layers
+from ssri_model.api.routes import assess, auth_keys, batch, health, inference, jobs, layers, training
 
 
 def _configure_cors(app: FastAPI, config: APIConfig) -> None:
@@ -90,6 +90,7 @@ def create_app(
     app.include_router(layers.router, prefix=config.api_prefix)
     app.include_router(auth_keys.router, prefix=config.api_prefix)
     app.include_router(jobs.router, prefix=config.api_prefix)
+    app.include_router(training.router, prefix=config.api_prefix)
 
     return app
 

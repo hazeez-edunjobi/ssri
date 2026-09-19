@@ -18,6 +18,7 @@ class JobStatus(str, Enum):
 class JobType(str, Enum):
     INFERENCE = "inference"
     BATCH = "batch"
+    TRAINING = "training"
 
 
 @dataclass

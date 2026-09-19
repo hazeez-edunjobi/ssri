@@ -53,6 +53,25 @@ Supported:
 
 Live acquisition without credentials returns an explicit configuration error (not silent success).
 
+## Manual training API
+
+Frontend: `/training` · API prefix: `/api/v1/training`
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /training/requirements` | Stage 2.5 data contract |
+| `POST /training/datasets` | Create dataset metadata |
+| `POST /training/datasets/{id}/upload` | Upload Stage 2.5 dataset zip |
+| `POST /training/datasets/{id}/validate` | Re-validate dataset |
+| `POST /training/jobs` | Start async `JobType.TRAINING` (uses existing `Trainer`) |
+| `GET /training/jobs/{id}` | Job status + epoch progress |
+| `GET /training/models` | List trained checkpoints |
+| `POST /training/models/activate` | Promote a checkpoint for assessments (does not overwrite other artifacts) |
+
+Artifacts live under `{SSRI_API_OUTPUT_ROOT}/training/` (`datasets/`, `runs/`, `models/`).
+
+Training completion sets `scientific_validation_status=NOT_VALIDATED`. Promote a model only after separate evaluation judgment.
+
 ## Object storage
 
 | Env | Purpose |

@@ -12,6 +12,7 @@ export const NAV_LINKS: NavLink[] = [
 ];
 
 export const DASHBOARD_HREF = "/dashboard";
+export const TRAINING_HREF = "/training";
 
 export const FOOTER_COLUMNS = [
   {
@@ -20,6 +21,7 @@ export const FOOTER_COLUMNS = [
       { label: "Overview", href: "/platform" },
       { label: "How It Works", href: "/platform#pipeline" },
       { label: "Dashboard", href: DASHBOARD_HREF },
+      { label: "Training", href: TRAINING_HREF },
     ],
   },
   {
