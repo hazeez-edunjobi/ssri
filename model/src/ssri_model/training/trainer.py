@@ -135,8 +135,14 @@ class Trainer:
         self,
         train_loader: DataLoader[dict[str, Any]] | None = None,
         validation_loader: DataLoader[dict[str, Any]] | None = None,
+        *,
+        epoch_callback: Any | None = None,
     ) -> TrainingResult:
-        """Train the model with validation, checkpointing, and optional early stopping."""
+        """Train the model with validation, checkpointing, and optional early stopping.
+
+        ``epoch_callback``, when provided, is invoked after each epoch with a
+        mapping of progress fields (epoch, train_loss, validation metrics, etc.).
+        """
         train_loader = train_loader or self._train_loader
         validation_loader = validation_loader or self._validation_loader
         if train_loader is None or validation_loader is None:
@@ -239,6 +245,25 @@ class Trainer:
 
             self.history.save_json(history_path)
             self._step_scheduler(validation_loss)
+
+            if epoch_callback is not None:
+                epoch_callback(
+                    {
+                        "phase": "training",
+                        "epoch": epoch,
+                        "total_epochs": self.config.epochs,
+                        "train_loss": train_loss,
+                        "validation_loss": validation_loss,
+                        "accuracy": validation_metrics.accuracy,
+                        "macro_f1": validation_metrics.macro_f1,
+                        "mean_iou": validation_metrics.mean_iou,
+                        "learning_rate": learning_rate,
+                        "best_epoch": self._best_epoch,
+                        "best_metric": self._best_metric,
+                        "best_metric_name": self.config.early_stopping_monitor,
+                        "epoch_seconds": epoch_seconds,
+                    }
+                )
 
             if (
                 self.config.early_stopping_enabled

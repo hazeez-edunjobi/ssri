@@ -148,6 +148,14 @@ def execute_job_record(job_id: str) -> None:
                 principal_key_id=claimed.submitted_by_key_id,
                 auth_role=claimed.auth_role,
             )
+        elif claimed.job_type == JobType.TRAINING:
+            from ssri_model.api.job_workers import run_training_job
+
+            run_training_job(
+                job_service=job_service,
+                job_id=job_id,
+                payload=dict(claimed.payload),
+            )
         else:
             batch_request = BatchInferenceRequest.from_dict(claimed.payload)
             run_batch_job(

@@ -9,6 +9,7 @@ import {
   type GeoJsonPolygon,
   type GeophysicsLayerMetadata,
   type GravityLayerResponse,
+  getActiveTrainedModel,
   getGravityLayer,
   getHealth,
   getReady,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/api";
 import { apiUrl } from "@/lib/env";
 import { AssessResultModal } from "@/components/AssessResultModal";
+import { TRAINING_HREF } from "@/lib/navigation";
 
 /** Soft guidance for Lagos geophysics clip (~2.5–4.5°E, ~5.5–7.5°N). */
 const LAGOS_GEO_HINT = {
@@ -137,6 +139,14 @@ export default function DashboardPage() {
         await getHealth();
         await getReady();
         if (!cancelled) setApiStatus("ok");
+        try {
+          const active = await getActiveTrainedModel();
+          if (!cancelled && active.checkpoint_path) {
+            setCheckpoint(active.checkpoint_path);
+          }
+        } catch {
+          // Active model is optional; leave checkpoint empty.
+        }
       } catch {
         if (!cancelled) setApiStatus("down");
       }
@@ -492,6 +502,12 @@ export default function DashboardPage() {
                 ? "reachable"
                 : "unreachable"}
           </p>
+          <Link
+            href={TRAINING_HREF}
+            className="mt-3 inline-flex text-xs text-electric hover:underline"
+          >
+            Open Manual Training →
+          </Link>
         </div>
 
         <div className="flex gap-2">
