@@ -60,6 +60,36 @@ def parse_api_key(plaintext_key: str) -> tuple[str, str]:
     return key_id, secret
 
 
+def ensure_key_store_file(path: Path | str) -> Path:
+    """Return a readable key-store file, creating an empty store when none exists.
+
+    Production enables API-key auth without always setting ``SSRI_AUTH_KEY_STORE``.
+    The default path is ``auth/keys.json``. On the container image, ``/app`` is not
+    writable, so a relative path falls back to ``/data/auth/keys.json``.
+    An empty store rejects every API key. It does not disable authentication.
+    """
+    store_path = Path(path)
+    if store_path.is_file():
+        return store_path
+    candidates = [store_path]
+    container_store = Path("/data/auth/keys.json")
+    if store_path == Path("auth/keys.json") and container_store.parent.is_dir():
+        candidates.append(container_store)
+    last_error: OSError | None = None
+    for candidate in candidates:
+        try:
+            candidate.parent.mkdir(parents=True, exist_ok=True)
+            if not candidate.exists():
+                candidate.write_text('{"keys": []}\n', encoding="utf-8")
+            return candidate
+        except OSError as exc:
+            last_error = exc
+    raise InvalidAuthConfigError(
+        "Authentication key store could not be created. "
+        "Set SSRI_AUTH_KEY_STORE to a writable path."
+    ) from last_error
+
+
 def redact_api_key(plaintext_key: str) -> str:
     """Return a redacted representation safe for logs."""
     try:
@@ -78,7 +108,7 @@ class KeyStore:
 
     @classmethod
     def load(cls, path: Path | str) -> KeyStore:
-        store_path = Path(path)
+        store_path = ensure_key_store_file(path)
         if not store_path.is_file():
             raise InvalidAuthConfigError("Authentication key store not found")
         try:
