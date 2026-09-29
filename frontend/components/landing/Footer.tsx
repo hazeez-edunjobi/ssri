@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { BrandLockup } from "@/components/landing/BrandMark";
-import { DASHBOARD_HREF, FOOTER_COLUMNS } from "@/lib/navigation";
+import { FOOTER_COLUMNS, LOGIN_HREF, SIGNUP_HREF } from "@/lib/navigation";
 
 export function Footer() {
   return (
@@ -15,12 +15,18 @@ export function Footer() {
           Take one minute. Pick a place on the map. See a friendly risk picture
           of the ground beneath.
         </p>
-        <div className="mt-7">
+        <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
-            href={DASHBOARD_HREF}
+            href={LOGIN_HREF}
             className="inline-flex rounded-md bg-sprout px-6 py-3.5 text-sm font-semibold text-soil transition hover:bg-leaf"
           >
-            Check a location
+            Log in
+          </Link>
+          <Link
+            href={SIGNUP_HREF}
+            className="inline-flex rounded-md border border-meadow/40 px-6 py-3.5 text-sm font-semibold text-chalk transition hover:border-sprout"
+          >
+            Sign up
           </Link>
         </div>
       </section>

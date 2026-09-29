@@ -4,16 +4,16 @@ import { Gauge, X } from "lucide-react";
 import type { AssessResponse, HazardProfile } from "@/lib/api";
 
 const HAZARD_COLORS: Record<string, string> = {
-  subsidence: "#3EA6FF",
-  landslide: "#22D3EE",
-  sinkhole: "#34D399",
+  subsidence: "#2D6A4F",
+  landslide: "#9C6644",
+  sinkhole: "#40916C",
 };
 
 function tierClass(tier: string): string {
-  if (tier.includes("Extrapolation")) return "text-amber-300";
+  if (tier.includes("Extrapolation")) return "text-amber-800";
   if (tier === "High") return "text-emerald";
-  if (tier === "Moderate") return "text-cyan";
-  return "text-muted";
+  if (tier === "Moderate") return "text-leaf";
+  return "text-stone";
 }
 
 type AssessResultModalProps = {
@@ -45,15 +45,15 @@ export function AssessResultModal({
       aria-labelledby="assess-result-title"
       data-testid="assess-result-modal"
     >
-      <div className="glass max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line bg-core p-5 shadow-xl">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-meadow bg-chalk p-5 shadow-soft">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-widest text-cyan">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-leaf">
               Assessment result
             </p>
             <h2
               id="assess-result-title"
-              className="mt-1 font-display text-lg text-ink"
+              className="mt-1 font-display text-lg text-bark"
             >
               {loading
                 ? "Running analysis…"
@@ -67,7 +67,7 @@ export function AssessResultModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-line p-1.5 text-muted hover:text-ink"
+            className="rounded-lg border border-meadow p-1.5 text-stone hover:text-bark"
             aria-label="Close"
             data-testid="assess-result-close"
           >
@@ -76,20 +76,20 @@ export function AssessResultModal({
         </div>
 
         {locationLabel && (
-          <p className="mt-3 font-mono text-[11px] text-muted" data-testid="assess-result-location">
+          <p className="mt-3 font-mono text-[11px] text-stone" data-testid="assess-result-location">
             AOI / point: {locationLabel}
           </p>
         )}
 
         {loading && (
-          <p className="mt-6 font-mono text-sm text-muted" data-testid="assess-result-loading">
+          <p className="mt-6 font-mono text-sm text-stone" data-testid="assess-result-loading">
             Acquiring features and running inference…
           </p>
         )}
 
         {!loading && error && (
           <div
-            className="mt-4 rounded-xl border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-xs text-amber-200"
+            className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-900"
             data-testid="assess-result-error"
           >
             {error}
@@ -98,12 +98,12 @@ export function AssessResultModal({
 
         {!loading && result && (
           <div className="mt-4 space-y-3" data-testid="assess-result-body">
-            <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted">
+            <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-stone">
               <Gauge className="h-3.5 w-3.5" /> {result.model_version} · {result.request_id}
             </p>
             {result.is_fixture_checkpoint && (
               <p
-                className="rounded-lg border border-amber-700/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-200"
+                className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
                 data-testid="assess-fixture-banner"
               >
                 Research / fixture model
@@ -115,12 +115,12 @@ export function AssessResultModal({
               </p>
             )}
             {!result.domain_similarity_calibrated && (
-              <p className="text-[11px] text-muted">
+              <p className="text-[11px] text-stone">
                 Domain similarity is not calibrated. Confidence tiers do not reflect
                 domain shift.
               </p>
             )}
-            <p className="font-mono text-[10px] text-muted">
+            <p className="font-mono text-[10px] text-stone">
               checkpoint sha256 {result.checkpoint_sha256.slice(0, 16)}…
               {result.checkpoint_dataset_name
                 ? ` · dataset ${result.checkpoint_dataset_name}@${
@@ -132,10 +132,10 @@ export function AssessResultModal({
             {result.hazard_profiles.map((profile: HazardProfile) => (
               <div
                 key={profile.hazard_type}
-                className="rounded-xl border border-line bg-void/40 px-4 py-3"
+                className="rounded-xl border border-meadow bg-mist px-4 py-3"
                 data-testid={`assess-hazard-${profile.hazard_type}`}
               >
-                <div className="flex items-center justify-between text-sm text-ink">
+                <div className="flex items-center justify-between text-sm text-bark">
                   <span className="flex items-center gap-2">
                     <span
                       className="h-2 w-2 rounded-full"
@@ -151,13 +151,13 @@ export function AssessResultModal({
                 </div>
                 <p className={`mt-2 text-xs ${tierClass(profile.confidence_tier)}`}>
                   Model confidence: {profile.confidence_tier}
-                  <span className="text-muted"> (not hazard severity)</span>
+                  <span className="text-stone"> (not hazard severity)</span>
                   {result.domain_similarity_calibrated &&
                   profile.domain_similarity_score != null
                     ? ` · domain ${profile.domain_similarity_score.toFixed(3)}`
                     : " · domain uncalibrated"}
                 </p>
-                <p className="mt-1 font-mono text-[11px] text-muted">
+                <p className="mt-1 font-mono text-[11px] text-stone">
                   80% CI [{profile.credible_interval_80[0].toFixed(3)},{" "}
                   {profile.credible_interval_80[1].toFixed(3)}] · 95% CI [
                   {profile.credible_interval_95[0].toFixed(3)},{" "}
@@ -166,9 +166,9 @@ export function AssessResultModal({
               </div>
             ))}
 
-            <p className="text-xs text-muted">{result.explanation}</p>
+            <p className="text-xs text-stone">{result.explanation}</p>
             {result.notes.length > 0 && (
-              <details className="text-[11px] text-muted">
+              <details className="text-[11px] text-stone">
                 <summary>Notes</summary>
                 <ul className="mt-1 list-disc pl-4">
                   {result.notes.map((note) => (
@@ -184,7 +184,7 @@ export function AssessResultModal({
           <button
             type="button"
             onClick={onViewMap}
-            className="rounded-lg border border-electric px-3 py-2 text-xs text-electric"
+            className="rounded-lg border border-leaf px-3 py-2 text-xs text-moss"
             data-testid="assess-view-map"
           >
             View on map
@@ -192,7 +192,7 @@ export function AssessResultModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg bg-electric px-3 py-2 text-xs font-medium text-void"
+            className="rounded-lg bg-leaf px-3 py-2 text-xs font-medium text-chalk"
           >
             Close
           </button>

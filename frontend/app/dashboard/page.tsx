@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Gauge, MapPin, Hexagon, Radio } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
@@ -17,7 +18,10 @@ import {
 } from "@/lib/api";
 import { apiUrl } from "@/lib/env";
 import { AssessResultModal } from "@/components/AssessResultModal";
+import { LandPhoto } from "@/components/theme/LandPhoto";
+import { RequireSession, useRequiredSession } from "@/components/auth/RequireSession";
 import { TRAINING_HREF } from "@/lib/navigation";
+import { getSupabase } from "@/lib/supabase";
 
 /** Soft guidance for Lagos geophysics clip (~2.5–4.5°E, ~5.5–7.5°N). */
 const LAGOS_GEO_HINT = {
@@ -34,7 +38,9 @@ const GRAVITY_OUTLINE = "ssri-gravity-outline";
 
 type Mode = "point" | "polygon";
 
-export default function DashboardPage() {
+function AssessmentWorkspace() {
+  const router = useRouter();
+  const { email } = useRequiredSession();
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("maplibre-gl").Map | undefined>();
   const markerRef = useRef<import("maplibre-gl").Marker | undefined>();
@@ -477,23 +483,43 @@ export default function DashboardPage() {
   };
 
   return (
-    <main className="flex h-screen flex-col bg-void text-ink md:flex-row">
-      <aside className="glass z-10 w-full space-y-6 overflow-y-auto border-b border-line p-6 md:h-full md:w-96 md:border-b-0 md:border-r">
+    <main className="flex h-screen flex-col bg-mist text-bark md:flex-row">
+      <aside className="z-10 w-full space-y-6 overflow-y-auto border-b border-meadow bg-chalk p-6 md:h-full md:w-96 md:border-b-0 md:border-r">
         <div>
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-muted transition hover:text-electric"
+            className="inline-flex items-center gap-1.5 text-xs text-stone transition hover:text-moss"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to site
           </Link>
-          <p className="mt-4 font-mono text-[11px] uppercase tracking-widest text-cyan">
+          <LandPhoto
+            unsplash="fields"
+            alt="Aerial view of the farmland you can assess"
+            caption="Check the ground"
+            className="mt-4"
+            height="h-28"
+          />
+          <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-stone">
+            <span className="truncate">{email}</span>
+            <button
+              type="button"
+              className="shrink-0 text-moss"
+              onClick={async () => {
+                await getSupabase()?.auth.signOut();
+                router.replace("/login?next=/dashboard");
+              }}
+            >
+              Log out
+            </button>
+          </div>
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-widest text-leaf">
             SSRI Dashboard
           </p>
-          <h1 className="mt-2 font-display text-xl font-medium text-ink">
+          <h1 className="mt-2 font-display text-xl font-medium text-bark">
             Risk Assessment Workspace
           </h1>
-          <p className="mt-2 flex items-center gap-2 font-mono text-[11px] text-muted">
+          <p className="mt-2 flex items-center gap-2 font-mono text-[11px] text-stone">
             <Radio className="h-3.5 w-3.5" />
             API {apiUrl} —{" "}
             {apiStatus === "checking"
@@ -504,7 +530,7 @@ export default function DashboardPage() {
           </p>
           <Link
             href={TRAINING_HREF}
-            className="mt-3 inline-flex text-xs text-electric hover:underline"
+            className="mt-3 inline-flex text-xs text-moss hover:underline"
           >
             Open Manual Training →
           </Link>
@@ -518,7 +544,7 @@ export default function DashboardPage() {
               clearPolygon();
             }}
             className={`flex-1 rounded-lg border px-3 py-2 text-xs ${
-              mode === "point" ? "border-electric text-electric" : "border-line text-muted"
+              mode === "point" ? "border-leaf text-moss" : "border-meadow text-stone"
             }`}
           >
             <MapPin className="mr-1 inline h-3.5 w-3.5" />
@@ -529,8 +555,8 @@ export default function DashboardPage() {
             onClick={() => setMode("polygon")}
             className={`flex-1 rounded-lg border px-3 py-2 text-xs ${
               mode === "polygon"
-                ? "border-electric text-electric"
-                : "border-line text-muted"
+                ? "border-leaf text-moss"
+                : "border-meadow text-stone"
             }`}
           >
             <Hexagon className="mr-1 inline h-3.5 w-3.5" />
@@ -539,14 +565,14 @@ export default function DashboardPage() {
         </div>
 
         <div
-          className="rounded-xl border border-line bg-core px-4 py-3"
+          className="rounded-xl border border-meadow bg-chalk px-4 py-3"
           data-testid="gravity-layer-panel"
         >
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] uppercase tracking-widest text-muted">
+            <p className="text-[11px] uppercase tracking-widest text-stone">
               Gravity layer
             </p>
-            <label className="flex items-center gap-2 font-mono text-[11px] text-ink">
+            <label className="flex items-center gap-2 font-mono text-[11px] text-bark">
               <input
                 type="checkbox"
                 data-testid="gravity-visibility-toggle"
@@ -558,8 +584,8 @@ export default function DashboardPage() {
             </label>
           </div>
           {gravityMeta ? (
-            <div className="mt-2 space-y-1 text-[11px] text-muted">
-              <p className="text-ink" data-testid="gravity-layer-title">
+            <div className="mt-2 space-y-1 text-[11px] text-stone">
+              <p className="text-bark" data-testid="gravity-layer-title">
                 {gravityMeta.title}
               </p>
               <p>
@@ -572,7 +598,7 @@ export default function DashboardPage() {
               <p className="text-[10px] leading-snug">{gravityMeta.scientific_limitation}</p>
             </div>
           ) : (
-            <p className="mt-2 text-[11px] text-muted" data-testid="gravity-layer-status">
+            <p className="mt-2 text-[11px] text-stone" data-testid="gravity-layer-status">
               {gravityError
                 ? `Unavailable: ${gravityError}`
                 : "Loading WGM2012 Bouguer layer…"}
@@ -580,11 +606,11 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="rounded-xl border border-line bg-core px-4 py-4">
-          <p className="text-xs uppercase tracking-widest text-muted">
+        <div className="rounded-xl border border-meadow bg-chalk px-4 py-4">
+          <p className="text-xs uppercase tracking-widest text-stone">
             {mode === "point" ? "Selected point" : "Drawn polygon"}
           </p>
-          <p className="mt-2 font-mono text-sm text-ink">
+          <p className="mt-2 font-mono text-sm text-bark">
             {mode === "point"
               ? point
                 ? `${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}`
@@ -597,7 +623,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={clearPolygon}
-              className="mt-2 text-[11px] text-muted underline"
+              className="mt-2 text-[11px] text-stone underline"
             >
               Clear polygon
             </button>
@@ -605,32 +631,32 @@ export default function DashboardPage() {
 
           {mode === "point" && (
             <div
-              className="mt-4 space-y-2 rounded-lg border border-line/80 bg-void/60 p-3"
+              className="mt-4 space-y-2 rounded-lg border border-meadow bg-mist p-3"
               data-testid="coordinate-entry"
             >
-              <p className="text-[11px] uppercase tracking-widest text-muted">
+              <p className="text-[11px] uppercase tracking-widest text-stone">
                 Enter coordinates
               </p>
               <div className="grid grid-cols-2 gap-2">
-                <label className="block text-[11px] text-muted">
+                <label className="block text-[11px] text-stone">
                   Latitude
                   <input
                     data-testid="coord-latitude"
                     value={latInput}
                     onChange={(e) => setLatInput(e.target.value)}
                     inputMode="decimal"
-                    className="mt-1 w-full rounded border border-line bg-void px-2 py-1.5 font-mono text-xs text-ink"
+                    className="mt-1 w-full rounded border border-meadow bg-mist px-2 py-1.5 font-mono text-xs text-bark"
                     placeholder="6.5244"
                   />
                 </label>
-                <label className="block text-[11px] text-muted">
+                <label className="block text-[11px] text-stone">
                   Longitude
                   <input
                     data-testid="coord-longitude"
                     value={lonInput}
                     onChange={(e) => setLonInput(e.target.value)}
                     inputMode="decimal"
-                    className="mt-1 w-full rounded border border-line bg-void px-2 py-1.5 font-mono text-xs text-ink"
+                    className="mt-1 w-full rounded border border-meadow bg-mist px-2 py-1.5 font-mono text-xs text-bark"
                     placeholder="3.3792"
                   />
                 </label>
@@ -639,13 +665,13 @@ export default function DashboardPage() {
                 type="button"
                 data-testid="coord-locate"
                 onClick={locateFromCoordinates}
-                className="w-full rounded-lg border border-electric/60 px-3 py-1.5 text-xs text-electric hover:bg-electric/10"
+                className="w-full rounded-lg border border-leaf px-3 py-1.5 text-xs text-moss hover:bg-meadow"
               >
                 Locate
               </button>
               {coordError && (
                 <p
-                  className="text-[11px] text-amber-200"
+                  className="text-[11px] text-amber-900"
                   data-testid="coord-error"
                   role="alert"
                 >
@@ -655,21 +681,21 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <label className="mt-4 block text-[11px] text-muted">
+          <label className="mt-4 block text-[11px] text-stone">
             Checkpoint path (server-visible)
             <input
               value={checkpoint}
               onChange={(e) => setCheckpoint(e.target.value)}
-              className="mt-1 w-full rounded border border-line bg-void px-2 py-1.5 font-mono text-xs text-ink"
+              className="mt-1 w-full rounded border border-meadow bg-mist px-2 py-1.5 font-mono text-xs text-bark"
               placeholder="/data/models/best.pt"
             />
           </label>
-          <label className="mt-3 block text-[11px] text-muted">
+          <label className="mt-3 block text-[11px] text-stone">
             Offline features .npy (optional)
             <input
               value={featuresPath}
               onChange={(e) => setFeaturesPath(e.target.value)}
-              className="mt-1 w-full rounded border border-line bg-void px-2 py-1.5 font-mono text-xs text-ink"
+              className="mt-1 w-full rounded border border-meadow bg-mist px-2 py-1.5 font-mono text-xs text-bark"
               placeholder="/data/features/sample.npy"
             />
           </label>
@@ -682,8 +708,8 @@ export default function DashboardPage() {
                 onClick={() => toggleHazard(hazard)}
                 className={`rounded border px-2 py-1 text-[11px] ${
                   selectedHazards.includes(hazard)
-                    ? "border-electric text-electric"
-                    : "border-line text-muted"
+                    ? "border-leaf text-moss"
+                    : "border-meadow text-stone"
                 }`}
               >
                 {hazard}
@@ -691,7 +717,7 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <label className="mt-3 flex items-center gap-2 text-[11px] text-muted">
+          <label className="mt-3 flex items-center gap-2 text-[11px] text-stone">
             <input
               type="checkbox"
               checked={produceGeotiff}
@@ -704,18 +730,18 @@ export default function DashboardPage() {
             type="button"
             onClick={onAssess}
             disabled={loading || selectedHazards.length === 0}
-            className="mt-4 w-full rounded-lg bg-electric px-4 py-2 text-sm font-medium text-void disabled:opacity-40"
+            className="mt-4 w-full rounded-lg bg-leaf px-4 py-2 text-sm font-medium text-chalk disabled:opacity-40"
           >
             {loading ? "Assessing…" : "Run assessment"}
           </button>
-          <p className="mt-2 text-[11px] text-muted">
+          <p className="mt-2 text-[11px] text-stone">
             Live AOI needs GEE/OpenTopo + SSRI_LIVE_ACQUISITION_ENABLED. Offline path uses
             features + checkpoint on the API host.
           </p>
         </div>
 
         {error && !modalOpen && (
-          <div className="rounded-xl border border-amber-500/40 bg-core px-4 py-3 text-xs text-amber-200">
+          <div className="rounded-xl border border-amber-300 bg-chalk px-4 py-3 text-xs text-amber-900">
             {error}
           </div>
         )}
@@ -725,13 +751,13 @@ export default function DashboardPage() {
             type="button"
             data-testid="reopen-assess-result"
             onClick={() => setModalOpen(true)}
-            className="flex w-full items-center justify-between rounded-xl border border-line bg-core px-4 py-3 text-left text-xs text-ink"
+            className="flex w-full items-center justify-between rounded-xl border border-meadow bg-chalk px-4 py-3 text-left text-xs text-bark"
           >
             <span className="flex items-center gap-2">
-              <Gauge className="h-3.5 w-3.5 text-cyan" />
+              <Gauge className="h-3.5 w-3.5 text-leaf" />
               Last result · {result.assessment_id}
             </span>
-            <span className="text-electric">View</span>
+            <span className="text-moss">View</span>
           </button>
         )}
       </aside>
@@ -743,8 +769,8 @@ export default function DashboardPage() {
           className="h-full w-full"
         />
         {!mapReady && (
-          <div className="absolute inset-0 flex items-center justify-center bg-void">
-            <span className="font-mono text-xs text-muted">Loading map…</span>
+          <div className="absolute inset-0 flex items-center justify-center bg-mist">
+            <span className="font-mono text-xs text-stone">Loading map…</span>
           </div>
         )}
         <div
@@ -777,5 +803,13 @@ export default function DashboardPage() {
         onViewMap={() => setModalOpen(false)}
       />
     </main>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <RequireSession nextPath="/dashboard">
+      <AssessmentWorkspace />
+    </RequireSession>
   );
 }

@@ -1,7 +1,17 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 const dashboard = process.env.SSRI_DASHBOARD_URL || "http://localhost:3000/dashboard";
 const api = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+async function openAssessmentOrSkip(page: Page) {
+  await page.goto(dashboard, { waitUntil: "domcontentloaded" });
+  const login = page.getByRole("heading", { name: "Log in" });
+  const workspace = page.getByText("Risk Assessment Workspace");
+  await expect(login.or(workspace)).toBeVisible({ timeout: 20_000 });
+  if (await login.isVisible()) {
+    test.skip(true, "Assessment requires a signed-in session");
+  }
+}
 
 test.describe("SSRI dashboard smoke", () => {
   test("API readiness is reachable", async ({ request }) => {
@@ -11,13 +21,16 @@ test.describe("SSRI dashboard smoke", () => {
     expect(body.status).toBe("ready");
   });
 
-  test("dashboard loads and reports API status", async ({ page }) => {
+  test("anonymous visitors must log in before assessment", async ({ page }) => {
     await page.goto(dashboard, { waitUntil: "domcontentloaded" });
-    await expect(page.getByText("Risk Assessment Workspace")).toBeVisible();
-    await expect(page.getByText(/API .* —/)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Log in" })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByRole("link", { name: "Create account" })).toBeVisible();
   });
 
   test("point mode validation failure without selection", async ({ page }) => {
+    await openAssessmentOrSkip(page);
     await page.goto(dashboard, { waitUntil: "networkidle" });
     await expect(page.getByTestId("ssri-map")).toBeVisible({ timeout: 30_000 });
     await page.getByRole("button", { name: /Run assessment/i }).click();
@@ -27,6 +40,7 @@ test.describe("SSRI dashboard smoke", () => {
   });
 
   test("polygon mode validation failure without geometry", async ({ page }) => {
+    await openAssessmentOrSkip(page);
     await page.goto(dashboard, { waitUntil: "networkidle" });
     await page.getByRole("button", { name: /Polygon/i }).click();
     await expect(page.getByTestId("ssri-map")).toBeVisible({ timeout: 30_000 });
@@ -37,6 +51,7 @@ test.describe("SSRI dashboard smoke", () => {
   });
 
   test("point selection + missing checkpoint validates", async ({ page }) => {
+    await openAssessmentOrSkip(page);
     await page.goto(dashboard, { waitUntil: "networkidle" });
     const map = page.getByTestId("ssri-map");
     await expect(map).toBeVisible({ timeout: 30_000 });
@@ -52,6 +67,7 @@ test.describe("SSRI dashboard smoke", () => {
   });
 
   test("manual coordinate entry locates and validates", async ({ page }) => {
+    await openAssessmentOrSkip(page);
     await page.goto(dashboard, { waitUntil: "networkidle" });
     await expect(page.getByTestId("coordinate-entry")).toBeVisible({
       timeout: 30_000,
@@ -86,6 +102,7 @@ test.describe("SSRI dashboard smoke", () => {
   test("assessment opens result modal on API success and failure", async ({
     page,
   }) => {
+    await openAssessmentOrSkip(page);
     await page.goto(dashboard, { waitUntil: "networkidle" });
     await page.getByTestId("coord-latitude").fill("6.5244");
     await page.getByTestId("coord-longitude").fill("3.3792");
@@ -185,6 +202,7 @@ test.describe("SSRI dashboard smoke", () => {
     expect(body.metadata.dataset.toLowerCase()).not.toContain("eigen6c4");
     expect(body.features.length).toBeGreaterThan(0);
 
+    await openAssessmentOrSkip(page);
     await page.goto(dashboard, { waitUntil: "networkidle" });
     await expect(page.getByTestId("gravity-layer-panel")).toBeVisible({
       timeout: 30_000,

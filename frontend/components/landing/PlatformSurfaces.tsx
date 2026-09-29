@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Map, Building2, Users } from "lucide-react";
-import { DASHBOARD_HREF } from "@/lib/navigation";
+import { LOGIN_HREF } from "@/lib/navigation";
 
 const SURFACES = [
   {
@@ -8,8 +8,8 @@ const SURFACES = [
     title: "For map explorers",
     tag: "Free start · Map tool",
     body: "Click any place you care about. Get a clear picture of ground risk in everyday words — not a wall of technical charts.",
-    href: DASHBOARD_HREF,
-    cta: "Open the map →",
+    href: LOGIN_HREF,
+    cta: "Log in to open the map →",
   },
   {
     icon: Building2,

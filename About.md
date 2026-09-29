@@ -38,7 +38,8 @@ Today, a user can:
 
 - Browse a public marketing site explaining the product and hazards
 - Open a **Risk Assessment Workspace** (dashboard) with an interactive map
-- Open a **Manual Training** workspace to upload Stage 2.5 training data, validate it, train a model, and promote a checkpoint for assessments
+- Open a **Manual Training** workspace to upload a Stage 2.5 ZIP or a compatible spatial CSV, validate it, and train a model
+- Sign in (when Supabase is configured) to keep datasets, training runs, and model versions on your account
 - Select a **point** (click or enter coordinates) or draw a **polygon**
 - Optionally view a **gravity data** preview layer on the map
 - Run an **assessment** for one or more of: subsidence, landslide, sinkhole
@@ -55,7 +56,7 @@ Behind the scenes, operators can also run the research and engineering stack (tr
 - **Offline assessment** — Can score using prepared feature files and a model checkpoint path when live acquisition is not used.
 - **Demo / presentation mode** — Can return consistent sample-style results for demos without calling live geospatial services.
 - **Gravity layer preview** — Optional map overlay based on available gravity data products.
-- **Manual model training** — Operators can upload a Stage 2.5 dataset (13-channel feature stacks + labels), validate it, start an asynchronous training job using the existing SSRI trainer, monitor progress, and promote a resulting checkpoint for assessments. **Training completion does not equal scientific validation.**
+- **Manual model training** — Operators can upload a Stage 2.5 dataset (13-channel feature stacks + labels), or a compatible spatial CSV that is converted into that same dataset before training. A single X,Y,Z file is one feature layer and is not a supervised training set. They can validate the dataset, start an asynchronous training job using the existing SSRI trainer, monitor progress, and promote a resulting checkpoint for assessments. **Training completion does not equal scientific validation.**
 - **Research training pipeline** — Catalog and feature-stack tooling, foundation model checkpoints, and evaluation reports exist for the research programme (separate from claiming a validated public hazard product).
 
 ## How It Works
