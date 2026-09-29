@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { IconOrbStatic } from "@/components/visuals/IconOrbStatic";
 
 export const metadata: Metadata = {
-  title: "Platform — SSRI",
+  title: "Platform",
   description:
     "How SSRI turns satellite views of land into clear ground-risk answers.",
 };

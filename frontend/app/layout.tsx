@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Outfit, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -20,10 +20,42 @@ const mono = IBM_Plex_Mono({
   variable: "--font-mono",
 });
 
+const description =
+  "SSRI (SubSurface Risk Intelligence) helps planners, engineers, and communities estimate subsidence, landslide, and sinkhole susceptibility from maps and satellite data.";
+
 export const metadata: Metadata = {
-  title: "SSRI — See the ground before you build",
-  description:
-    "SSRI helps planners, engineers, and communities understand landslide, sinkhole, and ground-settling risk using satellite maps and AI — in clear everyday language.",
+  applicationName: "SSRI",
+  title: {
+    default: "SSRI — See the ground before you build",
+    template: "%s — SSRI",
+  },
+  description,
+  keywords: [
+    "SSRI",
+    "SubSurface Risk Intelligence",
+    "subsidence",
+    "landslide",
+    "sinkhole",
+    "ground risk",
+  ],
+  authors: [{ name: "SSRI" }],
+  creator: "SSRI",
+  openGraph: {
+    type: "website",
+    siteName: "SSRI",
+    title: "SSRI — SubSurface Risk Intelligence",
+    description,
+  },
+  twitter: {
+    card: "summary",
+    title: "SSRI — SubSurface Risk Intelligence",
+    description,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1B4332",
+  colorScheme: "light",
 };
 
 export default function RootLayout({
