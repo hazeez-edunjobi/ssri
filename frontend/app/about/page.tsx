@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { IconOrbStatic } from "@/components/visuals/IconOrbStatic";
 
 export const metadata: Metadata = {
-  title: "About — SSRI",
+  title: "About",
   description:
     "SSRI mission, partners, and how we help people understand the ground.",
 };

@@ -7,7 +7,7 @@ import { IconOrbStatic } from "@/components/visuals/IconOrbStatic";
 import { Button } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
-  title: "Hazards — SSRI",
+  title: "Hazards",
   description:
     "Plain-language guides to landslide, sinkhole, and ground-settling risk.",
 };
