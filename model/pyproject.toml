@@ -26,10 +26,10 @@ sqlalchemy = "^2.0"
 psycopg = { version = "^3.2", extras = ["binary"] }
 boto3 = "^1.43.89"
 netcdf4 = "^1.7.4"
+httpx = "^0.28"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
-httpx = "^0.28"
 black = "^24.0"
 ruff = "^0.8"
 mypy = "^1.13"
