@@ -50,8 +50,8 @@ def validate_production_environment(environ: dict[str, str] | None = None) -> Pr
     if env.get("SSRI_AUTH_DEVELOPMENT_MODE", "false").lower() in {"1", "true", "yes"}:
         errors.append("SSRI_AUTH_DEVELOPMENT_MODE must be false in production")
 
-    key_store = env.get("SSRI_AUTH_KEY_STORE", "").strip()
-    if auth_enabled and not key_store:
+    # Unset uses AuthConfig's default path. An explicit blank value is still rejected.
+    if auth_enabled and "SSRI_AUTH_KEY_STORE" in env and not env.get("SSRI_AUTH_KEY_STORE", "").strip():
         errors.append("SSRI_AUTH_KEY_STORE is required when auth is enabled")
 
     jwt_secret = (
