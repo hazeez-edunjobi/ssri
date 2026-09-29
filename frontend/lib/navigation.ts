@@ -13,6 +13,8 @@ export const NAV_LINKS: NavLink[] = [
 
 export const DASHBOARD_HREF = "/dashboard";
 export const TRAINING_HREF = "/training";
+export const LOGIN_HREF = "/login?next=/dashboard";
+export const SIGNUP_HREF = "/signup?next=/dashboard";
 
 export const FOOTER_COLUMNS = [
   {

@@ -150,12 +150,45 @@ def execute_job_record(job_id: str) -> None:
             )
         elif claimed.job_type == JobType.TRAINING:
             from ssri_model.api.job_workers import run_training_job
+            from ssri_model.platform.service import execute_platform_training
+            from ssri_model.platform.supabase_store import supabase_store_from_env
 
-            run_training_job(
-                job_service=job_service,
-                job_id=job_id,
-                payload=dict(claimed.payload),
-            )
+            platform_run_id = claimed.payload.get("platform_run_id")
+            if platform_run_id:
+                store = supabase_store_from_env()
+                if store is None:
+                    job_service.mark_failed(
+                        job_id,
+                        error_code="PLATFORM_NOT_CONFIGURED",
+                        error_message="Platform training could not find Supabase configuration on the worker.",
+                    )
+                else:
+                    execute_platform_training(
+                        store,
+                        output_root=str(claimed.payload.get("output_root") or api_config.service_config.output_root),
+                        run_id=str(platform_run_id),
+                    )
+                    finished = store.get_run(str(platform_run_id))
+                    if finished and finished.status == "COMPLETED":
+                        job_service.mark_completed(
+                            job_id,
+                            result={
+                                "platform_run_id": platform_run_id,
+                                "scientific_validation_status": "NOT_VALIDATED",
+                            },
+                        )
+                    elif finished and finished.status == "FAILED":
+                        job_service.mark_failed(
+                            job_id,
+                            error_code="TRAINING_FAILED",
+                            error_message=finished.error_message or "Training failed.",
+                        )
+            else:
+                run_training_job(
+                    job_service=job_service,
+                    job_id=job_id,
+                    payload=dict(claimed.payload),
+                )
         else:
             batch_request = BatchInferenceRequest.from_dict(claimed.payload)
             run_batch_job(

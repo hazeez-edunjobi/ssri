@@ -68,6 +68,8 @@ Frontend: `/training` · API prefix: `/api/v1/training`
 | `GET /training/models` | List trained checkpoints |
 | `POST /training/models/activate` | Promote a checkpoint for assessments (does not overwrite other artifacts) |
 
+A compatible spatial CSV can also be uploaded on the platform training page. It is converted into this same Stage 2.5 layout before training. X and Y are projected coordinates, so the upload must include an explicit CRS such as `EPSG:32631`. A single `X,Y,Z` file is one feature layer and is not a supervised training dataset. Labels use `0` subsidence, `1` landslide, `2` sinkhole, and `-1` nodata. Converting a CSV does not scientifically validate the dataset or the trained model.
+
 Artifacts live under `{SSRI_API_OUTPUT_ROOT}/training/` (`datasets/`, `runs/`, `models/`).
 
 Training completion sets `scientific_validation_status=NOT_VALIDATED`. Promote a model only after separate evaluation judgment.

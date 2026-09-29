@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { BrandLockup } from "@/components/landing/BrandMark";
-import { DASHBOARD_HREF, NAV_LINKS } from "@/lib/navigation";
+import { DASHBOARD_HREF, LOGIN_HREF, NAV_LINKS, SIGNUP_HREF } from "@/lib/navigation";
+import { useAuthSession } from "@/lib/useAuthSession";
 import { cn } from "@/lib/utils";
 
 const HOME_LINKS = [
@@ -17,6 +18,8 @@ const HOME_LINKS = [
 export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { status } = useAuthSession();
+  const signedIn = status === "in";
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -43,14 +46,31 @@ export function Navbar() {
           ))}
         </div>
 
-        <div className="hidden md:block">
-          <Link
-            href={DASHBOARD_HREF}
-            className="inline-flex items-center gap-1.5 rounded-md bg-leaf px-4 py-2.5 text-sm font-semibold text-chalk shadow-soft transition hover:bg-moss"
-          >
-            Try a free risk check
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+        <div className="hidden items-center gap-2 md:flex">
+          {signedIn ? (
+            <Link
+              href={DASHBOARD_HREF}
+              className="inline-flex items-center gap-1.5 rounded-md bg-leaf px-4 py-2.5 text-sm font-semibold text-chalk shadow-soft transition hover:bg-moss"
+            >
+              Open assessment
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          ) : (
+            <>
+              <Link
+                href={LOGIN_HREF}
+                className="rounded-md px-3 py-2 text-sm font-semibold text-bark hover:text-moss"
+              >
+                Log in
+              </Link>
+              <Link
+                href={SIGNUP_HREF}
+                className="inline-flex items-center gap-1.5 rounded-md bg-leaf px-4 py-2.5 text-sm font-semibold text-chalk shadow-soft transition hover:bg-moss"
+              >
+                Sign up
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -97,14 +117,33 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href={DASHBOARD_HREF}
-                onClick={() => setOpen(false)}
-                className="mt-3 inline-flex items-center justify-center gap-2 rounded-md bg-leaf py-3 text-sm font-semibold text-chalk"
-              >
-                Try a free risk check
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              {signedIn ? (
+                <Link
+                  href={DASHBOARD_HREF}
+                  onClick={() => setOpen(false)}
+                  className="mt-3 inline-flex items-center justify-center gap-2 rounded-md bg-leaf py-3 text-sm font-semibold text-chalk"
+                >
+                  Open assessment
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <div className="mt-3 flex flex-col gap-2">
+                  <Link
+                    href={LOGIN_HREF}
+                    onClick={() => setOpen(false)}
+                    className="inline-flex items-center justify-center rounded-md border border-meadow py-3 text-sm font-semibold text-bark"
+                  >
+                    Log in
+                  </Link>
+                  <Link
+                    href={SIGNUP_HREF}
+                    onClick={() => setOpen(false)}
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-leaf py-3 text-sm font-semibold text-chalk"
+                  >
+                    Sign up
+                  </Link>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

@@ -4,9 +4,14 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
+
+# Repo-root .env holds Supabase keys. The API is often started from model/.
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 from fastapi.middleware.cors import CORSMiddleware
 
 from ssri_model.api.config import APIConfig
@@ -17,7 +22,17 @@ from ssri_model.api.dependencies import (
     create_app_state,
 )
 from ssri_model.api.errors import register_exception_handlers
-from ssri_model.api.routes import assess, auth_keys, batch, health, inference, jobs, layers, training
+from ssri_model.api.routes import (
+    assess,
+    auth_keys,
+    batch,
+    health,
+    inference,
+    jobs,
+    layers,
+    platform,
+    training,
+)
 
 
 def _configure_cors(app: FastAPI, config: APIConfig) -> None:
@@ -29,7 +44,12 @@ def _configure_cors(app: FastAPI, config: APIConfig) -> None:
         if config.service_config.environment.value == "production":
             # Fail closed: no CORS origins configured in production.
             return
-        origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+        origins = [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3001",
+        ]
     if "*" in origins and config.service_config.environment.value == "production":
         raise RuntimeError("Wildcard CORS origins are not allowed in production")
     app.add_middleware(
@@ -91,6 +111,7 @@ def create_app(
     app.include_router(auth_keys.router, prefix=config.api_prefix)
     app.include_router(jobs.router, prefix=config.api_prefix)
     app.include_router(training.router, prefix=config.api_prefix)
+    app.include_router(platform.router, prefix=config.api_prefix)
 
     return app
 

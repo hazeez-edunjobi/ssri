@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { DASHBOARD_HREF } from "@/lib/navigation";
+import { DASHBOARD_HREF, LOGIN_HREF, SIGNUP_HREF } from "@/lib/navigation";
+import { useAuthSession } from "@/lib/useAuthSession";
 
 /** Curated Unsplash geography imagery (satellite / aerial land). */
 export const HERO_GEOGRAPHY_IMAGE = {
@@ -15,6 +16,9 @@ export const HERO_GEOGRAPHY_IMAGE = {
 };
 
 export function Hero() {
+  const { status } = useAuthSession();
+  const signedIn = status === "in";
+
   return (
     <section className="relative isolate overflow-hidden bg-soil">
       <div className="absolute inset-0">
@@ -65,13 +69,31 @@ export function Hero() {
           transition={{ delay: 0.18 }}
           className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
         >
-          <Link
-            href={DASHBOARD_HREF}
-            className="inline-flex items-center gap-2 rounded-md bg-sprout px-6 py-3.5 text-sm font-semibold text-soil shadow-soft transition hover:bg-leaf"
-          >
-            Check a location on the map
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+          {signedIn ? (
+            <Link
+              href={DASHBOARD_HREF}
+              className="inline-flex items-center gap-2 rounded-md bg-sprout px-6 py-3.5 text-sm font-semibold text-soil shadow-soft transition hover:bg-leaf"
+            >
+              Check a location on the map
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          ) : (
+            <>
+              <Link
+                href={LOGIN_HREF}
+                className="inline-flex items-center gap-2 rounded-md bg-sprout px-6 py-3.5 text-sm font-semibold text-soil shadow-soft transition hover:bg-leaf"
+              >
+                Log in to check a location
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href={SIGNUP_HREF}
+                className="inline-flex items-center gap-2 rounded-md border border-meadow/50 bg-soil/30 px-6 py-3.5 text-sm font-semibold text-chalk backdrop-blur transition hover:border-sprout hover:bg-chalk/5"
+              >
+                Create an account
+              </Link>
+            </>
+          )}
           <Link
             href="/platform"
             className="inline-flex items-center gap-2 rounded-md border border-meadow/50 bg-soil/30 px-6 py-3.5 text-sm font-semibold text-chalk backdrop-blur transition hover:border-sprout hover:bg-chalk/5"

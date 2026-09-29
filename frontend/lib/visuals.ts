@@ -24,6 +24,14 @@ export const UNSPLASH = {
   /** Green landscape valleys */
   landscape: "photo-1501785888041-af3ef285b470",
   data: "photo-1551288049-bebda4e38f71",
+  /** Aerial green farmland */
+  fields: "photo-1500382017468-9049fed747ef",
+  /** Aerial crop patterns */
+  farmland: "photo-1625246333195-78d9c38ad449",
+  /** Rolling green hills */
+  hills: "photo-1472214103451-9374bd1c798e",
+  /** Forest canopy */
+  forest: "photo-1441974231531-c6227db76b6e",
 } as const;
 
 export type UnsplashKey = keyof typeof UNSPLASH;
