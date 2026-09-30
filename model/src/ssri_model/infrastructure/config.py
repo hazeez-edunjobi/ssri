@@ -137,7 +137,13 @@ def _optional_str(value: object | None) -> str | None:
 
 def _validate_database_url(url: str) -> None:
     parsed = urlparse(url)
-    if parsed.scheme not in {"postgresql", "postgresql+psycopg", "sqlite", "sqlite+pysqlite"}:
+    if parsed.scheme not in {
+        "postgresql",
+        "postgres",
+        "postgresql+psycopg",
+        "sqlite",
+        "sqlite+pysqlite",
+    }:
         raise InvalidServiceConfigError("database_url must use a supported scheme")
 
 
