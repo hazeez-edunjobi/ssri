@@ -9,6 +9,35 @@ from ssri_model.infrastructure.health import check_infrastructure_health
 from ssri_model.service.exceptions import InvalidServiceConfigError
 
 
+def test_bare_postgresql_url_uses_psycopg3_dialect() -> None:
+    from sqlalchemy.engine.url import make_url
+
+    from ssri_model.infrastructure.database.schema import (
+        create_database_engine,
+        normalize_database_url,
+    )
+
+    raw = "postgresql://user:pass@localhost:5432/ssri?sslmode=require"
+    normalized = normalize_database_url(raw)
+    assert normalized == "postgresql+psycopg://user:pass@localhost:5432/ssri?sslmode=require"
+    assert normalize_database_url(normalized) == normalized
+    assert (
+        normalize_database_url("postgres://user:pass@localhost:5432/ssri")
+        == "postgresql+psycopg://user:pass@localhost:5432/ssri"
+    )
+
+    parsed = make_url(normalized)
+    assert parsed.drivername == "postgresql+psycopg"
+    assert "psycopg2" not in parsed.get_dialect().__module__
+
+    engine = create_database_engine(raw)
+    try:
+        assert engine.dialect.driver == "psycopg"
+        assert "psycopg2" not in type(engine.dialect).__module__
+    finally:
+        engine.dispose()
+
+
 def test_local_mode_ready_without_external_services() -> None:
     health = check_infrastructure_health(InfrastructureConfig(execution_mode=ExecutionMode.LOCAL))
     assert health.ready is True

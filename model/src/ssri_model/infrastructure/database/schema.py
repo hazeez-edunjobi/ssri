@@ -56,8 +56,36 @@ jobs_table = Table(
 )
 
 
+def normalize_database_url(database_url: str) -> str:
+    """Select the psycopg 3 dialect for bare PostgreSQL URLs.
+
+    SQLAlchemy maps ``postgresql://`` and ``postgres://`` to the psycopg2
+    dialect. SSRI installs psycopg 3, so those URLs are rewritten to
+    ``postgresql+psycopg://`` before ``create_engine``. An explicit
+    ``postgresql+psycopg://`` URL is left unchanged.
+    """
+    if database_url.startswith("postgresql+"):
+        return database_url
+    if database_url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + database_url[len("postgresql://") :]
+    if database_url.startswith("postgres://"):
+        return "postgresql+psycopg://" + database_url[len("postgres://") :]
+    return database_url
+
+
 def create_database_engine(database_url: str, **kwargs: object) -> Engine:
-    return create_engine(database_url, pool_pre_ping=True, future=True, **kwargs)
+    url = normalize_database_url(database_url)
+    engine_kwargs: dict[str, object] = dict(kwargs)
+    if url.startswith("postgresql"):
+        connect_args = dict(engine_kwargs.get("connect_args") or {})
+        connect_args.setdefault("connect_timeout", 5)
+        engine_kwargs["connect_args"] = connect_args
+    return create_engine(
+        url,
+        pool_pre_ping=True,
+        future=True,
+        **engine_kwargs,
+    )
 
 
 def init_schema(engine: Engine) -> None:
