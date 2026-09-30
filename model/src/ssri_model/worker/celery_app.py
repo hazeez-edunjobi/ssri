@@ -8,6 +8,18 @@ from functools import lru_cache
 from celery import Celery
 
 
+def worker_concurrency() -> int:
+    """Prefork process count. Celery otherwise uses the host CPU count."""
+    raw = os.getenv("SSRI_CELERY_CONCURRENCY", "1").strip()
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise RuntimeError("SSRI_CELERY_CONCURRENCY must be a positive integer") from exc
+    if value < 1:
+        raise RuntimeError("SSRI_CELERY_CONCURRENCY must be a positive integer")
+    return value
+
+
 @lru_cache(maxsize=1)
 def get_celery_app() -> Celery:
     broker = os.getenv("SSRI_CELERY_BROKER_URL") or os.getenv("SSRI_REDIS_URL", "redis://localhost:6379/0")
@@ -20,6 +32,7 @@ def get_celery_app() -> Celery:
         task_acks_late=True,
         task_reject_on_worker_lost=True,
         worker_prefetch_multiplier=1,
+        worker_concurrency=worker_concurrency(),
         task_default_queue="ssri_jobs",
     )
     app.autodiscover_tasks(["ssri_model.worker"])
