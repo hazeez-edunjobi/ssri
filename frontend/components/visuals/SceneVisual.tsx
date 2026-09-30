@@ -32,26 +32,27 @@ export function SceneVisual({
   return (
     <GlassPanel
       gradient={config.gradient}
-      className={cn(height, config.glow, className)}
+      glow={false}
+      className={cn(height, className)}
     >
-      {showMedia && config.unsplash && (
+      {showMedia && config.unsplash ? (
         <MediaFallback
           alt={`${preset} visual`}
           unsplash={config.unsplash}
-          className="absolute inset-0 opacity-60 mix-blend-luminosity"
+          className="absolute inset-0"
           overlay="dark"
           priority={priority}
         />
-      )}
+      ) : null}
 
-      {showTerrain && (
+      {showTerrain && !showMedia ? (
         <TerrainGraphic
           className="absolute inset-0 opacity-80"
           variant={terrainVariant}
           scan
           interactive={false}
         />
-      )}
+      ) : null}
 
       {Icon && (
         <div className="absolute right-6 top-6 z-10">

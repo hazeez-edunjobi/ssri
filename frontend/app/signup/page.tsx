@@ -87,7 +87,7 @@ function SignupForm() {
       subtitle="Follow these steps to set up your account and check the ground."
     >
       <form onSubmit={onSubmit} className="w-full" noValidate>
-        <h1 className="text-center font-body text-[28px] font-medium text-bark">Join us</h1>
+        <h1 className="text-center font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark">Join us</h1>
         {!configured && (
           <p className="mt-4 text-center text-sm text-canopy" role="status">
             Sign-in is not configured in this environment.
@@ -149,7 +149,7 @@ function SignupForm() {
             />
             <button
               type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone"
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
               onClick={() => setShowPassword((current) => !current)}
@@ -157,7 +157,7 @@ function SignupForm() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          <ul id="signup-password-rules" className="mt-2 space-y-0.5 text-[11px]">
+          <ul id="signup-password-rules" className="mt-2 space-y-2 font-body text-xs leading-[1.5]">
             {rules.map((rule) => (
               <li key={rule.id} className={rule.ok ? "text-moss" : "text-stone"}>
                 {rule.ok ? "Met" : "Needs"}: {rule.label}
@@ -167,28 +167,28 @@ function SignupForm() {
         </div>
 
         {error && (
-          <p className="mt-3 text-[11px] font-medium text-canopy" role="alert">
+          <p className="mt-4 font-body text-sm font-medium leading-[1.5] text-canopy" role="alert">
             {error}
           </p>
         )}
         {message && (
-          <p className="mt-3 text-sm text-moss" role="status">
+          <p className="mt-4 font-body text-sm leading-[1.5] text-moss" role="status">
             {message}
           </p>
         )}
 
-        <button className={`${authButtonClass} mt-5`} type="submit" disabled={!formOk || busy}>
+        <button className={`${authButtonClass} mt-8`} type="submit" disabled={!formOk || busy}>
           {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
           {busy ? "Creating account…" : "Continue"}
         </button>
 
-        <p className="mt-4 text-center text-[13px] text-stone">
+        <p className="mt-4 text-center font-body text-sm leading-[1.5] text-stone">
           Already have an account?{" "}
           <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="font-semibold text-moss">
             Log in
           </Link>
         </p>
-        <p className="mt-6 text-center text-[11px] leading-relaxed text-stone">
+        <p className="mt-6 text-center font-body text-xs leading-[1.5] text-stone">
           By signing up you agree to use SSRI for ground-risk checks on the places you care about.
         </p>
       </form>

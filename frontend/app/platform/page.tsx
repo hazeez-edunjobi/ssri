@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { Reveal } from "@/components/animations/Reveal";
 import { PageHeader } from "@/components/pages/PageHeader";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { BentoGrid } from "@/components/landing/BentoGrid";
@@ -51,18 +52,22 @@ export default function PlatformPage() {
           title="How SSRI reads the land"
           description="From a map click to a friendly risk picture — built for planners, builders, and communities who need clear answers about the ground."
           visual="platform"
+          secondaryHref="#pipeline"
         />
 
-        <section id="pipeline" className="px-4 py-16 md:px-8">
+        <Reveal>
+        <section id="pipeline" className="scroll-mt-24 px-4 py-20 sm:px-6">
           <HowItWorks />
         </section>
+        </Reveal>
 
-        <section className="bg-land-wash px-4 py-16 md:px-8">
-          <div className="mx-auto max-w-6xl">
-            <h2 className="font-display text-3xl font-semibold tracking-tight text-bark md:text-4xl">
+        <Reveal>
+        <section className="bg-land-wash px-4 py-20 sm:px-6">
+          <div className="mx-auto max-w-[1200px]">
+            <h2 className="font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark min-[641px]:text-[40px]">
               What powers each check
             </h2>
-            <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-stone">
+            <p className="mt-6 max-w-[70ch] font-body text-[17px] font-normal leading-[1.6] text-bark/70">
               Real Earth data, lined up carefully, then turned into scores you can
               understand and share.
             </p>
@@ -83,10 +88,12 @@ export default function PlatformPage() {
             </div>
           </div>
         </section>
+        </Reveal>
 
-        <section className="px-4 py-16 md:px-8">
-          <div className="mx-auto max-w-6xl rounded-3xl border border-meadow bg-chalk p-6 shadow-soft md:p-10">
-            <h2 className="font-display text-3xl font-semibold tracking-tight text-bark">
+        <Reveal>
+        <section className="px-4 py-20 sm:px-6">
+          <div className="mx-auto max-w-[1200px] rounded-3xl border border-black/10 bg-chalk p-6 md:p-8">
+            <h2 className="font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark min-[641px]:text-[40px]">
               For developers
             </h2>
             <p className="mt-3 max-w-xl text-[15px] text-stone">
@@ -110,8 +117,11 @@ export default function PlatformPage() {
             </ul>
           </div>
         </section>
+        </Reveal>
 
-        <BentoGrid />
+        <Reveal>
+          <BentoGrid />
+        </Reveal>
       </main>
     </SiteShell>
   );

@@ -65,7 +65,7 @@ function LoginForm() {
       subtitle="Log in to open your datasets, training runs, and the assessment map."
     >
       <form onSubmit={onSubmit} className="w-full" noValidate>
-        <h1 className="text-center font-body text-[28px] font-medium text-bark">Log in</h1>
+        <h1 className="text-center font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark">Log in</h1>
         {!configured && (
           <p className="mt-4 text-center text-sm text-canopy" role="status">
             Sign-in is not configured in this environment.
@@ -104,7 +104,7 @@ function LoginForm() {
             />
             <button
               type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone"
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
               onClick={() => setShowPassword((current) => !current)}
@@ -114,21 +114,21 @@ function LoginForm() {
           </div>
         </div>
         {error && (
-          <p className="mt-3 text-[11px] font-medium text-canopy" role="alert">
+          <p className="mt-4 font-body text-sm font-medium leading-[1.5] text-canopy" role="alert">
             {error}
           </p>
         )}
-        <button className={`${authButtonClass} mt-5`} type="submit" disabled={!formOk || busy}>
+        <button className={`${authButtonClass} mt-8`} type="submit" disabled={!formOk || busy}>
           {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
           {busy ? "Signing in…" : "Continue"}
         </button>
-        <p className="mt-4 text-center text-[13px] text-stone">
+        <p className="mt-4 text-center font-body text-sm leading-[1.5] text-stone">
           New here?{" "}
           <Link href={`/signup?next=${encodeURIComponent(nextPath)}`} className="font-semibold text-moss">
             Create account
           </Link>
         </p>
-        <p className="mt-2 text-center text-[13px]">
+        <p className="mt-4 text-center font-body text-sm leading-[1.5]">
           <Link href="/forgot-password" className="font-semibold text-moss">
             Forgot password
           </Link>

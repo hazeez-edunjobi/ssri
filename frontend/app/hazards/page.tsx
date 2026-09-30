@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { Reveal } from "@/components/animations/Reveal";
 import { PageHeader } from "@/components/pages/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { MediaFallback } from "@/components/visuals/MediaFallback";
@@ -68,12 +69,13 @@ export default function HazardsPage() {
           visual="hazards"
         />
 
-        <section className="space-y-8 px-4 py-16 md:px-8">
+        <Reveal>
+        <section className="space-y-8 px-4 py-20 sm:px-6">
           {hazards.map((hazard) => (
             <article
               key={hazard.id}
               id={hazard.id}
-              className="mx-auto max-w-6xl scroll-mt-28"
+              className="mx-auto max-w-[1200px] scroll-mt-28"
             >
               <Card className="overflow-hidden p-0">
                 <div className="grid md:grid-cols-2">
@@ -84,10 +86,10 @@ export default function HazardsPage() {
                       tone="emerald"
                       float={false}
                     />
-                    <h2 className="mt-4 font-display text-3xl font-semibold text-bark">
+                    <h2 className="mt-4 font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark min-[641px]:text-[40px]">
                       {hazard.title}
                     </h2>
-                    <p className="mt-3 text-[15px] leading-relaxed text-stone">
+                    <p className="mt-6 max-w-[70ch] font-body text-[17px] font-normal leading-[1.6] text-bark/70">
                       {hazard.summary}
                     </p>
                     <ul className="mt-6 space-y-2">
@@ -110,11 +112,11 @@ export default function HazardsPage() {
                       </Button>
                     </div>
                   </div>
-                  <div className="relative min-h-[280px] bg-canopy">
+                  <div className="relative h-64 bg-canopy md:h-80">
                     <MediaFallback
                       alt={`${hazard.title} land visual`}
                       unsplash={hazard.unsplash}
-                      className="absolute inset-0 opacity-60"
+                      className="absolute inset-0"
                     />
                     <div className="absolute left-6 top-6">
                       <IconOrbStatic
@@ -129,6 +131,7 @@ export default function HazardsPage() {
             </article>
           ))}
         </section>
+        </Reveal>
       </main>
     </SiteShell>
   );

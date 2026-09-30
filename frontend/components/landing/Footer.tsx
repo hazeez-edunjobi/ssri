@@ -8,23 +8,23 @@ export function Footer() {
   return (
     <footer>
       <section className="bg-canopy px-4 py-16 text-center md:px-8">
-        <h2 className="mx-auto max-w-xl text-balance font-display text-3xl font-semibold text-chalk md:text-4xl">
+        <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-chalk min-[641px]:text-[40px]">
           Build on land you understand
         </h2>
-        <p className="mx-auto mt-3 max-w-md text-[15px] text-meadow/90">
+        <p className="mx-auto mt-6 max-w-[70ch] font-body text-[17px] font-normal leading-[1.6] text-chalk/70">
           Take one minute. Pick a place on the map. See a friendly risk picture
           of the ground beneath.
         </p>
-        <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
             href={LOGIN_HREF}
-            className="inline-flex rounded-md bg-sprout px-6 py-3.5 text-sm font-semibold text-soil transition hover:bg-leaf"
+            className="inline-flex min-h-12 items-center rounded-xl border border-black/10 bg-sprout px-6 py-4 font-body text-[17px] font-semibold leading-none text-soil transition-all duration-200 ease-[ease] hover:-translate-y-0.5 hover:bg-leaf"
           >
             Log in
           </Link>
           <Link
             href={SIGNUP_HREF}
-            className="inline-flex rounded-md border border-meadow/40 px-6 py-3.5 text-sm font-semibold text-chalk transition hover:border-sprout"
+            className="inline-flex min-h-12 items-center rounded-xl border border-white/10 px-6 py-4 font-body text-[17px] font-semibold leading-none text-chalk transition-all duration-200 ease-[ease] hover:-translate-y-0.5 hover:bg-chalk/5"
           >
             Sign up
           </Link>
@@ -32,7 +32,7 @@ export function Footer() {
       </section>
 
       <div className="border-t border-meadow bg-mist px-4 py-14 md:px-8">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-[1200px]">
           <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(4,1fr)]">
             <div>
               <BrandLockup />

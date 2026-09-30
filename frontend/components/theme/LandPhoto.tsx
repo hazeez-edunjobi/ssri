@@ -15,12 +15,12 @@ export function LandPhoto({
   alt,
   caption,
   className,
-  height = "h-44 md:h-56",
+  height = "h-48 md:h-64",
 }: LandPhotoProps) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-meadow shadow-soft",
+        "relative overflow-hidden rounded-3xl border border-black/10",
         height,
         className
       )}
@@ -32,7 +32,7 @@ export function LandPhoto({
         className="absolute inset-0"
       />
       {caption && (
-        <p className="absolute bottom-4 left-5 right-5 z-10 font-display text-2xl font-semibold text-chalk">
+        <p className="absolute bottom-4 left-4 right-4 z-10 font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-chalk">
           {caption}
         </p>
       )}

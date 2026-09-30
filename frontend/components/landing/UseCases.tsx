@@ -6,7 +6,6 @@ import { ArrowUpRight, Building2, MapPinned, ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { MediaFallback } from "@/components/visuals/MediaFallback";
 import { IconOrb } from "@/components/visuals/IconOrb";
-import { TerrainGraphic } from "@/components/landing/TerrainGraphic";
 
 const cases = [
   {
@@ -38,12 +37,12 @@ const cases = [
 export function UseCases() {
   return (
     <section className="px-4 py-24 md:px-8">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-[1200px]">
         <div className="max-w-2xl">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-leaf">
             SSRI in Action
           </p>
-          <h2 className="mt-4 font-display text-3xl font-semibold leading-tight tracking-tight text-bark md:text-4xl">
+          <h2 className="mt-4 font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark min-[641px]:text-[40px]">
             Use Cases
           </h2>
           <p className="mt-3 text-[15px] leading-relaxed text-stone">
@@ -97,18 +96,12 @@ export function UseCases() {
                   </Link>
                 </div>
 
-                <div className="relative mt-auto h-40 overflow-hidden border-t border-meadow/40">
+                <div className="relative mt-auto h-48 overflow-hidden border-t border-black/10">
                   <MediaFallback
                     alt={item.title}
                     unsplash={item.unsplash}
-                    className="absolute inset-0 opacity-70"
+                    className="absolute inset-0"
                     overlay="dark"
-                  />
-                  <TerrainGraphic
-                    className="absolute inset-0 opacity-60"
-                    variant="electric"
-                    scan={false}
-                    interactive={false}
                   />
                 </div>
               </Card>

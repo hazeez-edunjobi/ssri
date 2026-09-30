@@ -22,7 +22,7 @@ const partners = [
 export function PartnerLogos() {
   return (
     <section className="bg-mist px-4 py-16 md:px-8">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-[1200px]">
         <p className="text-center text-[11px] font-bold uppercase tracking-[0.14em] text-stone">
           Trusted by geoscience &amp; infrastructure partners
         </p>

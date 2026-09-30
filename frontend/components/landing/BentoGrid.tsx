@@ -12,9 +12,9 @@ export function BentoGrid() {
 
   return (
     <section className="bg-land-wash px-4 py-16 md:px-8">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-[1200px]">
         <div className="grid gap-8 md:grid-cols-[minmax(0,320px)_1fr]">
-          <h2 className="font-display text-3xl font-semibold leading-tight tracking-tight text-bark md:text-4xl">
+          <h2 className="font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark min-[641px]:text-[40px]">
             What is SSRI?
           </h2>
           <p className="max-w-xl text-[15px] leading-relaxed text-stone">

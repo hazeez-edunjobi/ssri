@@ -31,10 +31,11 @@ export function MediaFallback({
   overlay = "dark",
 }: MediaFallbackProps) {
   const [localFailed, setLocalFailed] = useState(false);
+  const [remoteFailed, setRemoteFailed] = useState(false);
   const remoteSrc = unsplashUrl(unsplash, 1400);
   const useRemote = !src || localFailed;
   const imageSrc = useRemote ? remoteSrc : src;
-  const showGradientOnly = localFailed && !unsplash;
+  const showGradientOnly = (useRemote && remoteFailed) || (localFailed && !unsplash);
 
   return (
     <div className={cn("relative overflow-hidden bg-canopy", className)}>
@@ -48,7 +49,10 @@ export function MediaFallback({
             priority={priority}
             sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover"
-            onError={() => setLocalFailed(true)}
+            onError={() => {
+              if (useRemote) setRemoteFailed(true);
+              else setLocalFailed(true);
+            }}
           />
           {overlay === "dark" && (
             <div className="absolute inset-0 bg-gradient-to-t from-soil via-canopy/50 to-soil/20" />
