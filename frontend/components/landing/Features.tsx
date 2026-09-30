@@ -36,9 +36,9 @@ export function Features() {
 
   return (
     <section className="px-4 py-24 md:px-8">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-[1200px]">
         <div className="grid gap-8 md:grid-cols-[minmax(0,320px)_1fr]">
-          <h2 className="font-display text-3xl font-semibold leading-tight tracking-tight text-bark md:text-4xl">
+          <h2 className="font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark min-[641px]:text-[40px]">
             Built for Geospatial Risk Teams
           </h2>
           <p className="max-w-xl text-[15px] leading-relaxed text-stone">

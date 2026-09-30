@@ -17,7 +17,7 @@ export function GlassPanel({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl2 border border-meadow/60 bg-gradient-to-br backdrop-blur-xl",
+        "relative overflow-hidden rounded-2xl border border-black/10 bg-gradient-to-br backdrop-blur-xl",
         gradient,
         glow && "shadow-[0_0_50px_-12px_rgba(45,106,79,0.28)]",
         className
@@ -31,7 +31,7 @@ export function GlassPanel({
         aria-hidden
         className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-leaf/15 blur-3xl"
       />
-      <div className="relative">{children}</div>
+      <div className="absolute inset-0">{children}</div>
     </div>
   );
 }

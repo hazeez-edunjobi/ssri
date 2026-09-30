@@ -21,13 +21,13 @@ const POINTS = [
 
 export function CorePlatform() {
   return (
-    <section className="bg-soil px-4 py-20 text-chalk md:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className="bg-soil px-4 py-20 text-chalk sm:px-6 md:py-24">
+      <div className="mx-auto max-w-[1200px]">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
+          <h2 className="font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] min-[641px]:text-[40px]">
             A fresh look at land safety
           </h2>
-          <p className="mt-4 text-[15px] leading-relaxed text-meadow/90">
+          <p className="mt-6 max-w-[70ch] font-body text-[17px] font-normal leading-[1.6] text-chalk/70">
             SSRI was built so anyone can ask a simple question: “Is this ground a
             wise place to live, build, or plant?” The answer comes from maps of
             real lands — forests, slopes, valleys, and towns — not guesswork.

@@ -74,7 +74,7 @@ export const VISUAL_PRESETS = {
     glow: "shadow-[0_0_50px_-12px_rgba(45,106,79,0.28)]",
   },
   about: {
-    unsplash: "satellite",
+    unsplash: "hills",
     icon: ShieldCheck,
     gradient: "from-sprout/20 via-leaf/10 to-transparent",
     glow: "shadow-[0_0_50px_-12px_rgba(82,183,136,0.25)]",

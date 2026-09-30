@@ -1,4 +1,5 @@
 import { SiteShell } from "@/components/layout/SiteShell";
+import { Reveal } from "@/components/animations/Reveal";
 import { Hero } from "@/components/landing/Hero";
 import { PlatformSurfaces } from "@/components/landing/PlatformSurfaces";
 import { CorePlatform } from "@/components/landing/CorePlatform";
@@ -11,11 +12,21 @@ export default function Home() {
     <SiteShell>
       <main>
         <Hero />
-        <PlatformSurfaces />
-        <CorePlatform />
-        <EverydayUses />
-        <CapabilityGrid />
-        <BuiltForWork />
+        <Reveal>
+          <PlatformSurfaces />
+        </Reveal>
+        <Reveal>
+          <CorePlatform />
+        </Reveal>
+        <Reveal>
+          <EverydayUses />
+        </Reveal>
+        <Reveal>
+          <CapabilityGrid />
+        </Reveal>
+        <Reveal>
+          <BuiltForWork />
+        </Reveal>
       </main>
     </SiteShell>
   );

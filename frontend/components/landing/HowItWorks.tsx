@@ -57,8 +57,8 @@ export function HowItWorks() {
   useScrollStagger(ref, ".step-card");
 
   return (
-    <div className="mx-auto max-w-6xl rounded-3xl border border-meadow bg-chalk p-6 shadow-soft md:p-10">
-      <h2 className="font-display text-3xl font-semibold tracking-tight text-bark md:text-4xl">
+    <div className="mx-auto max-w-[1200px] rounded-3xl border border-black/10 bg-chalk p-6 md:p-8">
+      <h2 className="font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark min-[641px]:text-[40px]">
         How it works
       </h2>
       <p className="mt-3 max-w-md text-[15px] leading-relaxed text-stone">

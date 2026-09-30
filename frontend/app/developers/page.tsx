@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { Reveal } from "@/components/animations/Reveal";
 import { PageHeader } from "@/components/pages/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -36,8 +37,9 @@ export default function DevelopersPage() {
           visual="developers"
         />
 
-        <section id="quickstart" className="px-4 py-16 md:px-8">
-          <div className="mx-auto max-w-6xl">
+        <Reveal>
+        <section id="quickstart" className="px-4 py-20 sm:px-6">
+          <div className="mx-auto max-w-[1200px]">
             <div className="flex items-center gap-3">
               <IconOrbStatic
                 name="terminal"
@@ -45,7 +47,7 @@ export default function DevelopersPage() {
                 tone="emerald"
                 float={false}
               />
-              <h2 className="font-display text-3xl font-semibold text-bark">
+              <h2 className="font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark min-[641px]:text-[40px]">
                 Quickstart
               </h2>
             </div>
@@ -79,9 +81,11 @@ export default function DevelopersPage() {
             </Card>
           </div>
         </section>
+        </Reveal>
 
-        <section id="openapi" className="bg-land-wash px-4 py-16 md:px-8">
-          <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2">
+        <Reveal>
+        <section id="openapi" className="bg-land-wash px-4 py-20 sm:px-6">
+          <div className="mx-auto grid max-w-[1200px] gap-6 md:grid-cols-2">
             <Card className="p-8">
               <IconOrbStatic
                 name="code2"
@@ -124,6 +128,7 @@ export default function DevelopersPage() {
             </Card>
           </div>
         </section>
+        </Reveal>
       </main>
     </SiteShell>
   );

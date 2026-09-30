@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { Reveal } from "@/components/animations/Reveal";
 import { PageHeader } from "@/components/pages/PageHeader";
 import { PartnerLogos } from "@/components/landing/PartnerLogos";
 import { Card } from "@/components/ui/Card";
@@ -41,8 +42,9 @@ export default function AboutPage() {
           visual="about"
         />
 
-        <section className="px-4 py-16 md:px-8">
-          <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3">
+        <Reveal>
+        <section className="px-4 py-20 sm:px-6">
+          <div className="mx-auto grid max-w-[1200px] gap-5 md:grid-cols-3">
             {values.map(({ icon, title, body }) => (
               <Card key={title} className="relative overflow-hidden p-6">
                 <div
@@ -63,17 +65,21 @@ export default function AboutPage() {
             ))}
           </div>
         </section>
+        </Reveal>
 
+        <Reveal>
         <section id="partners">
           <PartnerLogos />
         </section>
+        </Reveal>
 
+        <Reveal>
         <section id="contact" className="px-4 pb-20 md:px-8">
-          <div className="mx-auto max-w-6xl rounded-3xl border border-meadow bg-canopy px-6 py-12 text-center shadow-soft md:px-10">
-            <h2 className="font-display text-3xl font-semibold text-chalk">
+          <div className="mx-auto max-w-[1200px] rounded-3xl border border-white/10 bg-canopy px-6 py-16 text-center md:px-8 md:py-20">
+            <h2 className="font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-chalk min-[641px]:text-[40px]">
               Partner with SSRI
             </h2>
-            <p className="mx-auto mt-3 max-w-md text-[15px] text-meadow/90">
+            <p className="mx-auto mt-6 max-w-[70ch] font-body text-[17px] font-normal leading-[1.6] text-chalk/70">
               Join research groups and infrastructure teams making safer places
               with clearer ground intelligence.
             </p>
@@ -91,6 +97,7 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
+        </Reveal>
       </main>
     </SiteShell>
   );

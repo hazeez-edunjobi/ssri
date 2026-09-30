@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
       subtitle="We will email a link if this address already belongs to an SSRI account."
     >
       <form onSubmit={onSubmit} className="w-full" noValidate>
-        <h1 className="text-center font-body text-[28px] font-medium text-bark">Reset password</h1>
+        <h1 className="text-center font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark">Reset password</h1>
         {!configured && (
           <p className="mt-4 text-center text-sm text-canopy" role="status">
             Sign-in is not configured in this environment.
@@ -73,20 +73,20 @@ export default function ForgotPasswordPage() {
           {touched && !emailOk && <p className={authErrorClass}>Enter a valid email address.</p>}
         </div>
         {error && (
-          <p className="mt-3 text-[11px] font-medium text-canopy" role="alert">
+          <p className="mt-4 font-body text-sm font-medium leading-[1.5] text-canopy" role="alert">
             {error}
           </p>
         )}
         {message && (
-          <p className="mt-3 text-sm text-moss" role="status">
+          <p className="mt-4 font-body text-sm leading-[1.5] text-moss" role="status">
             {message}
           </p>
         )}
-        <button className={`${authButtonClass} mt-5`} type="submit" disabled={!configured || !emailOk || busy}>
+        <button className={`${authButtonClass} mt-8`} type="submit" disabled={!configured || !emailOk || busy}>
           {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
           {busy ? "Sending…" : "Continue"}
         </button>
-        <p className="mt-4 text-center text-[13px] text-stone">
+        <p className="mt-4 text-center font-body text-sm leading-[1.5] text-stone">
           <Link href="/login" className="font-semibold text-moss">
             Back to log in
           </Link>

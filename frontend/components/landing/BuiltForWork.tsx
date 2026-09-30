@@ -18,13 +18,13 @@ const STORIES = [
 
 export function BuiltForWork() {
   return (
-    <section className="bg-chalk px-4 py-20 md:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className="bg-chalk px-4 py-20 sm:px-6 md:py-24">
+      <div className="mx-auto max-w-[1200px]">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-3xl font-semibold tracking-tight text-bark md:text-4xl">
+          <h2 className="font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark min-[641px]:text-[40px]">
             Built for real places and real people
           </h2>
-          <p className="mt-3 text-[15px] leading-relaxed text-stone">
+          <p className="mt-6 font-body text-[17px] font-normal leading-[1.6] text-bark/70">
             From leafy neighborhoods to open farmland — SSRI is for the lands we
             live on, grow on, and pass to the next generation.
           </p>

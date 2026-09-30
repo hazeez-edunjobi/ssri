@@ -122,7 +122,7 @@ export function PlatformShell({
   return (
     <div className="min-h-screen bg-mist text-bark">
       <header className="sticky top-0 z-40 border-b border-meadow bg-chalk/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-3">
+        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-4 px-4 py-3">
           <BrandLockup />
           <nav className="flex flex-wrap gap-1 text-sm">
             {LINKS.map((link) => {
@@ -167,7 +167,7 @@ export function PlatformShell({
           </div>
         </div>
       </header>
-      <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mx-auto max-w-[1200px] px-4 py-8">
         <LandPhoto unsplash={banner.unsplash} alt={banner.alt} caption={banner.caption} className="mb-8" />
         {children}
       </div>

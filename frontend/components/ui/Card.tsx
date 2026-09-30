@@ -12,25 +12,20 @@ type CardProps = {
 };
 
 const tones = {
-  core: "bg-chalk border border-meadow text-bark shadow-soft",
-  electric: "bg-gradient-to-br from-meadow via-chalk to-mist border border-leaf/25 text-bark",
-  light: "bg-mist text-bark border border-meadow",
+  core: "bg-chalk border border-black/10 text-bark",
+  electric: "bg-gradient-to-br from-meadow via-chalk to-mist border border-black/10 text-bark",
+  light: "bg-mist text-bark border border-black/10",
   transparent: "bg-transparent",
-  earth: "bg-chalk border border-meadow text-bark shadow-soft",
-  canopy: "bg-canopy/90 border border-sprout/30 text-chalk",
+  earth: "bg-chalk border border-black/10 text-bark",
+  canopy: "bg-canopy/90 border border-white/10 text-chalk",
 };
 
 export function Card({ children, className, tone = "core", hover = true }: CardProps) {
   return (
     <motion.div
-      whileHover={hover ? { y: -6 } : undefined}
-      transition={{ type: "spring", stiffness: 300, damping: 24 }}
-      className={cn(
-        "rounded-2xl p-8 md:p-10",
-        hover && "hover:shadow-[0_24px_60px_-28px_rgba(45,106,79,0.35)]",
-        tones[tone],
-        className
-      )}
+      whileHover={hover ? { y: -2 } : undefined}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className={cn("rounded-2xl p-8 md:p-8", tones[tone], className)}
     >
       {children}
     </motion.div>

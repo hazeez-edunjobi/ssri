@@ -4,6 +4,10 @@ import { useEffect, useRef } from "react";
 import { useGsapConfig, ScrollTrigger } from "@/lib/gsap-config";
 import type { ReactNode } from "react";
 
+function motionAllowed() {
+  return typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 type ParallaxWrapperProps = {
   children: ReactNode;
   speed?: number; // yPercent applied relative to scroll
@@ -20,7 +24,7 @@ export function ParallaxWrapper({ children, speed = -25, className }: ParallaxWr
 
   useEffect(() => {
     const gsap = useGsapConfig();
-    if (!ref.current) return;
+    if (!ref.current || !motionAllowed()) return;
 
     const ctx = gsap.context(() => {
       gsap.to(ref.current, {
@@ -55,7 +59,7 @@ export function useScrollStagger(
 ) {
   useEffect(() => {
     const gsap = useGsapConfig();
-    if (!containerRef.current) return;
+    if (!containerRef.current || !motionAllowed()) return;
 
     const ctx = gsap.context(() => {
       const items = gsap.utils.toArray<HTMLElement>(selector, containerRef.current);

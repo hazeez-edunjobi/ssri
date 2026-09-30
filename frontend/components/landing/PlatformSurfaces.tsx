@@ -31,12 +31,12 @@ const SURFACES = [
 
 export function PlatformSurfaces() {
   return (
-    <section className="bg-land-wash px-4 py-20 md:px-8">
-      <div className="mx-auto max-w-6xl text-center">
-        <h2 className="font-display text-3xl font-semibold tracking-tight text-bark md:text-4xl">
+    <section className="bg-land-wash px-4 py-20 sm:px-6 md:py-24">
+      <div className="mx-auto max-w-[1200px] text-center">
+        <h2 className="font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark min-[641px]:text-[40px]">
           One clear picture. Three ways to use it.
         </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-stone">
+        <p className="mx-auto mt-6 max-w-[70ch] font-body text-[17px] font-normal leading-[1.6] text-bark/70">
           Open for anyone who wants to understand the land. Deeper tools when you
           need them for work. Same trusted earth view underneath.
         </p>
@@ -45,7 +45,7 @@ export function PlatformSurfaces() {
           {SURFACES.map(({ icon: Icon, title, tag, body, href, cta }) => (
             <article
               key={title}
-              className="flex h-full flex-col rounded-2xl border border-meadow bg-chalk p-6 shadow-soft"
+              className="flex h-full flex-col rounded-2xl border border-black/10 bg-chalk p-6"
             >
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-meadow text-moss">
                 <Icon className="h-5 w-5" strokeWidth={2} />

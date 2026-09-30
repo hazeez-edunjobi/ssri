@@ -26,12 +26,12 @@ const CAPABILITIES = [
 
 export function CapabilityGrid() {
   return (
-    <section className="bg-mist px-4 py-20 md:px-8">
-      <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3">
+    <section className="bg-mist px-4 py-20 sm:px-6 md:py-24">
+      <div className="mx-auto grid max-w-[1200px] gap-5 md:grid-cols-3">
         {CAPABILITIES.map((item) => (
           <article
             key={item.title}
-            className="rounded-2xl border border-meadow bg-chalk p-6 shadow-soft"
+            className="rounded-2xl border border-black/10 bg-chalk p-6"
           >
             <span className="inline-flex rounded-full bg-meadow px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-moss">
               {item.badge}

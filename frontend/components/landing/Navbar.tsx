@@ -26,7 +26,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-meadow/80 bg-chalk/95 backdrop-blur-md">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-8">
+      <nav className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-4 py-3 md:px-8">
         <BrandLockup />
 
         <div className="hidden items-center gap-1 md:flex">
