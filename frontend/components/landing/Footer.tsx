@@ -4,10 +4,10 @@ import Link from "next/link";
 import { BrandLockup } from "@/components/landing/BrandMark";
 import { FOOTER_COLUMNS, LOGIN_HREF, SIGNUP_HREF } from "@/lib/navigation";
 
-export function Footer() {
+export function Footer({ cta = true }: { cta?: boolean }) {
   return (
     <footer>
-      <section className="bg-canopy px-4 py-16 text-center md:px-8">
+      {cta ? <section className="bg-canopy px-4 py-16 text-center md:px-8">
         <h2 className="mx-auto max-w-[18ch] text-balance font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-chalk min-[641px]:text-[40px]">
           Build on land you understand
         </h2>
@@ -29,7 +29,7 @@ export function Footer() {
             Sign up
           </Link>
         </div>
-      </section>
+      </section> : null}
 
       <div className="border-t border-meadow bg-mist px-4 py-14 md:px-8">
         <div className="mx-auto max-w-[1200px]">

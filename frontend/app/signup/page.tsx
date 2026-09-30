@@ -3,31 +3,16 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import {
-  AuthScreen,
-  authButtonClass,
-  authErrorClass,
-  authFieldClass,
-  authLabelClass,
-} from "@/components/auth/AuthScreen";
+import { Check } from "lucide-react";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { AuthField, AuthSubmit, FormAlert, PasswordField, focusField, passwordRules } from "@/components/auth/fields";
 import { getSupabase, supabaseConfig } from "@/lib/supabase";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function passwordRules(password: string) {
-  return [
-    { id: "length", label: "12 to 20 characters", ok: password.length >= 12 && password.length <= 20 },
-    { id: "upper", label: "An uppercase letter", ok: /[A-Z]/.test(password) },
-    { id: "lower", label: "A lowercase letter", ok: /[a-z]/.test(password) },
-    { id: "number", label: "A number", ok: /\d/.test(password) },
-    { id: "symbol", label: "A symbol", ok: /[^A-Za-z0-9]/.test(password) },
-  ];
-}
-
 export default function SignupPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-soil" />}>
+    <Suspense fallback={<main className="min-h-screen bg-mist" />}>
       <SignupForm />
     </Suspense>
   );
@@ -40,9 +25,9 @@ function SignupForm() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [accepted, setAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [touched, setTouched] = useState({ name: false, email: false, password: false });
-  const [message, setMessage] = useState<string | null>(null);
+  const [touched, setTouched] = useState({ name: false, email: false, password: false, terms: false });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const configured = supabaseConfig().configured;
@@ -51,17 +36,37 @@ function SignupForm() {
   const emailOk = EMAIL.test(email.trim());
   const nameOk = displayName.trim().length >= 2;
   const passwordOk = rules.every((rule) => rule.ok);
-  const formOk = configured && emailOk && nameOk && passwordOk;
-  const activeStep: 1 | 2 | 3 = !emailOk || !passwordOk ? 1 : !nameOk ? 2 : 3;
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    setTouched({ name: true, email: true, password: true });
-    if (!formOk) return;
-    const supabase = getSupabase();
-    if (!supabase) return;
-    setBusy(true);
+    setTouched({ name: true, email: true, password: true, terms: true });
     setError(null);
+    if (!configured) {
+      setError("Sign-in is not configured in this environment.");
+      return;
+    }
+    if (!nameOk) {
+      focusField("signup-name");
+      return;
+    }
+    if (!emailOk) {
+      focusField("signup-email");
+      return;
+    }
+    if (!passwordOk) {
+      focusField("signup-password");
+      return;
+    }
+    if (!accepted) {
+      focusField("signup-terms");
+      return;
+    }
+    const supabase = getSupabase();
+    if (!supabase) {
+      setError("Sign-in is not configured in this environment.");
+      return;
+    }
+    setBusy(true);
     const { data, error: authError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
@@ -76,122 +81,97 @@ function SignupForm() {
       router.replace(nextPath);
       return;
     }
-    setMessage("Account created. Check your email if confirmation is required, then log in.");
+    router.push(`/verify-email?email=${encodeURIComponent(email.trim())}&next=${encodeURIComponent(nextPath)}`);
   }
 
   return (
-    <AuthScreen
-      activeStep={message ? 3 : activeStep}
-      kicker="Join SSRI"
-      title="Start your journey"
-      subtitle="Follow these steps to set up your account and check the ground."
+    <AuthLayout
+      panelTitle="Start reading the ground"
+      panelBody="Create an account, then check a place before you build on it."
+      bullets={["Clear ground scores", "Fast map checks", "Honest confidence"]}
+      image="fields"
+      formTitle="Create account"
+      formHelper="Tell us who you are. We'll send a confirmation if this project requires one."
+      step={1}
     >
-      <form onSubmit={onSubmit} className="w-full" noValidate>
-        <h1 className="text-center font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-bark">Join us</h1>
-        {!configured && (
-          <p className="mt-4 text-center text-sm text-canopy" role="status">
-            Sign-in is not configured in this environment.
-          </p>
-        )}
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label className={authLabelClass} htmlFor="signup-email">
-              Email
-            </label>
-            <input
-              id="signup-email"
-              className={authFieldClass}
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              aria-invalid={touched.email && !emailOk}
-              onBlur={() => setTouched((current) => ({ ...current, email: true }))}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-            {touched.email && !emailOk && <p className={authErrorClass}>Enter a valid email address.</p>}
-          </div>
-          <div className="sm:col-span-2">
-            <label className={authLabelClass} htmlFor="signup-name">
-              Full name
-            </label>
-            <input
-              id="signup-name"
-              className={authFieldClass}
-              autoComplete="name"
-              placeholder="Ada Okonkwo"
-              value={displayName}
-              aria-invalid={touched.name && !nameOk}
-              onBlur={() => setTouched((current) => ({ ...current, name: true }))}
-              onChange={(event) => setDisplayName(event.target.value)}
-            />
-            {touched.name && !nameOk && <p className={authErrorClass}>Enter the name we should show on your account.</p>}
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <label className={authLabelClass} htmlFor="signup-password">
-            Password
-          </label>
-          <div className="relative">
-            <input
-              id="signup-password"
-              className={`${authFieldClass} pr-12`}
-              type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
-              placeholder="Create a password"
-              value={password}
-              aria-invalid={touched.password && !passwordOk}
-              aria-describedby="signup-password-rules"
-              onBlur={() => setTouched((current) => ({ ...current, password: true }))}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-            <button
-              type="button"
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              aria-pressed={showPassword}
-              onClick={() => setShowPassword((current) => !current)}
+      <form onSubmit={onSubmit} noValidate>
+        {/* Google sign-in slot: render a button and an "or" divider here when OAuth is added. */}
+        <AuthField
+          id="signup-name"
+          label="Name"
+          autoComplete="name"
+          placeholder="Ada Okonkwo"
+          value={displayName}
+          error={touched.name && !nameOk ? "Enter the name we should show on your account." : undefined}
+          onBlur={() => setTouched((current) => ({ ...current, name: true }))}
+          onChange={(event) => setDisplayName(event.target.value)}
+        />
+        <AuthField
+          id="signup-email"
+          label="Email"
+          type="email"
+          autoComplete="email"
+          placeholder="you@example.com"
+          value={email}
+          error={touched.email && !emailOk ? "That email doesn't look right" : undefined}
+          onBlur={() => setTouched((current) => ({ ...current, email: true }))}
+          onChange={(event) => setEmail(event.target.value)}
+        />
+        <PasswordField
+          id="signup-password"
+          label="Password"
+          autoComplete="new-password"
+          placeholder="Create a password"
+          value={password}
+          shown={showPassword}
+          onToggle={() => setShowPassword((current) => !current)}
+          aria-describedby="signup-password-rules"
+          error={touched.password && !passwordOk ? "Choose a password that meets every rule." : undefined}
+          onBlur={() => setTouched((current) => ({ ...current, password: true }))}
+          onChange={(event) => setPassword(event.target.value)}
+        />
+        <ul id="signup-password-rules" className="mt-2 space-y-1 font-body text-xs leading-[1.5]">
+          {rules.map((rule) => (
+            <li
+              key={rule.id}
+              aria-label={rule.ok ? `Met: ${rule.label}` : `Not yet met: ${rule.label}`}
+              className={`flex items-center gap-2 ${rule.ok ? "text-moss" : "text-stone"}`}
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-          <ul id="signup-password-rules" className="mt-2 space-y-2 font-body text-xs leading-[1.5]">
-            {rules.map((rule) => (
-              <li key={rule.id} className={rule.ok ? "text-moss" : "text-stone"}>
-                {rule.ok ? "Met" : "Needs"}: {rule.label}
-              </li>
-            ))}
-          </ul>
+              <Check className={`h-3.5 w-3.5 ${rule.ok ? "opacity-100" : "opacity-30"}`} aria-hidden />
+              <span>{rule.label}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4">
+          <label className="flex items-start gap-3 font-body text-sm leading-[1.5] text-bark" htmlFor="signup-terms">
+            <input
+              id="signup-terms"
+              type="checkbox"
+              className="mt-1 h-4 w-4 accent-canopy"
+              checked={accepted}
+              aria-invalid={touched.terms && !accepted}
+              aria-describedby={touched.terms && !accepted ? "signup-terms-error" : undefined}
+              onChange={(event) => setAccepted(event.target.checked)}
+            />
+            <span>I agree to use SSRI for ground-risk checks on the places I care about.</span>
+          </label>
+          {touched.terms && !accepted ? (
+            <p id="signup-terms-error" className="mt-2 font-body text-sm leading-[1.5] text-red-700" role="alert">
+              Confirm this before creating an account.
+            </p>
+          ) : null}
         </div>
-
-        {error && (
-          <p className="mt-4 font-body text-sm font-medium leading-[1.5] text-canopy" role="alert">
-            {error}
-          </p>
-        )}
-        {message && (
-          <p className="mt-4 font-body text-sm leading-[1.5] text-moss" role="status">
-            {message}
-          </p>
-        )}
-
-        <button className={`${authButtonClass} mt-8`} type="submit" disabled={!formOk || busy}>
-          {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-          {busy ? "Creating account…" : "Continue"}
-        </button>
-
-        <p className="mt-4 text-center font-body text-sm leading-[1.5] text-stone">
+        {error ? <FormAlert>{error}</FormAlert> : null}
+        <AuthSubmit busy={busy} busyLabel="Creating account…" disabled={!configured}>
+          Create account
+        </AuthSubmit>
+        <p className="mt-4 font-body text-sm leading-[1.5] text-stone">
           Already have an account?{" "}
-          <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="font-semibold text-moss">
+          <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="font-semibold text-canopy">
             Log in
           </Link>
         </p>
-        <p className="mt-6 text-center font-body text-xs leading-[1.5] text-stone">
-          By signing up you agree to use SSRI for ground-risk checks on the places you care about.
-        </p>
       </form>
-    </AuthScreen>
+    </AuthLayout>
   );
 }

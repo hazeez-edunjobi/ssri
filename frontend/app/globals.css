@@ -69,3 +69,12 @@
     scroll-behavior: auto !important;
   }
 }
+
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #1a1f1c;
+  caret-color: #1a1f1c;
+  box-shadow: 0 0 0 1000px #f4f7f2 inset;
+  transition: background-color 9999s ease-out 0s;
+}
