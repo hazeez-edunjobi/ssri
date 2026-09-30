@@ -7,6 +7,28 @@ from types import SimpleNamespace
 import pytest
 
 
+def test_worker_concurrency_defaults_to_one(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("SSRI_CELERY_CONCURRENCY", raising=False)
+    from ssri_model.worker.celery_app import worker_concurrency
+
+    assert worker_concurrency() == 1
+
+
+def test_worker_concurrency_reads_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SSRI_CELERY_CONCURRENCY", "2")
+    from ssri_model.worker.celery_app import worker_concurrency
+
+    assert worker_concurrency() == 2
+
+
+def test_worker_concurrency_rejects_invalid(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SSRI_CELERY_CONCURRENCY", "0")
+    from ssri_model.worker.celery_app import worker_concurrency
+
+    with pytest.raises(RuntimeError):
+        worker_concurrency()
+
+
 def test_worker_health_fails_without_broker(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("SSRI_CELERY_BROKER_URL", raising=False)
     monkeypatch.delenv("CELERY_BROKER_URL", raising=False)
