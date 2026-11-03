@@ -1,0 +1,63 @@
+{
+  "phase": 8,
+  "generated_at_utc": "2026-11-03T19:38:45.635585+00:00",
+  "sigmoid_softmax_repro": {
+    "logits_shape": [
+      1,
+      3,
+      8,
+      8
+    ],
+    "sigmoid_channel_sums_mean": 1.5049757957458496,
+    "softmax_channel_sums_mean": 1.0,
+    "max_abs_diff_mean_over_space": 0.1827496737241745,
+    "finding": "Sigmoid channel sums \u2260 1; softmax sums \u2248 1. Assess/MC uses sigmoid; evaluation/predictions.py uses softmax \u2014 incompatible for mutually exclusive CE classes.",
+    "assess_file": "model/src/ssri_model/api/routes/assess.py",
+    "uncertainty_file": "model/src/ssri_model/uncertainty/__init__.py",
+    "eval_file": "model/src/ssri_model/evaluation/predictions.py"
+  },
+  "stage25_checkpoints": {
+    "best_or_latest_pt_found": [],
+    "count": 0,
+    "live_assess_without_checkpoint": "POST /api/v1/assess requires body.checkpoint path to an existing file; missing file \u2192 InvalidServiceRequestError. Demo mode can short-circuit without model."
+  },
+  "claims_audit": [
+    {
+      "path": "frontend/components/landing/Hero.tsx",
+      "snippet": "simple risk picture",
+      "issue": "Implies calibrated risk; evidence supports unvalidated susceptibility scores at best",
+      "proposed": "simple susceptibility picture (research preview; not validated)"
+    },
+    {
+      "path": "frontend/components/landing/UseCases.tsx",
+      "snippet": "calibrated probabilities and credible intervals",
+      "issue": "Calibration gates not met; ECE failed on foundation holdout",
+      "proposed": "experimental scores with uncertainty bands (not calibrated probabilities)"
+    },
+    {
+      "path": "frontend/components/pages/PageHeader.tsx",
+      "snippet": "Landslide risk is moderate, with high confidence",
+      "issue": "Demo copy states risk + high confidence without validated model",
+      "proposed": "Example only \u2014 not a validated risk rating"
+    },
+    {
+      "path": "frontend/app/developers/page.tsx",
+      "snippet": "land-risk job / risk scores",
+      "issue": "Marketing SDK routes not the real assess contract",
+      "proposed": "susceptibility assessment job (research API)"
+    },
+    {
+      "path": "model/src/ssri_model/api/routes/assess.py",
+      "snippet": "probability.tif / susceptibility_score",
+      "issue": "GeoTIFF named probability but produced via sigmoid on CE logits",
+      "proposed": "Rename to susceptibility_score.tif; document uncalibrated"
+    },
+    {
+      "path": "docs/SCIENTIFIC_VALIDATION_REPORT.md",
+      "snippet": "Status INCOMPLETE \u2014 honest",
+      "issue": "None \u2014 correctly incomplete",
+      "proposed": "Keep; link from marketing pages"
+    }
+  ],
+  "proposed_patches_dir": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide_due_diligence\\proposed_patches"
+}
