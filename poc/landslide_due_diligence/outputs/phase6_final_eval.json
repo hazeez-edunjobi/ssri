@@ -1,0 +1,6 @@
+{
+  "phase": 6,
+  "status": "SKIPPED",
+  "reason": "No phase5 freeze; test blocks for a protocol-compliant corpus were never opened for a final single evaluation.",
+  "diagnostic_only": "See phase3_baselines.json (existing 240 / manifest test). Not a Phase-6 acceptance decision."
+}

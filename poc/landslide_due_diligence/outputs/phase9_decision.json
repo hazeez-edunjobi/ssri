@@ -1,0 +1,14 @@
+{
+  "phase": 9,
+  "decision": "BLOCKED",
+  "diagnostic_on_v3": "NO-GO (all candidates fail acceptance)",
+  "reasons": [
+    "Cannot reach PROTOCOL minima (>=1500 tiles, 8 blocks, 3 held-out, 5deg-disjoint) from free in-repo rebuild this cycle",
+    "Existing v3 remapped 5deg train/test blocks overlap",
+    "Spectral channels corpus-wide nodata; GEE required to repair at source",
+    "On diagnostic Phase 3, no candidate has Delta-AUC vs slope CI lower bound > 0"
+  ],
+  "production_integration_authorized": false,
+  "tests_end": {"assess_suite": "93 passed", "deepslide_isolated": "9 passed"},
+  "protocol_sha256": "BD2A86BC5A883123B476F9CFD759026836740C60E09FD6A9ACE3BD088213DDFE"
+}
