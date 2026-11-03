@@ -1,0 +1,11 @@
+{
+  "phase": 5,
+  "status": "SKIPPED",
+  "reason": "PROTOCOL_v2: add layers only if Phase 4 reaches Tier A OR best terrain AUC < 0.80. Tier A failed for all candidates; slope-only test AUC on NEAR was 0.821 (>=0.80).",
+  "pre_registered_layers_not_evaluated": [
+    "ESA WorldCover / NLCD",
+    "WorldClim mean precipitation",
+    "GLiM / USGS lithology",
+    "Soils (SoilGrids/USDA)"
+  ]
+}
