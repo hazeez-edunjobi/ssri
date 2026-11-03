@@ -1,0 +1,21 @@
+{
+  "sample_id": "pseudo-absence-f3563fe4af",
+  "role": "absence",
+  "lat": 36.96282920918233,
+  "lon": -120.72117286918223,
+  "eval_block": "35_-125",
+  "inventory_timestamp": null,
+  "s2_item": "S2A_MSIL2A_20201207T184751_R070_T10SFF_20201220T044809",
+  "s2_datetime": "2020-12-07T18:47:51.024000Z",
+  "cloud_cover": 0.007741,
+  "dem_item": "Copernicus_DSM_COG_10_N36_00_W121_00_DEM",
+  "b10_zeros_fill": true,
+  "crs": "EPSG:32610",
+  "buffer_m": 40.0,
+  "gt_pos_pixels": 0,
+  "pred_pos_pixels": 0,
+  "score_max": 0.13586656749248505,
+  "chip_pred_positive": false,
+  "slope_baseline_positive": false,
+  "majority_baseline_positive": false
+}

@@ -1,0 +1,99 @@
+{
+  "generated_at_utc": "2026-11-03T18:34:52.575521+00:00",
+  "gate_b": {
+    "verdict": "PASS",
+    "note": "Isolated landslide-only engine prototype validated. NOT wired to /api/v1/assess. Existing 13-ch assess path untouched.",
+    "ssri_assess_contract": {
+      "channels": 13,
+      "channel_names": [
+        "elevation",
+        "slope",
+        "plan_curvature",
+        "profile_curvature",
+        "twi",
+        "relative_relief",
+        "valley_depth",
+        "ndvi",
+        "ndwi",
+        "clay_mineral_ratio",
+        "iron_oxide_index",
+        "gravity",
+        "magnetics"
+      ],
+      "import_error": null,
+      "endpoint": "POST /api/v1/assess",
+      "forces_channel_count": true
+    },
+    "deepslide_contract": {
+      "channels": 14,
+      "bands": [
+        "B01",
+        "B02",
+        "B03",
+        "B04",
+        "B05",
+        "B06",
+        "B07",
+        "B08",
+        "B09",
+        "B10",
+        "B11",
+        "B12",
+        "slope_deg",
+        "dem_m"
+      ],
+      "preprocess_version": "l4s-pack-v1-div-img-mean",
+      "threshold": 0.5,
+      "hazards": [
+        "landslide"
+      ],
+      "output_semantics": "uncalibrated_sigmoid_segmentation_score_not_calibrated_probability_not_validated_risk"
+    },
+    "compatible_without_new_path": false,
+    "prototype": {
+      "module": "poc/landslide4sense/integration/deepslide_engine.py",
+      "geotiff": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\production_gates\\outputs\\gate_b_prototype_prediction.tif",
+      "crs_ok": true,
+      "band_count_ok": true,
+      "score_is_uncalibrated": true
+    },
+    "production_assess_unchanged": true
+  },
+  "gate_c": {
+    "verdict": "PASS_LOCAL_ONLY",
+    "live_host_tested": false,
+    "live_host_note": "Intended production host ssri-api.onrender.com was NOT load-tested. Local CPU measurements must not be described as live-host verification.",
+    "measurements": {
+      "device": "cpu",
+      "cold_engine_init_s": 0.317,
+      "infer_mean_s": 0.0474,
+      "infer_p50_s": 0.0415,
+      "rss_mb_start": 384.4921875,
+      "rss_mb_after_load": 410.296875,
+      "rss_mb_after_infer": 426.5234375,
+      "peak_rss_mb": 426.5234375,
+      "checkpoint_mb": 25.57,
+      "gpu_required": false
+    },
+    "behaviours": {
+      "wrong_channels": "raises_ValueError",
+      "nan_input": {
+        "completed": true,
+        "has_nan_score": false,
+        "pred_pos": 690
+      },
+      "extreme_ood_values": {
+        "completed": true,
+        "score_max": 0.9848319888114929,
+        "pred_pos": 3740
+      }
+    },
+    "gates": {
+      "single_chip_cpu_ok": true,
+      "peak_rss_under_1500mb": true,
+      "invalid_input_raises": true,
+      "live_render_verified": false
+    }
+  },
+  "errors": []
+}

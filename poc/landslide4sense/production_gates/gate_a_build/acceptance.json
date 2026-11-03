@@ -1,0 +1,30 @@
+{
+  "declared_before_eval": true,
+  "threshold": 0.5,
+  "threshold_selection": "Fixed DeepSlide default; not tuned on this dataset.",
+  "label_method": {
+    "presence": "USGS v3 inventory POINT buffered to 40 m radius as positive pixels inside 128x128@10m chip centered on the point",
+    "absence": "Same 5-degree-block catalog pseudo-absences when available; otherwise synthesized points in-block ≥5 km from any USGS presence. All-zero masks.",
+    "limitation": "Point inventories are not scar polygons; pixel metrics vs circular buffers are approximate. Chip-level detection is the primary metric."
+  },
+  "geography": {
+    "include": "CONUS lat 24-49, lon -125 to -66",
+    "exclude_l4s_study_areas": ["Iburi JP", "Kodagu IN", "Gorkha NP", "Taiwan"],
+    "independence_basis": "USGS CONUS points are outside documented L4S Asia study areas"
+  },
+  "split": {
+    "method": "spatial 5-degree blocks; hold out entire blocks for evaluation only (no training/tuning)",
+    "role": "evaluation_only"
+  },
+  "min_chips": 24,
+  "min_regions": 3,
+  "primary_metric": "chip_level_f1",
+  "chip_positive_rule": "chip labelled positive if inventory presence; prediction positive if any pixel score>0.5 inside the 40m buffer (presence) or anywhere (absence → FP if any)",
+  "gates": {
+    "beat_majority_chip_f1": true,
+    "beat_slope_chip_f1": true,
+    "min_chip_f1": 0.40
+  },
+  "secondary_pixel_metrics": "reported vs buffer masks but do not alone determine PASS/FAIL",
+  "scientific_validation_claim": "Even if numeric gates pass, results remain limited by point-buffer labels and are NOT full scar-level scientific validation."
+}

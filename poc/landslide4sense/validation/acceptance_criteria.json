@@ -1,0 +1,53 @@
+{
+  "declared_before_final_test_eval": true,
+  "declared_at_utc": "2026-11-03T18:00:00Z",
+  "scope": "landslide_detection_only",
+  "threshold_policy": {
+    "decision_threshold": 0.5,
+    "selection": "Fixed at DeepSlide documented default (sigmoid > 0.5). Not tuned on the evaluation set.",
+    "scientific_note": "Raw sigmoid outputs are uncalibrated segmentation scores, not risk probabilities."
+  },
+  "held_out_eval": {
+    "dataset": "Landslide4Sense validation split (HF mirror with masks)",
+    "rationale": "DeepSlide trained on Landslide4Sense; public train chips are leakage-prone. Validation split is the competition held-out set with labels on HF mirrors.",
+    "minimum_chips": 30,
+    "gates": {
+      "beat_majority_micro_f1": {"required": true, "rule": "model_micro_f1 > majority_micro_f1"},
+      "beat_slope_micro_f1_by": {"required": true, "delta": 0.10, "rule": "model_micro_f1 - slope_micro_f1 >= 0.10"},
+      "absolute_micro_f1_floor": {
+        "required": true,
+        "min_f1": 0.50,
+        "rationale": "Floor below official IARAI U-Net validation F1 0.5782 to allow smaller subsample variance; not a claim of matching the leaderboard."
+      }
+    },
+    "scientific_acceptance": {
+      "policy": "Even if numeric gates pass, scientific_acceptance remains UNRESOLVED unless an independent spatially blocked inventory study is completed. This milestone does not claim scientific validation."
+    }
+  },
+  "georeferenced_pipeline": {
+    "required": true,
+    "rules": [
+      "Input stack must include 14 bands in L4S order with documented provenance",
+      "Output GeoTIFF must carry a real CRS (not None) and affine matching the input window",
+      "Do not invent CRS for L4S HDF5 chips",
+      "Do not map SSRI 13-channel stack into 14 bands"
+    ]
+  },
+  "deployment": {
+    "required_checks": [
+      "model_load_s measured on CPU",
+      "per_chip_infer_s measured",
+      "peak_rss_mb measured",
+      "compare against unknown Render RAM with conservative 512MB-class caution"
+    ],
+    "pass_rule": "Single-chip CPU inference completes; peak RSS for model+one chip < 1500 MB; no claim of verified production deploy without live Render test"
+  },
+  "pass_for_integration_requires": [
+    "phase1_model_authenticated",
+    "phase2_georeferenced_input_ok",
+    "phase3_held_out_gates_pass",
+    "phase4_georeferenced_output_ok",
+    "phase5_deployment_feasibility_ok",
+    "ssri_input_contract_compatible_or_new_pipeline_ready"
+  ]
+}
