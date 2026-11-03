@@ -1,0 +1,21 @@
+{
+  "sample_id": "usgs-v3-pt24139",
+  "role": "presence",
+  "lat": 37.834976349,
+  "lon": -122.062804218,
+  "eval_block": "35_-125",
+  "inventory_timestamp": "2017/01/01 00:00:00",
+  "s2_item": "S2A_MSIL2A_20170430T190351_R113_T10SEH_20210209T120323",
+  "s2_datetime": "2017-04-30T19:03:51.026000Z",
+  "cloud_cover": 0.384176,
+  "dem_item": "Copernicus_DSM_COG_10_N37_00_W123_00_DEM",
+  "b10_zeros_fill": true,
+  "crs": "EPSG:32610",
+  "buffer_m": 40.0,
+  "gt_pos_pixels": 0,
+  "pred_pos_pixels": 293,
+  "score_max": 0.9761358499526978,
+  "chip_pred_positive": false,
+  "slope_baseline_positive": false,
+  "majority_baseline_positive": false
+}

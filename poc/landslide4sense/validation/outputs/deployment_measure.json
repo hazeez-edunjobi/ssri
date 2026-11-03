@@ -1,0 +1,45 @@
+{
+  "phase": 5,
+  "target_architecture": {
+    "api": "ssri_model.api.app:app FastAPI /api/v1",
+    "worker": "Celery ssri.execute_job via infra/docker-compose.yml worker",
+    "frontend": "Next.js /dashboard -> POST /api/v1/assess",
+    "production_host": "https://ssri-api.onrender.com (CPU torch historically)",
+    "live_production_test": false,
+    "note": "No production deploy or Render live load test performed (authorization required)."
+  },
+  "ssri_contract_gap": {
+    "assess_expects": "Stage 2.5 SSRIModel 13-channel feature stack",
+    "deepslide_expects": "14-band L4S Sentinel-2 + slope + DEM",
+    "compatible_without_new_pipeline": false
+  },
+  "measurements": {
+    "device": "cpu",
+    "checkpoint_mb": 25.57,
+    "model_load_s": 4.785,
+    "infer_per_chip_s_mean": 0.0452,
+    "infer_per_chip_s_p50": 0.0423,
+    "batch4_s": 0.1179,
+    "rss_mb_start": 236.69921875,
+    "rss_mb_after_load": 404.6953125,
+    "rss_mb_after_infer": 416.7890625,
+    "rss_mb_after_batch4": 424.6015625,
+    "deps": [
+      "torch",
+      "segmentation-models-pytorch",
+      "h5py",
+      "numpy",
+      "rasterio (geo path)"
+    ]
+  },
+  "gates": {
+    "single_chip_cpu_ok": true,
+    "peak_rss_under_1500mb": true,
+    "peak_rss_mb": 424.6015625,
+    "live_render_verified": false,
+    "assess_route_compatible_without_new_ingest": false,
+    "worker_path_compatible_without_new_ingest": false
+  },
+  "verdict": "FEASIBLE_ISOLATED_CPU_BUT_NOT_SSRI_WIRED",
+  "failure_handling": "Not integrated; no production failure path for DeepSlide. Isolated PoC raises on missing weights / bad shapes."
+}

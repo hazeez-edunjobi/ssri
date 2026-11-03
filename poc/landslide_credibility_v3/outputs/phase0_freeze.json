@@ -1,0 +1,24 @@
+{
+  "phase": 0,
+  "recorded_at_utc": "2026-11-03T22:13:00Z",
+  "git": {
+    "branch": "poc/landslide-credibility-v3",
+    "commit": "0341cc446f6a72c5d42906df396c056be5406679"
+  },
+  "protocol_v1_sha256": "BD2A86BC5A883123B476F9CFD759026836740C60E09FD6A9ACE3BD088213DDFE",
+  "protocol_v2_sha256": "5F63E3625717B25750868985621C6C161BDC9B31C295B7585E47BCD77796FEF5",
+  "v2_corpus_manifest_sha256": "E0D31A4FCE9377CDF840FA3EAC46CDF5944B3F08ACB8DDAC44409B0473781913",
+  "foundation_v2_sha256": "39B41634B75CD31E9CB85F981FA6FBA33321B4EA8B0E7B74F485362DB140E0B6",
+  "python_env": {
+    "torch": "2.15.0+cpu",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "sklearn": "1.9.1"
+  },
+  "baseline_tests": {
+    "assess_suite": "93 passed",
+    "deepslide_isolated": "9 passed",
+    "total_passed": 102,
+    "total_failed": 0
+  }
+}

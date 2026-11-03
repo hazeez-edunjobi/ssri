@@ -1,0 +1,42 @@
+{
+  "report": "ssri_free_first_ai_model_audit",
+  "date": "2026-11-03",
+  "scientific_status": "NOT_VALIDATED",
+  "outcome": "AUGMENT",
+  "best_free_first_candidate": {
+    "provider": "Google Gemini API Free Tier",
+    "role": "optional_natural_language_explanations_only",
+    "notes": "Select Flash-class model ID in AI Studio at enablement; confirm RPM/TPM/RPD there. Free tier may use content to improve Google products per pricing docs."
+  },
+  "least_expensive_fallbacks": [
+    "existing_build_template_explanation",
+    "groq_free_openai/gpt-oss-20b",
+    "cloudflare_workers_ai_10000_neurons_per_day",
+    "local_ollama_small_instruct"
+  ],
+  "not_recommended_as_free_default": [
+    "cerebras_5_dollar_trial_requires_payment_method",
+    "openai_paid_api",
+    "self_host_gpt-oss_on_render_cpu"
+  ],
+  "replace_geospatial_engine": false,
+  "reverified_blockers": {
+    "assess_uses_sigmoid": true,
+    "runner_uses_softmax": true,
+    "default_dropout": 0.0,
+    "evidence": [
+      "model/src/ssri_model/api/routes/assess.py",
+      "model/src/ssri_model/uncertainty/__init__.py",
+      "model/src/ssri_model/evaluation/predictions.py",
+      "model/src/ssri_model/architecture/config.py"
+    ]
+  },
+  "fail_safe": "On missing key, 429, timeout, or SSRI_LLM_ENABLED=false return template explanation; never silent paid switch unless SSRI_LLM_ALLOW_PAID explicitly true",
+  "sources": [
+    "https://ai.google.dev/gemini-api/docs/rate-limits",
+    "https://ai.google.dev/gemini-api/docs/pricing",
+    "https://console.groq.com/docs/rate-limits",
+    "https://developers.cloudflare.com/workers-ai/platform/pricing/",
+    "https://inference-docs.cerebras.ai/support/rate-limits"
+  ]
+}
