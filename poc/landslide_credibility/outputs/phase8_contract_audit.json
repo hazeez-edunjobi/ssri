@@ -1,0 +1,39 @@
+{
+  "phase": 8,
+  "sigmoid_softmax": {
+    "reproduced": true,
+    "method": "Same as due-diligence phase8: torch.sigmoid channel sums ≠1 vs F.softmax sums≈1",
+    "proposed_patch": "proposed_patches/SOFTMAX_CONTRACT_PATCH.md (carried forward)",
+    "applied_to_production": false
+  },
+  "landslide_only_contract": "proposed_patches/LANDSLIDE_ONLY_ASSESS_CONTRACT.md",
+  "live_endpoint_today": {
+    "loads": "SSRIModel Stage 2.5 if checkpoint path provided",
+    "stage25_checkpoint_in_repo": false,
+    "without_checkpoint": "InvalidServiceRequestError or demo short-circuit",
+    "render_checkpoint_identity": "UNKNOWN"
+  },
+  "claims_replacements": [
+    {
+      "path": "frontend/components/landing/Hero.tsx",
+      "from": "simple risk picture",
+      "to": "relative landslide susceptibility preview (research; not validated risk)"
+    },
+    {
+      "path": "frontend/components/landing/UseCases.tsx",
+      "from": "calibrated probabilities",
+      "to": "experimental ranking scores (sampling fixes prevalence; not event probabilities)"
+    },
+    {
+      "path": "frontend/components/pages/PageHeader.tsx",
+      "from": "Landslide risk is moderate, with high confidence",
+      "to": "Example only — not a validated risk rating"
+    },
+    {
+      "path": "api AssessResponse susceptibility_score / probability.tif",
+      "from": "probability naming",
+      "to": "susceptibility_score; document uncalibrated ranking"
+    }
+  ],
+  "required_framing": "relative landslide susceptibility index, derived from terrain/environment, validated only on CONUS held-out blocks (if Tier A or B), not a probability and not a risk estimate"
+}
