@@ -1,10 +1,8 @@
 # Non-developer API guide (release shell)
 
-## Does a full UI exist?
+## UI first
 
-**Partial.** `/training/operator` supports classic Stage 2.5 create → upload → validate → train → promote, plus a **Known Limitations** panel. It does **not** yet call `/api/v1/release-shell/*`, show the PASS/WARN/FAIL shell validation report, multi-seed evaluation, or gate statuses.
-
-Until that UI is wired, use these endpoints (e.g. with Postman, Bruno, or curl).
+Prefer **`/shell`** when `SSRI_RELEASE_SHELL=true`. If the page is incomplete or the API is offline, use the endpoints below (Postman, Bruno, or curl). Classic `/training/operator` does **not** call `/api/v1/release-shell/*`.
 
 ## Prerequisites
 
@@ -33,17 +31,21 @@ Start API: `poetry -C model run uvicorn ssri_model.api.app:app --port 8000`
 4. **Train (3 seeds)**  
    `POST /api/v1/release-shell/jobs`  
    Body: `{"dataset_id":"...","epochs":3,"seeds":[42,43,44]}`  
-   Poll `GET /api/v1/jobs/{job_id}` until `completed` or `failed`.
+   Poll **`GET /api/v1/jobs/{job_id}`** — response includes **`progress`**, **`result`** (evaluation + seed checkpoints when complete), and artifact paths.
 
 5. **Evaluation report**  
+   Prefer the job `result.evaluation` from step 4, or:  
    `GET /api/v1/training/models` → find `model_id` / `checkpoint_path`  
    `GET /api/v1/release-shell/models/{model_id}/evaluation`  
    Read per-seed results and gate strings (`evaluated` / `trained, no demonstrated skill beyond slope` / `trained, unconfirmed across seeds`).
 
-6. **Assess**  
+6. **Select checkpoint**  
+   `POST /api/v1/training/models/activate` with `{"model_id":"..."}`.
+
+7. **Assess**  
    Before any train: `POST /api/v1/assess` `{}` → `no_trained_model`.  
    After: `POST /api/v1/assess` with `checkpoint` + `features` and preferably `point` (lat/lon) for region check.  
-   Each hazard returns `status`/`score`/`reason` — **score is null** unless gate is `evaluated` and inside training region.
+   Each hazard returns `status`/`score`/`reason` — **score is null** unless gate is `evaluated` and inside training region. Outside geography → `outside_training_region`.
 
 ## Must never
 

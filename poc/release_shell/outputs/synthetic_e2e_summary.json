@@ -1,0 +1,75 @@
+{
+  "job_id": "job-b57c1cf767cc9ab4",
+  "status": "completed",
+  "progress": {
+    "phase": "evaluated",
+    "message": "Trained 3 seeds; held-out evaluation complete. Status remains NOT_VALIDATED.",
+    "evaluation_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\release_shell\\outputs\\acceptance_tmp\\service-outputs\\training\\models\\ssri-model-a5bc7fb276\\release_shell_evaluation.json",
+    "seeds": [
+      42,
+      43,
+      44
+    ]
+  },
+  "message": "Training completed successfully. The model is NOT automatically scientifically validated or production-ready.",
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "evaluation_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\release_shell\\outputs\\acceptance_tmp\\service-outputs\\training\\models\\ssri-model-a5bc7fb276\\release_shell_evaluation.json",
+  "aggregate_gates": null,
+  "per_seed_summary": {
+    "42": {
+      "gate": null,
+      "keys": [
+        "status",
+        "scientific_validation_status",
+        "score_framing",
+        "checkpoint_path",
+        "checkpoint_sha256",
+        "data_hash",
+        "split_policy",
+        "split_manifest",
+        "seeds",
+        "hazards",
+        "limitations",
+        "notes"
+      ]
+    },
+    "43": {
+      "gate": null,
+      "keys": [
+        "status",
+        "scientific_validation_status",
+        "score_framing",
+        "checkpoint_path",
+        "checkpoint_sha256",
+        "data_hash",
+        "split_policy",
+        "split_manifest",
+        "seeds",
+        "hazards",
+        "limitations",
+        "notes"
+      ]
+    },
+    "44": {
+      "gate": null,
+      "keys": [
+        "status",
+        "scientific_validation_status",
+        "score_framing",
+        "checkpoint_path",
+        "checkpoint_sha256",
+        "data_hash",
+        "split_policy",
+        "split_manifest",
+        "seeds",
+        "hazards",
+        "limitations",
+        "notes"
+      ]
+    }
+  }
+}

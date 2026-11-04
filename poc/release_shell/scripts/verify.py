@@ -48,6 +48,8 @@ def main() -> int:
             "tests/test_release_shell_assess.py",
             "tests/test_release_shell_validator.py",
             "tests/test_release_shell_assess_contract.py",
+            "tests/test_release_shell_assess_route.py",
+            "tests/test_release_shell_jobs_result.py",
             "-q",
             "--tb=line",
         ]
