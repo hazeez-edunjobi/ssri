@@ -96,8 +96,9 @@ class AssessmentResult:
     model_version: str = "unknown"
     spatial_output_url: str | None = None
     notes: tuple[str, ...] = (
-        "Confidence tiers use configurable calibration parameters, "
-        "not scientifically validated thresholds.",
+        "Ranking confidence bands are software heuristics only; "
+        "status remains NOT_VALIDATED. Scores are relative susceptibility rankings, "
+        "not probabilities or risk estimates.",
     )
 
     def to_dict(self) -> dict[str, Any]:
@@ -194,7 +195,18 @@ def gradient_feature_attribution(
     features = features.detach().clone().requires_grad_(True)
     logits = model(features)
     # Mean spatial probability for the selected class.
-    probs = torch.sigmoid(logits[:, class_index : class_index + 1])
+    from ssri_model.release_shell.flags import use_assess_softmax
+    from ssri_model.release_shell.probability import (
+        logits_to_class_probabilities,
+        logits_to_legacy_sigmoid,
+    )
+
+    probs_full = (
+        logits_to_class_probabilities(logits)
+        if use_assess_softmax()
+        else logits_to_legacy_sigmoid(logits)
+    )
+    probs = probs_full[:, class_index : class_index + 1]
     score = probs.mean()
     score.backward()
     assert features.grad is not None
@@ -228,7 +240,17 @@ def run_mc_dropout(
     with torch.no_grad():
         for _ in range(cfg.mc_samples):
             logits = model(features)
-            probs = torch.sigmoid(logits)
+            from ssri_model.release_shell.flags import use_assess_softmax
+            from ssri_model.release_shell.probability import (
+                logits_to_class_probabilities,
+                logits_to_legacy_sigmoid,
+            )
+
+            probs = (
+                logits_to_class_probabilities(logits)
+                if use_assess_softmax()
+                else logits_to_legacy_sigmoid(logits)
+            )
             # Spatial mean per class for compact assessment scores.
             sample = probs.mean(dim=(0, 2, 3)).detach().cpu().numpy()
             samples.append(sample)
