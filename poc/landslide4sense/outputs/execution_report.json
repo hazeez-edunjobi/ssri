@@ -1,0 +1,288 @@
+{
+  "verdict": "PASS",
+  "candidate_primary": {
+    "name": "IARAI Landslide4Sense baseline U-Net",
+    "checkpoint": "batch3500_F1_7396.pth",
+    "source": "https://cloud.iarai.ac.at/index.php/s/CgbjDRK6B5KYaLE",
+    "license_code": "MIT (iarai/Landslide4Sense-2022)",
+    "license_data": "CC-BY-4.0 (Zenodo / competition)",
+    "status": "UNREACHABLE",
+    "blocker": "DNS NXDOMAIN for cloud.iarai.ac.at (and nextcloud.iarai.ac.at) from this host"
+  },
+  "candidate_executed": {
+    "name": "DeepSlide MobileNetV2 U-Net (SMP)",
+    "checkpoint": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\weights\\mobilenetv2.pth",
+    "source": "https://huggingface.co/harshinde/DeepSlide_Models/mobilenetv2.pth",
+    "license": "MIT",
+    "dataset": "Landslide4Sense / ibm-nasa-geospatial/Landslide4sense (14-band 128x128 h5)",
+    "architecture": "smp.Unet(encoder_name=mobilenet_v2, in_channels=14, classes=1)",
+    "reported_paper_f1": 0.7119
+  },
+  "ssri_input_compatibility": {
+    "ssri_channels": 13,
+    "l4s_channels": 14,
+    "defensible_transform_from_ssri_stack": false,
+    "reason": "SSRI Stage 2.5 uses a different 13-channel feature stack (CHANNEL_NAMES). L4S requires Sentinel-2 B1-B12 + ALOS slope + DEM. Mapping SSRI channels into L4S is not scientifically defensible without rebuilding the S2+DEM/slope stack."
+  },
+  "errors": [],
+  "weight_load": "prefix=model.model. keys=374 missing=0 unexpected=0; prefix=model. keys=376 missing=312 unexpected=376; prefix=<raw> keys=377 missing=312 unexpected=377; selected_prefix=model.model. missing=0 unexpected=0",
+  "input_format": {
+    "shape": [
+      14,
+      128,
+      128
+    ],
+    "dtype": "float32",
+    "min": 0.0,
+    "max": 6.397335052490234,
+    "resolution_claimed_m": 10,
+    "crs_in_source": null
+  },
+  "georeference": {
+    "georeferenced": false,
+    "reason": "Landslide4Sense HDF5 chips contain no CRS/affine; competition patches are ~10 m/px but locations are not released.",
+    "written": true,
+    "format": "GeoTIFF",
+    "path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\outputs\\prediction_local_grid.tif",
+    "crs": null,
+    "transform": "from_origin(0, 1280, 10, 10) local only"
+  },
+  "evaluation": {
+    "dataset": "Landslide4Sense train chips (HF mirror), held-out ids for this PoC only",
+    "chip_ids": [
+      1,
+      10,
+      100,
+      50
+    ],
+    "note": "These train-split chips may overlap DeepSlide training data; metrics are smoke-test only, NOT independent scientific validation.",
+    "model": [
+      {
+        "chip_id": 1,
+        "precision": 0.6091269841269841,
+        "recall": 0.7580246913580246,
+        "f1": 0.6754675467546755,
+        "iou": 0.5099667774086378,
+        "tp": 307,
+        "fp": 197,
+        "fn": 98,
+        "tn": 15782,
+        "pred_pos": 504,
+        "gt_pos": 405
+      },
+      {
+        "chip_id": 10,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "iou": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "tn": 16384,
+        "pred_pos": 0,
+        "gt_pos": 0
+      },
+      {
+        "chip_id": 100,
+        "precision": 0.5269086357947435,
+        "recall": 0.8789144050104384,
+        "f1": 0.6588419405320814,
+        "iou": 0.4912485414235706,
+        "tp": 421,
+        "fp": 378,
+        "fn": 58,
+        "tn": 15527,
+        "pred_pos": 799,
+        "gt_pos": 479
+      },
+      {
+        "chip_id": 50,
+        "precision": 0.06060606060606061,
+        "recall": 0.20689655172413793,
+        "f1": 0.09374999999999999,
+        "iou": 0.04918032786885246,
+        "tp": 6,
+        "fp": 93,
+        "fn": 23,
+        "tn": 16262,
+        "pred_pos": 99,
+        "gt_pos": 29
+      }
+    ],
+    "baseline_majority_class": [
+      {
+        "chip_id": 1,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "iou": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 405,
+        "tn": 15979
+      },
+      {
+        "chip_id": 10,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "iou": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "tn": 16384
+      },
+      {
+        "chip_id": 100,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "iou": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 479,
+        "tn": 15905
+      },
+      {
+        "chip_id": 50,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "iou": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 29,
+        "tn": 16355
+      }
+    ],
+    "baseline_slope_threshold": [
+      {
+        "chip_id": 1,
+        "precision": 0.07883369330453564,
+        "recall": 0.5407407407407407,
+        "f1": 0.13760603204524036,
+        "iou": 0.07388663967611336,
+        "tp": 219,
+        "fp": 2559,
+        "fn": 186,
+        "tn": 13420
+      },
+      {
+        "chip_id": 10,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "iou": 0.0,
+        "tp": 0,
+        "fp": 4191,
+        "fn": 0,
+        "tn": 12193
+      },
+      {
+        "chip_id": 100,
+        "precision": 0.03915703602991163,
+        "recall": 0.6012526096033403,
+        "f1": 0.07352565739086037,
+        "iou": 0.03816591571693612,
+        "tp": 288,
+        "fp": 7067,
+        "fn": 191,
+        "tn": 8838
+      },
+      {
+        "chip_id": 50,
+        "precision": 0.003723986856516977,
+        "recall": 0.5862068965517241,
+        "f1": 0.007400957771005659,
+        "iou": 0.003714223290364868,
+        "tp": 17,
+        "fp": 4548,
+        "fn": 12,
+        "tn": 11807
+      }
+    ],
+    "mean_f1_model": 0.35701487182168923,
+    "mean_f1_majority": 0.0,
+    "mean_f1_slope": 0.054633161801776596,
+    "outperforms_majority": true,
+    "outperforms_slope": true,
+    "micro_model": {
+      "precision": 0.5235378031383737,
+      "recall": 0.8039430449069004,
+      "f1": 0.6341252699784018,
+      "iou": 0.46426312460468055,
+      "tp": 734,
+      "fp": 668,
+      "fn": 179,
+      "tn": 63955
+    },
+    "micro_majority": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "iou": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 913,
+      "tn": 64623
+    },
+    "micro_slope": {
+      "precision": 0.02774101328815713,
+      "recall": 0.5739320920043811,
+      "f1": 0.05292394707605292,
+      "iou": 0.02718124286751738,
+      "tp": 524,
+      "fp": 18365,
+      "fn": 389,
+      "tn": 46258
+    },
+    "outperforms_majority_micro": true,
+    "outperforms_slope_micro": true
+  },
+  "runtime": {
+    "device": "cpu",
+    "model_build_load_s": 17.487,
+    "infer_per_chip_s": [
+      0.11,
+      0.112,
+      0.083,
+      0.102
+    ],
+    "infer_mean_s": 0.102,
+    "rss_mb_start": null,
+    "rss_mb_end": null,
+    "checkpoint_mb": 25.57
+  },
+  "verdict_caveats": [
+    "PASS refers to DeepSlide MobileNetV2 fallback, not the official IARAI batch3500 checkpoint.",
+    "Official IARAI pretrained weights remain UNREACHABLE (DNS).",
+    "No real-world CRS in source chips; local-grid GeoTIFF only.",
+    "Eval chips are from the public train split; may leak vs DeepSlide training \u2014 not scientific validation.",
+    "Landslide detection only; no subsidence/sinkhole claim."
+  ],
+  "integration_recommendation": {
+    "integrate_now": false,
+    "reason": "Do not wire into SSRI assess yet: (1) official L4S weights unreachable; (2) SSRI 13-ch stack is incompatible with 14-band L4S input without new data pipeline; (3) L4S chips lack CRS needed for SSRI map products; (4) this PoC is landslide-only and NOT scientifically validated.",
+    "next_steps": [
+      "Obtain official batch3500_F1_7396.pth from a reachable mirror or alternate network path.",
+      "OR continue with DeepSlide/ResNet34 after building a Sentinel-2 + DEM/slope ingest that matches L4S band order.",
+      "For georeferenced products, generate 14-band stacks from STAC/COGs with real affine/CRS rather than competition chips.",
+      "Next candidate if DeepSlide underperforms on held-out AOIs: TorchGeo Prithvi / TerraMind with free weights (larger deps)."
+    ]
+  },
+  "environment": {
+    "platform": "Windows-11-10.0.26100-SP0",
+    "python": "3.12.10",
+    "dependencies": {
+      "torch": "2.15.0+cpu",
+      "h5py": "3.16.0",
+      "numpy": "2.4.6",
+      "matplotlib": "3.11.1",
+      "segmentation_models_pytorch": "0.6.0",
+      "rasterio": "1.4.4"
+    },
+    "gpu": false,
+    "device": "cpu"
+  }
+}

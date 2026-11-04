@@ -1,0 +1,40 @@
+{
+  "decision": "NO-GAIN",
+  "credibility_level": "L1",
+  "acceptance": {
+    "B2_logreg": {
+      "tier_a": {
+        "pass": false,
+        "NEAR_delta_ci_gt0": false,
+        "SLOPE_MATCHED_delta_point_gt0": false,
+        "frac_blocks": true,
+        "dci": [
+          -0.2512868258054871,
+          0.03387091715614108
+        ],
+        "sm_delta": -0.11449449668343181
+      },
+      "tier_b": {
+        "pass": false,
+        "reason": "sealed unavailable or tier A failed"
+      }
+    },
+    "B3_hgb": {
+      "tier_a": {
+        "pass": false,
+        "NEAR_delta_ci_gt0": false,
+        "SLOPE_MATCHED_delta_point_gt0": false,
+        "frac_blocks": false,
+        "dci": [
+          -0.2797488914699675,
+          0.04293530632699459
+        ],
+        "sm_delta": -0.03986032145200091
+      },
+      "tier_b": {
+        "pass": false,
+        "reason": "sealed unavailable or tier A failed"
+      }
+    }
+  }
+}

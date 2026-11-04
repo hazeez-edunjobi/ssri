@@ -1,0 +1,12 @@
+2026-11-03T19:35:01.787481+00:00 START phase2_data_audit
+2026-11-03T19:35:13.129313+00:00 END phase2_data_audit n=240
+2026-11-03T19:35:50.139655+00:00 START phase3_baselines
+RETRY phase3: fixed np.trapz -> np.trapezoid (numpy 2.x)
+2026-11-03T19:36:27.047617+00:00 START phase3_baselines
+2026-11-03T19:36:47.320097+00:00 END phase3_baselines
+2026-11-03T19:38:45.635585+00:00 START phase8_contract_audit
+2026-11-03T19:38:50.257063+00:00 END phase8_contract_audit
+RETRY phase3: U-Net scores were NaN due to custom norm on -9999 spectral; now use checkpoint normalization (as trained). Prior B4/B5 AUC=1.0 results INVALID.
+2026-11-03T19:41:58.923220+00:00 START phase3_baselines
+2026-11-03T19:42:26.381705+00:00 END phase3_baselines
+2026-11-03T20:43:35.4947569+01:00 END suite tests: 93+9 passed; PROTOCOL hash BD2A86BC unchanged; decision BLOCKED

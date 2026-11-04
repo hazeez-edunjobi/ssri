@@ -1,0 +1,15 @@
+{
+  "status": "BLOCKED",
+  "reason": "Could not download NASA Global Landslide Catalog from free URLs",
+  "download_errors": [
+    {
+      "url": "https://raw.githubusercontent.com/nasa/global-landslide-catalog/master/nasa_global_landslide_catalog.csv",
+      "error": "HTTPError: HTTP Error 404: Not Found"
+    },
+    {
+      "url": "https://data.nasa.gov/api/views/h9rt-udyj/rows.csv?accessType=DOWNLOAD",
+      "error": "HTTPError: HTTP Error 404: Not Found"
+    }
+  ],
+  "note": "Report-only phase; does not change Tier decision"
+}

@@ -1,0 +1,36 @@
+{
+  "phase": 7,
+  "generated_at_utc": "2026-11-03T19:45:00Z",
+  "scope": "Diagnostic Phase 3 test-manifest (n_test=28) after U-Net scoring fix",
+  "run_note": "First U-Net pass produced NaN scores (invalid AUC=1.0); corrected to checkpoint normalization. Logged in run_log.txt.",
+  "ranking_test_auc": {
+    "B1_slope": 0.6944,
+    "B2_logreg": 0.8000,
+    "B3_hgb": 0.7722,
+    "B4_unet": 0.7333,
+    "B5_unet_spectral0": 0.7333
+  },
+  "findings": [
+    {
+      "claim": "Deep U-Net does not earn its complexity on this corpus",
+      "evidence": "B4 test ROC-AUC 0.733 < B2 logreg 0.800 and only slightly above slope 0.694; ΔAUC vs slope CI crosses 0",
+      "label": "VERIFIED"
+    },
+    {
+      "claim": "Spectral inputs contribute nothing",
+      "evidence": "B4 and B5 metrics identical to floating precision; channels 100% nodata corpus-wide",
+      "label": "VERIFIED"
+    },
+    {
+      "claim": "Pixel F1 is misleading",
+      "evidence": "predict-all-positive on masked test pixels F1≈0.778 vs foundation-reported pixel F1 0.818",
+      "label": "VERIFIED"
+    },
+    {
+      "claim": "No candidate passes protocol acceptance even diagnostically",
+      "evidence": "All FAIL criterion A (ΔAUC CI vs slope) and/or B/C",
+      "label": "VERIFIED"
+    }
+  ],
+  "does_deep_model_earn_complexity": false
+}

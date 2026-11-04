@@ -1,0 +1,10 @@
+{
+  "protocol_v1_ok": true,
+  "protocol_v2_ok": true,
+  "samples_near_hash_ok": true,
+  "regen_hgb_test_auc": 0.8504232804232804,
+  "regen_slope_test_auc": 0.8211640211640212,
+  "expected_hgb_auc_approx": 0.8504232804232804,
+  "match_within_1e-6": true,
+  "all_ok": true
+}
