@@ -11,7 +11,7 @@ All SSRI release-shell and credibility research work is consolidated on **`integ
 | Item | Value | Label |
 |------|-------|-------|
 | Integration branch | `integration/ssri-shell-rc1` | VERIFIED |
-| Tip at report time | *(see commit after this report is committed)* | VERIFIED after push |
+| Tip at report time | `ba9330fd6dcafb35509754ea3113290d3cc47330` (+ follow-up handoff commit if any) | VERIFIED |
 | Base `main` | `9a1a44cbc9b9012e1f960a9fc9d37eb4c823e29d` | VERIFIED |
 | Merged `poc/release-shell` | `35e817bc3fb5b594e63f60ffa86904e8682ed79d` / tag `archive/release-shell-final` | VERIFIED |
 | Merged `poc/landslide-credibility-v3` | `374f2bd90fb2d7cfc5fff99ae7a999e6c6406b4e` / tag `archive/credibility-v3-final` | VERIFIED |
@@ -33,7 +33,7 @@ See also `CONSOLIDATION_LOG.md` (repo root).
 | 3d Owner UI | **DONE** | `/shell` page: upload, validation PASS/WARN/FAIL, train progress, evaluation, checkpoint select, Known limitations. API fallback still `OWNER_API_GUIDE.md` |
 | 3e Flag-off proof | **DONE** | Flag OFF suite **123 passed** (`outputs/pytest_flag_off.txt`); assess without checkpoint still 400/422 when flag off |
 | 4 Tests OFF + ON | **DONE** | Both **123 passed** (`pytest_flag_off.txt`, `pytest_flag_on.txt`); breakdown below |
-| 5 Clean-clone rehearsal | **PARTIAL / see log** | Logged in this report § Clean-clone |
+| 5 Clean-clone rehearsal | **DONE** | Fresh clone `ssri-rc1-rehearsal` @ `ba9330f…`; all 6 steps PASS — `outputs/rehearsal_rc1_log.json` |
 | 6 Handoff docs | **DONE** | `README_OWNER.md`, `OWNER_API_GUIDE.md`, `DATASET_SPEC.md`, `LIMITATIONS.md`, `DEMO_SCRIPT.md`, `MERGE_CHECKLIST.md`, `STAKEHOLDER_SUMMARY.md` |
 
 ---
@@ -79,19 +79,22 @@ Jobs GET now returns `result` and `progress` in one payload (VERIFIED in accepta
 
 ---
 
-## Clean-clone rehearsal log
+## Clean-clone rehearsal log (VERIFIED)
 
-*(Filled when rehearsal completes; any deviation from the stated steps is recorded here.)*
+Clone dir: `C:\Users\LENOVO\Documents\MrBusoye\ssri-rc1-rehearsal`  
+Commit: `ba9330fd6dcafb35509754ea3113290d3cc47330`  
+Log: `poc/release_shell/outputs/rehearsal_rc1_log.json`
 
 | # | Step | Expected | Result |
 |---|------|----------|--------|
-| 0 | Fresh clone + install + `scripts/verify.py` | pass | *(pending fill)* |
-| 1 | assess no checkpoint | `no_trained_model` | |
-| 2 | broken ZIP | FAIL, train refuses | |
-| 3 | FeatureStacks v3 ZIP | FAIL on 4 sentinel channels; hazards DISABLED | |
-| 4 | SYNTHETIC → train 3 seeds → eval → gates | PASS/WARN → completed | |
-| 5 | select ckpt → assess | scores or not_available + hashes/limitations | |
-| 6 | outside region | `outside_training_region` | |
+| 0a | Fresh clone + `poetry install` | ok | DONE |
+| 0b | `scripts/verify.py` | pass | **PARTIAL** — assess 93 + shell 21 + no_trained_model PASS; DeepSlide initially 5 ERROR / later 1 FAIL until optional `pip install segmentation_models_pytorch h5py` (not in poetry.lock). After optional deps: **9 passed**. Recorded as open risk for virgin envs. |
+| 1 | assess no checkpoint | `no_trained_model` | PASS (200) |
+| 2 | broken ZIP | FAIL, train refuses | PASS (overall FAIL, train 400) |
+| 3 | FeatureStacks v3 ZIP | FAIL on 4 sentinels; hazards DISABLED | PASS (channel_quality FAIL on ndvi/ndwi/clay/iron; all 3 hazards DISABLED). ZIP copied from developer machine because gitignored. |
+| 4 | SYNTHETIC → train 3 seeds → eval → gates | PASS/WARN → completed | PASS (WARN, can_train true, seeds 42/43/44, job completed, result present) |
+| 5 | select ckpt → assess | scores or not_available + hashes/limitations | PASS — all hazards `not_available` / score null (gate: no demonstrated skill beyond slope on SYNTHETIC); checkpoint hash present |
+| 6 | outside region | `outside_training_region` | PASS (3/3 hazards, score null) |
 
 ---
 
@@ -111,6 +114,8 @@ Jobs GET now returns `result` and `progress` in one payload (VERIFIED in accepta
 - SYNTHETIC gates will usually be “no demonstrated skill beyond slope” — expected on tiny fake data.
 - `/shell` UI depends on API env flag; if flag off, page tells operator to enable it.
 - Large `poc/landslide4sense` binaries inflate clone size (GitHub warned on ValidData.zip).
+- DeepSlide 9 on a virgin Poetry env needs optional `segmentation_models_pytorch` + `h5py` (not declared in `model` poetry deps) — VERIFIED blocker until installed; engine remains unwired.
+- FeatureStacks rehearsal ZIP is gitignored; clean-clone step 3 needs the ZIP present locally or uses prior validation JSON.
 
 ## Owner decisions
 
