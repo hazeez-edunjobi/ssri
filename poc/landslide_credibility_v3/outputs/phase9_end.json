@@ -1,0 +1,15 @@
+{
+  "decision": "NO-GAIN",
+  "credibility_level": "L1",
+  "shipped_index": "ssri_landslide_slope_only_v3",
+  "tests_end": {
+    "assess_suite": "93 passed",
+    "deepslide_isolated": "9 passed",
+    "total_passed": 102,
+    "total_failed": 0
+  },
+  "verify_pass": true,
+  "production_changed": false,
+  "external_transfer": "BLOCKED",
+  "environment_layers": "BLOCKED_MISSING_FILE"
+}
