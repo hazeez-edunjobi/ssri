@@ -1,0 +1,13 @@
+RETRY extend_corpus: fixed v2 import shadowing
+RETRY2 extend_corpus: clear common cache before v2 import
+2026-11-03T22:25:46.525302+00:00 START extend_corpus
+RETRY3 extend_corpus: slope-matched via resample of existing absences
+2026-11-03T22:39:27.911033+00:00 START extend_corpus
+2026-11-03T22:40:12.507749+00:00 END extend_corpus fresh_ok=False
+START lobo_eval phase3-4
+2026-11-03T22:41:30.124465+00:00 START lobo_eval
+2026-11-03T22:44:04.153863+00:00 FROZE models before sealed holdout
+2026-11-03T22:44:05.563505+00:00 END lobo_eval decision=NO-GAIN
+2026-11-04T12:22:47.530901+00:00 START failure_analysis
+2026-11-04T12:22:47.836622+00:00 END failure_analysis
+2026-11-04T13:37:17.0343577+01:00 END v3 cycle decision=NO-GAIN level=L1 tests=93+9 verify=pass

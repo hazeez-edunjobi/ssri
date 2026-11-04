@@ -1,0 +1,22 @@
+{
+  "protocol": "PROTOCOL_v2.md",
+  "seed": 42,
+  "seeds_train": [42, 43, 44],
+  "block_deg": 5,
+  "min_presence_separation_km": 1.0,
+  "max_source_share_per_block": 0.25,
+  "train_test_buffer_km": 50.0,
+  "absence_near_km": [5.0, 20.0],
+  "absence_far_min_km": 20.0,
+  "absence_scheme_primary": "NEAR",
+  "target_n_presence": 900,
+  "target_n_absence_near": 900,
+  "target_n_absence_far": 900,
+  "min_total_after_filters": 1500,
+  "dem_collection": "cop-dem-glo-30",
+  "dem_resolution_m": 30.0,
+  "window_half_m": 1000.0,
+  "max_void_frac": 0.40,
+  "stac_url": "https://planetarycomputer.microsoft.com/api/stac/v1",
+  "conus": {"lat_min": 24.0, "lat_max": 49.0, "lon_min": -125.0, "lon_max": -66.0}
+}

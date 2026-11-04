@@ -1,0 +1,105 @@
+{
+  "report": "ssri_authenticated_production_self_test",
+  "date": "2026-10-01",
+  "scientific_status": "NOT_VALIDATED",
+  "continues": "ssri_self_test_report.json",
+  "final_status": "SELF-TEST BLOCKED",
+  "deployment": {
+    "api": "https://ssri-api.onrender.com",
+    "service": "ssri-inference",
+    "environment": "render",
+    "execution_mode_from_prior_ready": "distributed",
+    "deployment_version": null
+  },
+  "authentication": {
+    "credential_mechanism": "Authorization: Bearer ssri_<16 hex key id>_<secret>",
+    "parser": "ssri_model.auth.credentials.parse_api_key",
+    "verifier": "ssri_model.auth.dependencies.authenticate_api_key",
+    "assess_inference_dependency": "require_run_inference_rate_limited",
+    "platform_auth": "supabase access token; does not authorize assess or inference",
+    "credential_available": "NO",
+    "authenticated_request_reached_api": "NO",
+    "production_model_verification": "BLOCKED — no legitimate authenticated test credential available"
+  },
+  "production_model": {
+    "live_checkpoint_observed": false,
+    "intended_model_class": "SSRIModel",
+    "loader": "load_inference_checkpoint",
+    "input_channels": 13,
+    "class_vocabulary": ["subsidence", "landslide", "sinkhole"],
+    "checkpoint": null,
+    "checkpoint_version": null,
+    "default_dropout": 0.0
+  },
+  "production_inference": {
+    "authenticated_inference": "NOT RUN",
+    "http_status": null,
+    "request_id": null,
+    "model_execution_verified": false,
+    "prediction_returned": false
+  },
+  "probability_verification": {
+    "live_measurement": "NOT MEASURED",
+    "expected_transform": "softmax",
+    "assess_path_transform_in_source": "sigmoid",
+    "runner_transform_in_source": "softmax",
+    "probability_sum": null,
+    "repository_contract": "FAIL",
+    "deployed_contract": "NOT MEASURED"
+  },
+  "input_perturbation": {
+    "baseline_result": null,
+    "perturbed_result": null,
+    "output_changed": "NOT TESTED",
+    "status": "BLOCKED"
+  },
+  "determinism": {
+    "repeated_runs": 0,
+    "variation": null,
+    "status": "BLOCKED"
+  },
+  "uncertainty": {
+    "dropout_default": 0.0,
+    "mc_sampling": "no Dropout modules when dropout is 0",
+    "observed_variance": null,
+    "status": "WARNING — stochastic MC-dropout uncertainty is unavailable"
+  },
+  "input_validation": {
+    "nan": "BLOCKED",
+    "inf": "BLOCKED",
+    "wrong_channel_count": "BLOCKED",
+    "wrong_dimensions": "BLOCKED",
+    "nodata": "BLOCKED"
+  },
+  "api_vs_runner": {
+    "scope": "source inspection only",
+    "normalization": "same helper when statistics are supplied",
+    "channel_ordering": "CHANNEL_NAMES; count checked, semantic identity not checked",
+    "probability_conversion": "inconsistent: assess sigmoid, runner softmax",
+    "nodata": "runner masks FEATURE_NODATA; assess geotiff branch does not",
+    "model": "SSRIModel",
+    "class_vocabulary": ["subsidence", "landslide", "sinkhole"]
+  },
+  "demo_mock": {
+    "demo_mode_on_render": "NOT OBSERVED",
+    "repository_example_default": false,
+    "static_output": "demo_assessment.py when SSRI_DEMO_MODE is set; not invoked",
+    "fallback_prediction_observed": false
+  },
+  "local_test_suite": {
+    "prior_full_suite": {
+      "passed": 652,
+      "failed": 1,
+      "skipped": 2,
+      "seconds": 513.67,
+      "traceback": "discarded by --tb=no"
+    },
+    "target_test": "tests/test_manual_training.py::test_training_api_upload_validate_and_start",
+    "isolated": "passed (27.30s and 27.29s, including one parallel pair)",
+    "module": "7 passed in 34.39s",
+    "full_suite_this_session": "not re-run",
+    "reproduced": false,
+    "status": "INTERMITTENT / NOT REPRODUCED",
+    "hypothesis_not_confirmed": "30s poll budget (60 x 0.5s) is close to the isolated runtime of about 27s; full-suite CPU contention could expire the poll before LocalJobExecutor finishes. Not reproduced this session."
+  }
+}

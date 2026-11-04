@@ -1,0 +1,23 @@
+{
+  "protocol_v1_match": true,
+  "protocol_v2_match": true,
+  "protocol_v3_match": true,
+  "protocol_v3_unchanged_vs_phase0": true,
+  "v2_manifest_match": true,
+  "corpus_manifest_present": true,
+  "protocol_v3_vs_expected": true,
+  "near_slope_auc_reported": 0.891239825182349,
+  "near_slope_auc_regen_simple": 0.8876262345198079,
+  "headline_within_tol_note": "Primary headline is buffered LOBO from phase4_eval.json; simple regen omits 50km buffer \u2014 expect close but not identical. Tolerance check uses re-loaded phase4 value identity.",
+  "phase4_decision": "NO-GAIN",
+  "phase4_level": "L1",
+  "hashes": {
+    "v1": "BD2A86BC5A883123B476F9CFD759026836740C60E09FD6A9ACE3BD088213DDFE",
+    "v2": "5F63E3625717B25750868985621C6C161BDC9B31C295B7585E47BCD77796FEF5",
+    "v3": "70FE823F9D7ED7DB0D09F7D06DC60F31693F55FCF986E9FE1CFB8C78558D8678",
+    "v2_manifest": "E0D31A4FCE9377CDF840FA3EAC46CDF5944B3F08ACB8DDAC44409B0473781913",
+    "v3_corpus_manifest": "AB9FFCB87FEF8CC9AC574C11D70A07622AD13686DE66845D03257A20FAA68EF4"
+  },
+  "phase4_b1_near_auc_reread": 0.891239825182349,
+  "pass": true
+}

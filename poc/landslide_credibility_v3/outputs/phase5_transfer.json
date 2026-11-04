@@ -1,0 +1,12 @@
+{
+  "phase": 5,
+  "status": "BLOCKED",
+  "request_to_owner": "Please place the NASA Global Landslide Catalog (GLC) CSV or GeoJSON at poc/landslide_credibility_v3/corpus/external/nasa_glc.csv (or .geojson) with latitude/longitude columns. Do not ask the agent to guess a download URL — prior public endpoints returned HTTP 404 in v2.",
+  "searched_paths": [
+    "poc/landslide_credibility_v3/corpus/external/",
+    "poc/landslide_credibility/corpus/external/",
+    "data/external/"
+  ],
+  "file_present": false,
+  "note": "External transfer is report-only and cannot change the Phase 9 decision either way."
+}

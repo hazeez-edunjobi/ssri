@@ -1,0 +1,26 @@
+{
+  "phase": 4,
+  "status": "STOPPED",
+  "generated_at_utc": "2026-11-03T19:40:00Z",
+  "protocol_requirement": {
+    "min_tiles": 1500,
+    "min_blocks_5deg": 8,
+    "min_held_out_blocks": 3
+  },
+  "largest_valid_corpus_available": {
+    "name": "usgs_landslide_featurestacks/v3",
+    "n_tiles": 240,
+    "n_block5": 32,
+    "spectral_usable": false,
+    "protocol_5deg_train_test_disjoint": false,
+    "note": "Manifest 2° split remaps to overlapping 5° blocks (see phase2 leakage_audit.block5_overlap_train_test)"
+  },
+  "rebuild_attempt": {
+    "planned": "Rebuild >=1500 tiles via build_usgs_feature_dataset + build_feature_stack with 20 km absence buffer and spectral repair",
+    "blocker": "Spectral channels require Google Earth Engine Sentinel composites (feature_engineering.get_sentinel_composite). Prior production qualification documented GEE IAM / spectral INIT failures. Rebuilding 1500 full stacks needs working GEE + OpenTopography at free-tier scale and hours of wall time; this task forbids paid services and must not force a non-protocol corpus.",
+    "terrain_only_alternative": "A terrain-only stack builder under poc/ could be written, but is a new pipeline not yet validated; not executed in this cycle to avoid inventing an unverified feature contract mid-protocol.",
+    "decision": "Do not fabricate spectral bands; do not silently train on 240 while claiming protocol minima met."
+  },
+  "corpus_frozen": false,
+  "phases_5_6": "SKIPPED — no protocol-compliant scaled corpus; no new candidate freeze for final test"
+}
