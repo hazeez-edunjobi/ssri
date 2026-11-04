@@ -1,37 +1,22 @@
-# 5-minute demo script
+# 5-minute demo (SYNTHETIC only)
 
-Prereqs: API running with `SSRI_RELEASE_SHELL=true` (see README_OWNER.md). Use SYNTHETIC mins for the tiny template.
+**Label every demo artifact SYNTHETIC.** Do not imply real geology, risk, probability, detection, or validation.
 
-## 1) Assess with no checkpoint → `no_trained_model`
+## Prep (2 min)
 
-```bash
-curl -s -X POST http://127.0.0.1:8000/api/v1/assess -H "Content-Type: application/json" -d "{}"
-```
+1. API with `SSRI_RELEASE_SHELL=true` and lowered mins for the template (4/4/2) if needed.  
+2. Open `/shell` or have `OWNER_API_GUIDE.md` ready.  
+3. ZIP: `poc/release_shell/templates/SYNTHETIC_stage25_template.zip`.
 
-Expect: `"status":"no_trained_model"`.
+## Script (3 min)
 
-## 2) Validation FAIL (broken ZIP)
+1. **No model yet** — assess `{}` → `no_trained_model`.  
+2. **Upload SYNTHETIC ZIP** — validation PASS or WARN; `can_train` true. Say: “This is fabricated data.”  
+3. **Start training (3 seeds)** — show job progress on `GET /jobs/{id}`.  
+4. **Evaluation** — show gate strings only; status **NOT_VALIDATED**.  
+5. **Assess inside geography** — scores only if gate is `evaluated`; otherwise `not_available` / null score.  
+6. **Assess far away** — `outside_training_region`, score null.
 
-Create a zip that is not a Stage 2.5 dataset (e.g. a single `readme.txt`), create a dataset, upload, validate — expect FAIL / training refuse. Or use a dataset whose spectral channels are all `-9999` (validator check `channel_quality`).
+## Never say
 
-## 3) SYNTHETIC template → validate → train → evaluate
-
-```bash
-# build template once
-poetry -C model run python poc/release_shell/scripts/build_synthetic_template.py
-
-# create dataset (training API)
-curl -s -X POST http://127.0.0.1:8000/api/v1/training/datasets -H "Content-Type: application/json" -d "{\"name\":\"SYNTHETIC demo\",\"notes\":\"SYNTHETIC\"}"
-
-# upload + validate + train via release-shell routes (use returned dataset_id)
-```
-
-Poll job until completed; fetch evaluation JSON. Confirm baselines (majority, slope) and gate strings — never “validated”.
-
-## 4) Assess with checkpoint
-
-POST `/api/v1/assess` with `features` (.npy) + `checkpoint`. Hazards without training remain `not_available` when using the shell contract fields in notes/limitations.
-
-## Timing
-
-Aim for ≤5 minutes of talking time; training epochs for SYNTHETIC should be 2–3 on CPU.
+Validated, calibrated, probability of failure, risk score, detection, production-ready, insurance-ready.

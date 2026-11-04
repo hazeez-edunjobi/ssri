@@ -60,3 +60,13 @@ Static terrain/environment features only for susceptibility ranking. Event dates
 ## Splits (release shell)
 
 Whole **5° blocks** with configurable buffer (default 50 km). Random 70/15/15 is **not** used when `SSRI_RELEASE_SHELL=true`.
+
+## Owner minimums (production defaults)
+
+| Requirement | Default |
+|-------------|---------|
+| Tiles | ≥ 300 |
+| Separate 5° blocks | ≥ 8 |
+| Held-out blocks | ≥ 3 |
+
+Demo/SYNTHETIC runs may lower these via `SSRI_RELEASE_SHELL_MIN_*` env vars. Empty (all-sentinel) channels cause **FAIL**.
