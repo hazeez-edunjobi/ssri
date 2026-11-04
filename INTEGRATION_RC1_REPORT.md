@@ -11,7 +11,7 @@ All SSRI release-shell and credibility research work is consolidated on **`integ
 | Item | Value | Label |
 |------|-------|-------|
 | Integration branch | `integration/ssri-shell-rc1` | VERIFIED |
-| Tip at report time | `002f61add5c15882ba5315274b11a647bc125c74` (tag `archive/ssri-shell-rc1`) | VERIFIED |
+| Tip at report time | tag `archive/ssri-shell-rc1` (move with branch tip; do not treat an in-doc SHA as frozen) | VERIFIED |
 | Base `main` | `9a1a44cbc9b9012e1f960a9fc9d37eb4c823e29d` | VERIFIED |
 | Merged `poc/release-shell` | `35e817bc3fb5b594e63f60ffa86904e8682ed79d` / tag `archive/release-shell-final` | VERIFIED |
 | Merged `poc/landslide-credibility-v3` | `374f2bd90fb2d7cfc5fff99ae7a999e6c6406b4e` / tag `archive/credibility-v3-final` | VERIFIED |
