@@ -73,25 +73,31 @@ From `outputs/verify_report.json` (VERIFIED):
 | `/training/operator` | Classic `/training/*` | Classic preview | Classic job | No shell eval UI | Promote/active path |
 | Release-shell routes | Yes | Yes | Yes (3 seeds) | Yes | Via `/training/models` + assess `checkpoint` |
 
-Non-developers: follow **`OWNER_API_GUIDE.md`**.
+Non-developers: prefer **`/shell`**, else **`OWNER_API_GUIDE.md`**.
+
+**Superseded by consolidation:** full RC1 status lives on **`integration/ssri-shell-rc1`** — see `INTEGRATION_RC1_REPORT.md` and `CONSOLIDATION_LOG.md`.
 
 ---
 
-## Orphan branches (MERGE_CHECKLIST)
+## Orphan branches (resolved on integration)
 
-- DeepSlide 9: **`poc/landslide-credibility-v3`** (`poc/landslide4sense/integration/test_deepslide_engine.py`)
-- v3 slope index / PROTOCOL_v3: **`poc/landslide-credibility-v3`** (`poc/landslide_credibility_v3/`); some files may still be uncommitted there
-- Softmax PoC patches: also under credibility / due-diligence `proposed_patches/`
+| Asset | Status on `integration/ssri-shell-rc1` |
+|-------|----------------------------------------|
+| DeepSlide 9 | Present, unwired — `poc/landslide4sense/integration/test_deepslide_engine.py` |
+| v3 slope index / PROTOCOL_v3 | Present under `poc/landslide_credibility_v3/` |
+| Softmax / assess proposed patches | Kept as research archives; shell implements equivalents behind the flag |
+| Archive tags | `archive/release-shell-final`, `archive/credibility-v3-final`, `archive/due-diligence-final`, `archive/ssri-shell-rc1` |
 
 ---
 
-## Test counts
+## Test counts (integration RC1 — VERIFIED)
 
 | Suite | Result | Label |
-|-------|--------|-------|
+|-------|------:|-------|
 | Existing assess suite | 93 passed | VERIFIED |
-| DeepSlide 9 | not on branch | UNKNOWN / listed in MERGE_CHECKLIST |
-| Release-shell tests | 16 passed | VERIFIED |
+| DeepSlide 9 | 9 passed | VERIFIED (optional `smp`+`h5py` on virgin Poetry env) |
+| Release-shell tests | 21 passed | VERIFIED (16 + assess-route 4 + jobs-result 1) |
+| Combined matrix flag OFF/ON | 123 passed each | VERIFIED |
 
 ---
 
@@ -107,4 +113,4 @@ Non-developers: follow **`OWNER_API_GUIDE.md`**.
 
 ## Integrity statement
 
-Frozen protocols v1/v2/v3 and their frozen outputs were **not edited** on this branch. Existing **93** tests pass with default flag **off**. DeepSlide remains **unwired** and its 9 tests live on **`poc/landslide-credibility-v3`**, not this checkout. **Nothing merged or deployed.** No production weights shipped. Claims limited to gate strings and **NOT_VALIDATED**.
+Frozen protocols v1/v2/v3 and their frozen outputs were **not edited**. Existing **93** tests pass with default flag **off**. DeepSlide remains **unwired**. **Nothing merged to main or deployed.** No production weights shipped. Claims limited to gate strings and **NOT_VALIDATED**.
