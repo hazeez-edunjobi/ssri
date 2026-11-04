@@ -1,0 +1,3 @@
+# Stakeholder summary — upload-and-train shell
+
+SSRI can now support an **upload → validate → train → evaluate → assess** research workflow on a feature-flagged branch (`SSRI_RELEASE_SHELL`). Owners upload a labelled ZIP, get a readable validation report, start training, and receive an automatic held-out evaluation that always compares the model to a **slope-only** baseline. Assess without a checkpoint returns **no trained model**. Scores are framed as **relative susceptibility rankings**; status stays **NOT_VALIDATED**. Nothing is merged or deployed; no production weights ship. Hazards without enough labelled tiles are marked insufficient. The shell must never be used for insurance, engineering, safety, or emergency decisions.
