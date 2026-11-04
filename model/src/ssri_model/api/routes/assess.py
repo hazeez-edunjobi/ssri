@@ -213,6 +213,30 @@ def assess_endpoint(
     assessment_id = f"assess-{secrets.token_hex(8)}"
 
     if body.checkpoint is None:
+        from ssri_model.release_shell.flags import (
+            default_limitations,
+            release_shell_enabled,
+        )
+
+        if release_shell_enabled():
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(  # type: ignore[return-value]
+                status_code=200,
+                content={
+                    "status": "no_trained_model",
+                    "message": (
+                        "No trained model checkpoint was provided. "
+                        "Upload a labelled dataset, train, then select a checkpoint "
+                        "before running assess."
+                    ),
+                    "scientific_validation_status": "NOT_VALIDATED",
+                    "score_framing": "relative susceptibility rankings",
+                    "limitations": default_limitations(),
+                    "request_id": request_id,
+                    "assessment_id": assessment_id,
+                },
+            )
         raise InvalidServiceRequestError("Assessment requires 'checkpoint'.")
 
     features, acquisition_notes = _resolve_features(
@@ -232,6 +256,13 @@ def assess_endpoint(
     )
     dataset_name, dataset_version = dataset_manifest_fields(payload)
     is_fixture = enforce_fixture_checkpoint_policy(dataset_name)
+
+    from ssri_model.release_shell.flags import default_limitations, release_shell_enabled
+    from ssri_model.release_shell.meta import load_shell_meta
+
+    shell_meta = load_shell_meta(checkpoint_path) if release_shell_enabled() else None
+    query_lat = body.point.latitude if body.point is not None else None
+    query_lon = body.point.longitude if body.point is not None else None
 
     cfg = UncertaintyConfig(mc_samples=body.mc_samples, seed=42)
     samples = run_mc_dropout(model, features, config=cfg)
@@ -262,45 +293,100 @@ def assess_endpoint(
         assessment_id=assessment_id,
         model_version=body.model_version,
     )
-    explanation = build_template_explanation(result.hazard_profiles)
 
+    if release_shell_enabled():
+        from ssri_model.release_shell.assess_contract import build_shell_hazard_profiles
+
+        raw_scores: dict[str, float] = {}
+        for profile in result.hazard_profiles:
+            pdata = profile.to_dict()
+            name = str(pdata.get("hazard_type") or "")
+            score = pdata.get("susceptibility_score")
+            if score is None:
+                score = pdata.get("point_estimate")
+            if name and score is not None:
+                raw_scores[name] = float(score)
+        shell_profiles = build_shell_hazard_profiles(
+            shell_meta=shell_meta,
+            raw_scores=raw_scores,
+            query_lat=query_lat,
+            query_lon=query_lon,
+            requested=selected,
+        )
+        # Replace scored profiles with contract-compliant entries (no score if not evaluated)
+        explanation = (
+            "Relative susceptibility rankings only where gate_status is evaluated. "
+            "Status remains NOT_VALIDATED. Not for insurance, engineering, safety, "
+            "or emergency decisions."
+        )
+        result_profiles = shell_profiles
+    else:
+        explanation = build_template_explanation(result.hazard_profiles)
+        result_profiles = [profile.to_dict() for profile in result.hazard_profiles]
     spatial_url: str | None = None
     if body.produce_geotiff and selected_indices:
         with torch.no_grad():
             model.eval()
             logits = model(features)
-            probs = torch.sigmoid(logits)[0, selected_indices[0]].detach().cpu().numpy()
+            from ssri_model.release_shell.flags import use_assess_softmax
+            from ssri_model.release_shell.probability import (
+                logits_to_class_probabilities,
+                logits_to_legacy_sigmoid,
+            )
+
+            probs_full = (
+                logits_to_class_probabilities(logits)
+                if use_assess_softmax()
+                else logits_to_legacy_sigmoid(logits)
+            )
+            probs = probs_full[0, selected_indices[0]].detach().cpu().numpy()
+        from ssri_model.release_shell.flags import use_assess_softmax as _uas
+
+        score_name = "ranking_score" if _uas() else "probability"
         tif_path = (
             output_root
             / "assessments"
             / assessment_id
-            / f"{selected[0]}_probability.tif"
+            / f"{selected[0]}_{score_name}.tif"
         )
         write_probability_geotiff(tif_path, probs)
         storage = build_object_storage_from_env()
         key = storage.put_bytes(
-            f"assessments/{assessment_id}/{selected[0]}_probability.tif",
+            f"assessments/{assessment_id}/{selected[0]}_{score_name}.tif",
             tif_path.read_bytes(),
             content_type="image/tiff",
         )
         expires = int(os.getenv("SSRI_OBJECT_STORAGE_URL_EXPIRES", "3600"))
         spatial_url = storage.signed_url(key, expires_seconds=expires)
 
+    notes = list(result.notes) + acquisition_notes + list(domain.notes) + [
+        f"requested_by={principal.key_id}",
+        f"request_id={request_id}",
+        f"checkpoint_sha256={checkpoint_sha256}",
+        f"is_fixture_checkpoint={str(is_fixture).lower()}",
+    ]
+
+    if release_shell_enabled():
+        notes.extend(
+            [
+                "score_framing=relative_susceptibility_rankings",
+                "scientific_validation_status=NOT_VALIDATED",
+                *[f"limitation={item}" for item in default_limitations()],
+            ]
+        )
+        if shell_meta and shell_meta.get("data_hash"):
+            notes.append(f"data_hash={shell_meta['data_hash']}")
+        if shell_meta and shell_meta.get("training_region"):
+            notes.append(
+                "split_policy=whole_5deg_blocks_with_buffer"
+            )
     response = AssessResponseBody(
         assessment_id=result.assessment_id,
-        hazard_profiles=[profile.to_dict() for profile in result.hazard_profiles],
+        hazard_profiles=result_profiles,
         explanation=explanation,
         model_version=result.model_version,
         spatial_output_url=spatial_url,
-        notes=list(result.notes)
-        + acquisition_notes
-        + list(domain.notes)
-        + [
-            f"requested_by={principal.key_id}",
-            f"request_id={request_id}",
-            f"checkpoint_sha256={checkpoint_sha256}",
-            f"is_fixture_checkpoint={str(is_fixture).lower()}",
-        ],
+        notes=notes,
         request_id=request_id,
         checkpoint_sha256=checkpoint_sha256,
         checkpoint_dataset_name=dataset_name,

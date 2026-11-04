@@ -1,0 +1,628 @@
+{
+  "steps": {
+    "b_no_trained_model": {
+      "status_code": 200,
+      "body": {
+        "status": "no_trained_model",
+        "message": "No trained model checkpoint was provided. Upload a labelled dataset, train, then select a checkpoint before running assess.",
+        "scientific_validation_status": "NOT_VALIDATED",
+        "score_framing": "relative susceptibility rankings",
+        "limitations": [
+          "trained only on the uploaded data's geography; not validated elsewhere",
+          "slope alone often matches or beats trained models",
+          "scores are relative susceptibility rankings, not probabilities or risk estimates",
+          "scientific status remains NOT_VALIDATED; not independently reviewed",
+          "must never be used for insurance, engineering, safety, or emergency decisions"
+        ],
+        "request_id": "assess-b415c349f585",
+        "assessment_id": "assess-6549894ae8dbf3c3"
+      },
+      "pass": true
+    },
+    "c_broken_zip": {
+      "upload_status": 200,
+      "upload_body": {
+        "dataset_id": "ds_cdecb79d4bbb",
+        "uploaded": true,
+        "bytes": 131
+      },
+      "validate": {
+        "validation": {
+          "overall": "FAIL",
+          "can_train": false,
+          "scientific_validation_status": "NOT_VALIDATED",
+          "checks": [
+            {
+              "name": "samples_present",
+              "status": "FAIL",
+              "message": "No sample folders found.",
+              "detail": {}
+            },
+            {
+              "name": "schema_shapes",
+              "status": "PASS",
+              "message": "Channel count and shapes OK.",
+              "detail": {}
+            },
+            {
+              "name": "coordinates",
+              "status": "PASS",
+              "message": "All samples have coordinates.",
+              "detail": {}
+            },
+            {
+              "name": "crs",
+              "status": "PASS",
+              "message": "CRS present on labels.",
+              "detail": {}
+            },
+            {
+              "name": "channel_quality",
+              "status": "PASS",
+              "message": "No channel is entirely nodata/constant.",
+              "detail": {
+                "channels": {
+                  "elevation": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "slope": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "plan_curvature": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "profile_curvature": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "twi": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "relative_relief": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "valley_depth": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "ndvi": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "ndwi": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "clay_mineral_ratio": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "iron_oxide_index": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "gravity": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  },
+                  "magnetics": {
+                    "nodata_frac": 0.0,
+                    "constant_frac": 0.0,
+                    "n": 0
+                  }
+                }
+              }
+            },
+            {
+              "name": "duplicates",
+              "status": "PASS",
+              "message": "Sample ids unique.",
+              "detail": {}
+            },
+            {
+              "name": "spatial_split",
+              "status": "FAIL",
+              "message": "Cannot build spatial split without coordinates and CRS.",
+              "detail": {}
+            },
+            {
+              "name": "label_vs_imagery_dates",
+              "status": "PASS",
+              "message": "No label/imagery date mismatches flagged (or dates absent).",
+              "detail": {}
+            },
+            {
+              "name": "pseudo_absence",
+              "status": "WARN",
+              "message": "Pseudo-absence distance to positives is not encoded in Stage 2.5 tiles; operators should document absence design outside this ZIP.",
+              "detail": {}
+            },
+            {
+              "name": "hazard_minimums",
+              "status": "WARN",
+              "message": "All hazards are DISABLED for skill claims (below minimum labelled data). Training may still run for shell demos if schema checks PASS, but gate status cannot reach 'evaluated'.",
+              "detail": {
+                "minimums_prominence": {
+                  "tiles_per_hazard": 4,
+                  "blocks": 4,
+                  "held_out_blocks": 2
+                }
+              }
+            }
+          ],
+          "hazards": [
+            {
+              "hazard": "subsidence",
+              "labelled_tiles": 0,
+              "blocks_with_labels": 0,
+              "status": "DISABLED",
+              "reason": "insufficient labelled data (need \u22654 tiles across \u22654 blocks with \u22652 held out; found tiles=0, blocks=0)"
+            },
+            {
+              "hazard": "landslide",
+              "labelled_tiles": 0,
+              "blocks_with_labels": 0,
+              "status": "DISABLED",
+              "reason": "insufficient labelled data (need \u22654 tiles across \u22654 blocks with \u22652 held out; found tiles=0, blocks=0)"
+            },
+            {
+              "hazard": "sinkhole",
+              "labelled_tiles": 0,
+              "blocks_with_labels": 0,
+              "status": "DISABLED",
+              "reason": "insufficient labelled data (need \u22654 tiles across \u22654 blocks with \u22652 held out; found tiles=0, blocks=0)"
+            }
+          ],
+          "label_pixel_counts": {
+            "subsidence": {},
+            "landslide": {},
+            "sinkhole": {}
+          },
+          "minimums": {
+            "tiles_per_hazard": 4,
+            "blocks": 4,
+            "held_out_blocks": 2,
+            "buffer_km": 0.0,
+            "note": "Shown prominently: defaults 300 tiles / 8 blocks / 3 held out."
+          },
+          "spatial_split": null,
+          "n_samples": 0,
+          "median_nn_km": null,
+          "score_framing": "relative susceptibility rankings (not probabilities or risk)"
+        }
+      },
+      "train_refuse_status": 400,
+      "train_refuse": {
+        "error": {
+          "code": "VALIDATION_FAILED",
+          "message": "Training refused: No sample folders found.",
+          "validation": {
+            "overall": "FAIL",
+            "can_train": false,
+            "scientific_validation_status": "NOT_VALIDATED",
+            "checks": [
+              {
+                "name": "samples_present",
+                "status": "FAIL",
+                "message": "No sample folders found.",
+                "detail": {}
+              },
+              {
+                "name": "schema_shapes",
+                "status": "PASS",
+                "message": "Channel count and shapes OK.",
+                "detail": {}
+              },
+              {
+                "name": "coordinates",
+                "status": "PASS",
+                "message": "All samples have coordinates.",
+                "detail": {}
+              },
+              {
+                "name": "crs",
+                "status": "PASS",
+                "message": "CRS present on labels.",
+                "detail": {}
+              },
+              {
+                "name": "channel_quality",
+                "status": "PASS",
+                "message": "No channel is entirely nodata/constant.",
+                "detail": {
+                  "channels": {
+                    "elevation": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "slope": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "plan_curvature": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "profile_curvature": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "twi": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "relative_relief": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "valley_depth": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "ndvi": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "ndwi": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "clay_mineral_ratio": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "iron_oxide_index": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "gravity": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    },
+                    "magnetics": {
+                      "nodata_frac": 0.0,
+                      "constant_frac": 0.0,
+                      "n": 0
+                    }
+                  }
+                }
+              },
+              {
+                "name": "duplicates",
+                "status": "PASS",
+                "message": "Sample ids unique.",
+                "detail": {}
+              },
+              {
+                "name": "spatial_split",
+                "status": "FAIL",
+                "message": "Cannot build spatial split without coordinates and CRS.",
+                "detail": {}
+              },
+              {
+                "name": "label_vs_imagery_dates",
+                "status": "PASS",
+                "message": "No label/imagery date mismatches flagged (or dates absent).",
+                "detail": {}
+              },
+              {
+                "name": "pseudo_absence",
+                "status": "WARN",
+                "message": "Pseudo-absence distance to positives is not encoded in Stage 2.5 tiles; operators should document absence design outside this ZIP.",
+                "detail": {}
+              },
+              {
+                "name": "hazard_minimums",
+                "status": "WARN",
+                "message": "All hazards are DISABLED for skill claims (below minimum labelled data). Training may still run for shell demos if schema checks PASS, but gate status cannot reach 'evaluated'.",
+                "detail": {
+                  "minimums_prominence": {
+                    "tiles_per_hazard": 4,
+                    "blocks": 4,
+                    "held_out_blocks": 2
+                  }
+                }
+              }
+            ],
+            "hazards": [
+              {
+                "hazard": "subsidence",
+                "labelled_tiles": 0,
+                "blocks_with_labels": 0,
+                "status": "DISABLED",
+                "reason": "insufficient labelled data (need \u22654 tiles across \u22654 blocks with \u22652 held out; found tiles=0, blocks=0)"
+              },
+              {
+                "hazard": "landslide",
+                "labelled_tiles": 0,
+                "blocks_with_labels": 0,
+                "status": "DISABLED",
+                "reason": "insufficient labelled data (need \u22654 tiles across \u22654 blocks with \u22652 held out; found tiles=0, blocks=0)"
+              },
+              {
+                "hazard": "sinkhole",
+                "labelled_tiles": 0,
+                "blocks_with_labels": 0,
+                "status": "DISABLED",
+                "reason": "insufficient labelled data (need \u22654 tiles across \u22654 blocks with \u22652 held out; found tiles=0, blocks=0)"
+              }
+            ],
+            "label_pixel_counts": {
+              "subsidence": {},
+              "landslide": {},
+              "sinkhole": {}
+            },
+            "minimums": {
+              "tiles_per_hazard": 4,
+              "blocks": 4,
+              "held_out_blocks": 2,
+              "buffer_km": 0.0,
+              "note": "Shown prominently: defaults 300 tiles / 8 blocks / 3 held out."
+            },
+            "spatial_split": null,
+            "n_samples": 0,
+            "median_nn_km": null,
+            "score_framing": "relative susceptibility rankings (not probabilities or risk)"
+          }
+        }
+      },
+      "pass": true
+    },
+    "d_synthetic": {
+      "upload": 200,
+      "validation_overall": "WARN",
+      "can_train": true,
+      "start_status": 202,
+      "start": {
+        "job_id": "job-1eef928af93514aa",
+        "run_id": "run_e11338f3bfed",
+        "message": "Training started. Poll /api/v1/jobs/{job_id}. Held-out evaluation runs automatically after training.",
+        "data_hash": "9709C05E93A8B26C788166ADBBBF87794CD1113AD5D2841A8AA586846E9A6772",
+        "scientific_validation_status": "NOT_VALIDATED",
+        "limitations": [
+          "trained only on the uploaded data's geography; not validated elsewhere",
+          "slope alone often matches or beats trained models",
+          "scores are relative susceptibility rankings, not probabilities or risk estimates",
+          "scientific status remains NOT_VALIDATED; not independently reviewed",
+          "must never be used for insurance, engineering, safety, or emergency decisions"
+        ]
+      },
+      "job_final": {
+        "job_id": "job-1eef928af93514aa",
+        "request_id": "shell-train-run_e11338f3bfed",
+        "job_type": "training",
+        "status": "completed",
+        "scientific_validation_status": "NOT_VALIDATED",
+        "created_at": "2026-11-04T21:51:11.793852+00:00",
+        "started_at": "2026-11-04T21:51:11.827134+00:00",
+        "completed_at": "2026-11-04T21:51:16.754437+00:00",
+        "submitted_by_key_id": "development",
+        "auth_role": "operator",
+        "artifacts": {
+          "prediction": null,
+          "confidence": null,
+          "probabilities": null,
+          "metadata": null,
+          "manifest_path": null
+        },
+        "error_code": null,
+        "error_message": null
+      },
+      "pass": true
+    },
+    "e_assess": {
+      "pass": true,
+      "models_seen": 2,
+      "status_code": 200,
+      "body_keys": [
+        "assessment_id",
+        "hazard_profiles",
+        "explanation",
+        "model_version",
+        "spatial_output_url",
+        "notes",
+        "request_id",
+        "checkpoint_sha256",
+        "checkpoint_dataset_name",
+        "checkpoint_dataset_version",
+        "is_fixture_checkpoint",
+        "domain_similarity_calibrated"
+      ],
+      "notes_sample": [
+        "Confidence tiers use configurable calibration parameters, not scientifically validated thresholds.",
+        "domain_similarity_calibrated=false",
+        "domain_similarity_reason=no_SSRI_DOMAIN_CENTROID_PATH",
+        "requested_by=development",
+        "request_id=assess-52b1519f0ea5",
+        "checkpoint_sha256=78cd3111cf1fe955e34c85d1d61f2e39731ce06208ec5b943dcfe35e880e0b76",
+        "is_fixture_checkpoint=false",
+        "score_framing=relative_susceptibility_rankings"
+      ],
+      "checkpoint": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\release_shell\\outputs\\acceptance_tmp\\service-outputs\\training\\models\\ssri-model-8eaafd56a3\\best.pt",
+      "model_id": "ssri-model-8eaafd56a3",
+      "evaluation_status": 200,
+      "evaluation": {
+        "status": "completed",
+        "scientific_validation_status": "NOT_VALIDATED",
+        "score_framing": "relative susceptibility rankings",
+        "checkpoint_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\release_shell\\outputs\\acceptance_tmp\\service-outputs\\training\\models\\ssri-model-8eaafd56a3\\best.pt",
+        "checkpoint_sha256": "78CD3111CF1FE955E34C85D1D61F2E39731CE06208EC5B943DCFE35E880E0B76",
+        "data_hash": "9709C05E93A8B26C788166ADBBBF87794CD1113AD5D2841A8AA586846E9A6772",
+        "split_policy": "whole_5deg_blocks_with_buffer",
+        "split_manifest": {
+          "test": [
+            "SYNTHETIC_tile_10",
+            "SYNTHETIC_tile_01",
+            "SYNTHETIC_tile_06"
+          ],
+          "validation": [
+            "SYNTHETIC_tile_02",
+            "SYNTHETIC_tile_08"
+          ],
+          "train": [
+            "SYNTHETIC_tile_04",
+            "SYNTHETIC_val_placeholder",
+            "SYNTHETIC_tile_00",
+            "SYNTHETIC_tile_07",
+            "SYNTHETIC_tile_05",
+            "SYNTHETIC_tile_11",
+            "SYNTHETIC_tile_03",
+            "SYNTHETIC_tile_09"
+          ]
+        },
+        "seeds": [
+          42,
+          43,
+          44
+        ],
+        "hazards": {
+          "subsidence": {
+            "gate_status": "trained, no demonstrated skill beyond slope",
+            "roc_auc": 0.48046875,
+            "pr_auc": 0.30964196437328945,
+            "threshold_from_validation": 0.5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "iou": 0.0,
+            "confusion": {
+              "tp": 0,
+              "fp": 0,
+              "fn": 64,
+              "tn": 128
+            },
+            "baselines": {
+              "majority_constant_score": 0.0,
+              "slope_only_auc": 0.4810791015625,
+              "slope_threshold": 0.95,
+              "delta_auc_vs_slope": -0.0006103515625,
+              "delta_auc_ci95": [
+                -0.0465087890625,
+                0.05224609375
+              ],
+              "model_auc_ci95": [
+                0.46826171875,
+                0.49267578125
+              ]
+            },
+            "per_block": {
+              "30_-90": {
+                "n": 64,
+                "roc_auc": null
+              },
+              "35_-125": {
+                "n": 64,
+                "roc_auc": null
+              },
+              "40_-110": {
+                "n": 64,
+                "roc_auc": null
+              }
+            },
+            "frac_held_out_blocks_auc_gt_0_5": 0.0,
+            "brier_informational": 0.22706380386934366,
+            "ece_informational": 0.08597556004921596,
+            "warn_near_constant_output": false,
+            "n_test_pixels_subsampled": 192
+          },
+          "landslide": {
+            "gate_status": "trained, no demonstrated skill beyond slope",
+            "roc_auc": 0.4813232421875,
+            "pr_auc": 0.6575101313227993,
+            "threshold_from_validation": 0.5,
+            "precision": 0.75,
+            "recall": 0.0234375,
+            "f1": 0.045454545454545456,
+            "iou": 0.023255813953488372,
+            "confusion": {
+              "tp": 3,
+              "fp": 1,
+              "fn": 125,
+              "tn": 63
+            },
+            "baselines": {
+              "majority_constant_score": 0.0,
+              "slope_only_auc": 0.5189208984375,
+              "slope_threshold": 0.95,
+              "delta_auc_vs_slope": -0.03759765625,
+              "delta_auc_ci95": [
+                -0.077880859375,
+                -0.0042724609375
+              ],
+              "model_auc_ci95": [
+                0.48095703125,
+                0.481689453125
+              ]
+            },
+            "per_block": {
+              "30_-90": {
+                "n": 64,
+                "roc_auc": null
+              },
+              "35_-125": {
+                "n": 64,
+                "roc_auc": null
+              },
+              "40_-110": {
+                "n": 64,
+                "roc_auc": null
+              }
+            },
+            "frac_held_out_blocks_auc_gt_0_5": 0.0,
+            "brier_informational": 0.291514788734791,
+            "ece_informational": 0.25936434930190444,
+            "warn_near_constant_output": false,
+            "n_test_pixels_subsampled": 192
+          },
+          "sinkhole": {
+            "status": "insufficient_pixels",
+            "gate_status": "trained, no demonstrated skill beyond slope",
+            "message": "Not enough labelled pixels on held-out blocks."
+          }
+        },
+        "limitations": [
+          "trained only on the uploaded data's geography; not validated elsewhere",
+          "slope alone often matches or beats trained models",
+          "scores are relative susceptibility rankings, not probabilities or risk estimates",
+          "scientific status remains NOT_VALIDATED; not independently reviewed",
+          "must never be used for insurance, engineering, safety, or emergency decisions"
+        ],
+        "notes": [
+          "Evaluation uses held-out blocks only.",
+          "ECE and Brier are informational only (not gates).",
+          "Never claim validated risk, probability, or detection."
+        ]
+      }
+    }
+  },
+  "pass": true
+}
