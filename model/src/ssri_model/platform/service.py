@@ -18,10 +18,9 @@ from ssri_model.manual_training.validation import validate_training_dataset
 from ssri_model.manual_training.registry import ModelRegistry
 from ssri_model.manual_training.runner import run_manual_training
 from ssri_model.manual_training.storage import TrainingStorage
+from ssri_model.manual_training.upload_limits import reject_if_upload_too_large
 from ssri_model.platform.models import DatasetVersion, PlatformModel
 from ssri_model.platform.store import MemoryPlatformStore, PlatformError
-
-MAX_UPLOAD_BYTES = 500 * 1024 * 1024
 
 
 def _now() -> str:
@@ -50,12 +49,10 @@ def register_dataset_zip(
     dataset = store.get_dataset(dataset_id)
     if dataset is None or dataset.user_id != user_id:
         raise PlatformError("Dataset not found.", code="NOT_FOUND", status=404)
-    if len(content) > MAX_UPLOAD_BYTES:
-        raise PlatformError(
-            f"That file is too large. The maximum upload is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB.",
-            code="UPLOAD_TOO_LARGE",
-            status=400,
-        )
+    try:
+        reject_if_upload_too_large(len(content))
+    except ManualTrainingError as exc:
+        raise PlatformError(exc.message, code=exc.code, status=413) from exc
     lowered = filename.lower()
     if lowered.endswith(".csv") or looks_like_csv_bundle(filename, content):
         return _register_csv(
@@ -86,7 +83,8 @@ def register_dataset_zip(
             content=content,
         )
     except ManualTrainingError as exc:
-        raise PlatformError(exc.message, code=exc.code, status=400) from exc
+        status = 413 if exc.code == "UPLOAD_TOO_LARGE" else 400
+        raise PlatformError(exc.message, code=exc.code, status=status) from exc
     version_number = store.next_version_number(dataset_id)
     version_id = str(uuid.uuid4())
     safe_name = _safe_object_name(filename)
@@ -286,7 +284,8 @@ def _register_csv(
         channels = None
         resolution = analysis.get("x_spacing")
     except ManualTrainingError as exc:
-        raise PlatformError(exc.message, code=exc.code, status=400) from exc
+        status = 413 if exc.code == "UPLOAD_TOO_LARGE" else 400
+        raise PlatformError(exc.message, code=exc.code, status=status) from exc
     version_id = str(uuid.uuid4())
     safe_name = _safe_object_name(filename)
     object_path = f"{user_id}/{dataset_id}/{version_id}/{safe_name}"

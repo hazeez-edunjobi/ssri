@@ -1,0 +1,151 @@
+{
+  "status": "FAIL",
+  "generated_at": "2026-10-01",
+  "scientific_validation_status": "NOT_VALIDATED",
+  "deployment": {
+    "environment": "Render API, distributed mode (PostgreSQL and Redis connected)",
+    "deployment_url": "unknown — no frontend URL is recorded in the repository. https://ssri.vercel.app responded but is an unrelated PHP site.",
+    "api_url": "https://ssri-api.onrender.com",
+    "commit": "not exposed by /api/v1/health or /api/v1/ready",
+    "service_name": "ssri-inference",
+    "model": "not loaded during this self-test",
+    "checkpoint": "not observable",
+    "demo_mode": "not observable; unauthenticated assess never reached the demo branch. Repository default is SSRI_DEMO_MODE=false.",
+    "execution_mode": "distributed",
+    "docs_enabled": true
+  },
+  "authentication": {
+    "registration": "BLOCKED after input checks. Invalid email rejected (400). Password shorter than 6 characters rejected (422). A valid-format disposable signup then returned 429 email rate limit exceeded, so no session was created.",
+    "email_verification": "NOT TESTED — no account was created",
+    "login": "FAIL to complete. Nonexistent account and wrong password both return 400 Invalid login credentials, which avoids account enumeration. No successful login.",
+    "session": "BLOCKED — no access token",
+    "logout": "NOT TESTED",
+    "protected_api": "PASS for rejection. /api/v1/assess and /api/v1/inference return 401 AUTHENTICATION_REQUIRED with no token, and 401 INVALID_CREDENTIALS with a fake bearer. /api/v1/platform/me returns 401 UNAUTHENTICATED.",
+    "note": "Website login is Supabase and authorizes /api/v1/platform. Assess and inference use a separate API-key principal. A user session does not, by itself, authorize model inference."
+  },
+  "model": {
+    "architecture_intended_for_assess": "SSRIModel",
+    "input_channels": 13,
+    "class_vocabulary_assess": ["subsidence", "landslide", "sinkhole"],
+    "class_vocabulary_foundation": ["landslide", "subsidence", "liquefaction"],
+    "checkpoint": "No Stage 2.5 checkpoint was reachable on the deployed host. Local foundation files are not loaded by the assess loader.",
+    "inference": "BLOCKED — requests stopped at authentication",
+    "scientific_validation_status": "NOT_VALIDATED"
+  },
+  "data_contract": {
+    "channel_order_in_code": [
+      "elevation",
+      "slope",
+      "plan_curvature",
+      "profile_curvature",
+      "twi",
+      "relative_relief",
+      "valley_depth",
+      "ndvi",
+      "ndwi",
+      "clay_mineral_ratio",
+      "iron_oxide_index",
+      "gravity",
+      "magnetics"
+    ],
+    "channel_identity_enforced_by_model": false,
+    "nodata_sentinel": -9999.0,
+    "deployed_dataset": "NOT TESTED — server filesystem was not accessible",
+    "local_usgs_v3_spectral_channels": "ndvi, ndwi, clay_mineral_ratio, and iron_oxide_index are entirely nodata on all 240 stacks"
+  },
+  "probability_validation": {
+    "assess_transform_in_repository": "sigmoid",
+    "geospatial_runner_transform_in_repository": "softmax",
+    "live_probability_sum": "NOT TESTED",
+    "mutually_exclusive": "FAIL in repository assess path; not observed live"
+  },
+  "uncertainty": {
+    "default_dropout": 0.0,
+    "stochastic": false,
+    "live_samples": "NOT TESTED",
+    "interpretation": "Uncertainty is unavailable as calibrated stochastic uncertainty on the default SSRIModel. Do not treat a zero-width interval as a measurement."
+  },
+  "geospatial": {
+    "live_raster": "NOT TESTED",
+    "runner_contract": "softmax probabilities, argmax class, nodata where any input channel is -9999, CRS and transform copied from the inference grid"
+  },
+  "api": {
+    "health": {"status": 200, "cold_ms": 73990, "warm_ms": 2163, "body": {"status": "ok", "service": "ssri-inference"}, "checks_model": false},
+    "ready": {"status": 200, "ms": 6416, "infrastructure_ready": true, "mode": "distributed", "checks_model": false},
+    "assess": {"unauthenticated": 401, "invalid_token": 401},
+    "inference": {"unauthenticated": 401},
+    "error_shape": "JSON error code and message. No stack trace observed."
+  },
+  "frontend_to_model": {
+    "status": "BLOCKED",
+    "reason": "Deployed frontend URL is not in the repository. Model route rejected the request before inference."
+  },
+  "local_software_tests": {
+    "command": "cd model; SSRI_EXECUTION_MODE=local; poetry run pytest --tb=no -q",
+    "passed": 652,
+    "failed": 1,
+    "skipped": 2,
+    "seconds": 513.67,
+    "failed_tests": [
+      "tests/test_manual_training.py::test_training_api_upload_validate_and_start"
+    ],
+    "note": "The full run used --tb=no, so the assertion text was not captured. Re-running that test alone passed in 31.52s. The failure did not reproduce. Skipped tests are the two distributed integration tests and are not passes."
+  },
+  "failures": [
+    {
+      "test": "Real model inference on the deployment",
+      "expected": "A valid 13-channel input produces finite 3-class softmax probabilities from SSRIModel",
+      "actual": "POST /api/v1/assess and POST /api/v1/inference return 401 before any checkpoint is loaded",
+      "root_cause": "Production API-key authentication is enabled. No production API key was used. The route also expects server-side checkpoint and feature paths, not an uploaded tensor.",
+      "file": "model/src/ssri_model/api/routes/assess.py",
+      "function": "assess_endpoint",
+      "severity": "high",
+      "classification": "BLOCKED"
+    },
+    {
+      "test": "Readiness reports model load",
+      "expected": "Ready is false when the assessment model cannot be loaded",
+      "actual": "GET /api/v1/ready returned 200 ready=true with PostgreSQL and Redis only. The payload has no model or checkpoint field.",
+      "root_cause": "readiness() validates service config, output disk, and infrastructure health, not a checkpoint.",
+      "file": "model/src/ssri_model/api/routes/health.py",
+      "function": "readiness",
+      "severity": "high",
+      "classification": "FAIL"
+    },
+    {
+      "test": "Assess probabilities are mutually exclusive",
+      "expected": "softmax over subsidence, landslide, and sinkhole sums to 1",
+      "actual": "Not observed live. Repository assess path applies torch.sigmoid per logit. The geospatial runner applies softmax.",
+      "root_cause": "run_mc_dropout and the GeoTIFF branch use sigmoid on a model trained with masked cross-entropy.",
+      "file": "model/src/ssri_model/uncertainty/__init__.py",
+      "function": "run_mc_dropout",
+      "severity": "high",
+      "classification": "FAIL"
+    },
+    {
+      "test": "User session can run an assessment",
+      "expected": "After login, the assessment request is authenticated as that user",
+      "actual": "Assess uses API-key auth. Platform routes use the Supabase access token. They are different credentials.",
+      "root_cause": "submitAssess attaches NEXT_PUBLIC_SSRI_API_KEY, not the Supabase session.",
+      "file": "frontend/lib/api.ts",
+      "function": "authHeaders",
+      "severity": "high",
+      "classification": "FAIL"
+    }
+  ],
+  "warnings": [
+    "Swagger UI is enabled at /docs on the deployed API.",
+    "Default SSRIModel dropout is 0, so MC samples do not vary. That is not calibrated uncertainty.",
+    "The model does not check that channel 8 is NDVI. Order is the caller's responsibility via CHANNEL_NAMES.",
+    "Foundation checkpoints label v2 internally as ssri-foundation-v1 and are not assess-loadable.",
+    "Demo mode could not be read from the live process. It is checked only after API-key authentication.",
+    "Invalid login and unknown account return the same message."
+  ],
+  "limitations": [
+    "Software results are not scientific validation. Status remains NOT_VALIDATED.",
+    "Liquefaction is not sinkhole.",
+    "Local USGS v3 stacks have empty NDVI, NDWI, clay-mineral, and iron-oxide channels. Those values were not invented or replaced.",
+    "Distributed integration tests are skipped unless SSRI_INTEGRATION_TESTS=1. A skip is not a pass.",
+    "NaN and Inf rejection was not exercised on the deployment because authentication stopped the request. In the repository, SSRIModel.forward still accepts non-finite tensors."
+  ]
+}

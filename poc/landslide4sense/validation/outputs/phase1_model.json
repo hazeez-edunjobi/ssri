@@ -1,0 +1,26 @@
+{
+  "phase": 1,
+  "architecture": "smp.Unet(encoder_name='mobilenet_v2', in_channels=14, classes=1)",
+  "checkpoint_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\weights\\mobilenetv2.pth",
+  "checkpoint_source": "https://huggingface.co/harshinde/DeepSlide_Models/blob/main/mobilenetv2.pth",
+  "license": "MIT (model card)",
+  "dataset_trained_on": "ibm-nasa-geospatial/Landslide4sense / Landslide4Sense",
+  "sha256_local": "a743e627dd68a1409ddda4ad43b70b53ee92c0d504d16c890e128ba04dc9ab4f",
+  "sha256_hf_lfs": "a743e627dd68a1409ddda4ad43b70b53ee92c0d504d16c890e128ba04dc9ab4f",
+  "sha256_match": true,
+  "checkpoint_keys": 377,
+  "unet_keys_loaded": 374,
+  "missing": 0,
+  "unexpected": 0,
+  "params": 6632113,
+  "input_contract": {
+    "bands": 14,
+    "order": "S2 B1-B12, slope (ALOS), DEM (ALOS) \u2014 L4S competition order",
+    "spatial": "128x128",
+    "normalization": "DeepSlide config normalize=False (raw competition tensors)",
+    "output": "logits -> sigmoid; threshold 0.5; binary landslide mask",
+    "matches_vendor_streamlit": true
+  },
+  "not_substituted": true,
+  "verdict": "PASS"
+}

@@ -1,0 +1,457 @@
+{
+  "question": "Does anything beyond slope add value?",
+  "answer": "No under PROTOCOL_v3 Tier A. On NEAR LOBO, slope-only AUC\u22480.89; logreg/HGB \u0394AUC point estimates negative and 95% CI lower bounds \u22640. On SLOPE-MATCHED, slope itself drops to ~0.53 and multivariate models still do not beat it (\u0394AUC point < 0).",
+  "why": "Presence\u2013absence separation in NEAR/FAR is largely slope-driven. Matching absences on slope removes that signal; residual DEM features do not recover ranking skill above chance with CI support.",
+  "by_block": {
+    "30_-115": {
+      "n": 28,
+      "n_pos": 4,
+      "auc_slope": 1.0,
+      "auc_logreg": 1.0,
+      "auc_hgb": 0.9895833333333334,
+      "mean_slope_pos": 38.315795304444414,
+      "mean_slope_neg": 7.164952813787863,
+      "sources": {
+        "usgs_landslide_inventories_us": 4,
+        "pseudo_near": 24
+      }
+    },
+    "30_-120": {
+      "n": 52,
+      "n_pos": 4,
+      "auc_slope": 0.2708333333333333,
+      "auc_logreg": 0.2708333333333333,
+      "auc_hgb": 0.5677083333333334,
+      "mean_slope_pos": 8.125384407592408,
+      "mean_slope_neg": 15.81565056468313,
+      "sources": {
+        "usgs_landslide_inventories_us": 4,
+        "pseudo_near": 48
+      }
+    },
+    "35_-110": {
+      "n": 69,
+      "n_pos": 6,
+      "auc_slope": 0.8677248677248677,
+      "auc_logreg": 0.8756613756613757,
+      "auc_hgb": 1.0,
+      "mean_slope_pos": 27.974218855120498,
+      "mean_slope_neg": 13.587410743406934,
+      "sources": {
+        "usgs_landslide_inventories_us": 6,
+        "pseudo_near": 63
+      }
+    },
+    "35_-115": {
+      "n": 28,
+      "n_pos": 5,
+      "auc_slope": 0.48695652173913045,
+      "auc_logreg": 0.591304347826087,
+      "auc_hgb": 0.9826086956521739,
+      "mean_slope_pos": 13.272731272937085,
+      "mean_slope_neg": 12.081456199443817,
+      "sources": {
+        "usgs_landslide_inventories_us": 5,
+        "pseudo_near": 23
+      }
+    },
+    "35_-80": {
+      "n": 81,
+      "n_pos": 51,
+      "auc_slope": 0.8660130718954249,
+      "auc_logreg": 0.8758169934640523,
+      "auc_hgb": 0.9764705882352941,
+      "mean_slope_pos": 18.79045622264383,
+      "mean_slope_neg": 8.632068669566866,
+      "sources": {
+        "usgs_landslide_inventories_us": 51,
+        "pseudo_near": 30
+      }
+    },
+    "35_-85": {
+      "n": 687,
+      "n_pos": 655,
+      "auc_slope": 0.7581583969465648,
+      "auc_logreg": 0.7805343511450382,
+      "auc_hgb": 0.9404103053435114,
+      "mean_slope_pos": 19.189323723029414,
+      "mean_slope_neg": 11.781639206330079,
+      "sources": {
+        "usgs_landslide_inventories_us": 655,
+        "pseudo_near": 32
+      }
+    },
+    "35_-90": {
+      "n": 92,
+      "n_pos": 5,
+      "auc_slope": 0.5310344827586206,
+      "auc_logreg": 0.5908045977011495,
+      "auc_hgb": 0.8919540229885058,
+      "mean_slope_pos": 6.147385636901192,
+      "mean_slope_neg": 5.59464343180492,
+      "sources": {
+        "usgs_landslide_inventories_us": 5,
+        "pseudo_near": 87
+      }
+    },
+    "35_-95": {
+      "n": 69,
+      "n_pos": 2,
+      "auc_slope": 0.8656716417910447,
+      "auc_logreg": 0.8283582089552238,
+      "auc_hgb": 0.9626865671641791,
+      "mean_slope_pos": 11.846005055889377,
+      "mean_slope_neg": 3.3397768244082617,
+      "sources": {
+        "usgs_landslide_inventories_us": 2,
+        "pseudo_near": 67
+      }
+    },
+    "40_-100": {
+      "n": 39,
+      "n_pos": 4,
+      "auc_slope": 0.8214285714285714,
+      "auc_logreg": 0.7642857142857142,
+      "auc_hgb": 0.95,
+      "mean_slope_pos": 5.482124307836713,
+      "mean_slope_neg": 2.794593735014156,
+      "sources": {
+        "usgs_landslide_inventories_us": 4,
+        "pseudo_near": 35
+      }
+    },
+    "40_-110": {
+      "n": 51,
+      "n_pos": 7,
+      "auc_slope": 0.8701298701298701,
+      "auc_logreg": 0.8701298701298701,
+      "auc_hgb": 0.9935064935064936,
+      "mean_slope_pos": 25.567890743712578,
+      "mean_slope_neg": 8.864519013887309,
+      "sources": {
+        "usgs_landslide_inventories_us": 7,
+        "pseudo_near": 44
+      }
+    },
+    "40_-75": {
+      "n": 21,
+      "n_pos": 9,
+      "auc_slope": 0.9351851851851852,
+      "auc_logreg": 0.8611111111111112,
+      "auc_hgb": 1.0,
+      "mean_slope_pos": 14.80247186524539,
+      "mean_slope_neg": 2.625329268332778,
+      "sources": {
+        "usgs_landslide_inventories_us": 9,
+        "pseudo_near": 12
+      }
+    },
+    "40_-85": {
+      "n": 53,
+      "n_pos": 10,
+      "auc_slope": 0.8046511627906977,
+      "auc_logreg": 0.8209302325581396,
+      "auc_hgb": 0.9558139534883721,
+      "mean_slope_pos": 16.46704109962876,
+      "mean_slope_neg": 9.25829399346353,
+      "sources": {
+        "usgs_landslide_inventories_us": 10,
+        "pseudo_near": 43
+      }
+    },
+    "40_-95": {
+      "n": 44,
+      "n_pos": 1,
+      "auc_slope": 0.9302325581395349,
+      "auc_logreg": 0.9767441860465116,
+      "auc_hgb": 1.0,
+      "mean_slope_pos": 7.21599159284944,
+      "mean_slope_neg": 3.1117286146033503,
+      "sources": {
+        "usgs_landslide_inventories_us": 1,
+        "pseudo_near": 43
+      }
+    },
+    "45_-125": {
+      "n": 70,
+      "n_pos": 43,
+      "auc_slope": 0.6175710594315246,
+      "auc_logreg": 0.6675279931093885,
+      "auc_hgb": 0.9069767441860465,
+      "mean_slope_pos": 18.58048314556193,
+      "mean_slope_neg": 14.440009190511596,
+      "sources": {
+        "usgs_landslide_inventories_us": 43,
+        "pseudo_near": 27
+      }
+    },
+    "45_-70": {
+      "n": 91,
+      "n_pos": 1,
+      "auc_slope": 1.0,
+      "auc_logreg": 1.0,
+      "auc_hgb": 1.0,
+      "mean_slope_pos": 38.41342599843127,
+      "mean_slope_neg": 5.713246132507283,
+      "sources": {
+        "usgs_landslide_inventories_us": 1,
+        "pseudo_near": 90
+      }
+    }
+  },
+  "by_slope_quintile": [
+    {
+      "slope_lo": 0.0,
+      "slope_hi": 3.676035139579749,
+      "n": 295,
+      "auc_slope": 0.5814545454545454,
+      "auc_logreg": 0.6012727272727273,
+      "auc_hgb": 0.9925454545454545
+    },
+    {
+      "slope_lo": 3.676035139579749,
+      "slope_hi": 10.370261383245426,
+      "n": 295,
+      "auc_slope": 0.5987077420099227,
+      "auc_logreg": 0.6776277835467867,
+      "auc_hgb": 0.9567901234567902
+    },
+    {
+      "slope_lo": 10.370261383245426,
+      "slope_hi": 16.9121362980764,
+      "n": 295,
+      "auc_slope": 0.592225426580149,
+      "auc_logreg": 0.7886325402547465,
+      "auc_hgb": 0.9598053352559481
+    },
+    {
+      "slope_lo": 16.9121362980764,
+      "slope_hi": 22.748090167307748,
+      "n": 295,
+      "auc_slope": 0.45063879210220675,
+      "auc_logreg": 0.7147005143520823,
+      "auc_hgb": 0.9597643935623029
+    },
+    {
+      "slope_lo": 22.748090167307748,
+      "slope_hi": 46.03281987659899,
+      "n": 295,
+      "auc_slope": 0.5349623482403565,
+      "auc_logreg": 0.7153834332257569,
+      "auc_hgb": 0.958736745043799
+    }
+  ],
+  "false_positives_slope": [
+    {
+      "sample_id": "abs-near-00010",
+      "lat": 39.85001300346353,
+      "lon": -105.89531702950468,
+      "block": "35_-110",
+      "y": 0,
+      "slope": 22.42251254035996,
+      "score_slope": 0.792542372881356,
+      "score_logreg": 0.10431830870355158,
+      "score_hgb": 0.0638101755593031,
+      "source": "pseudo_near",
+      "dist_km_nearest_opp": 14.134374000504087
+    },
+    {
+      "sample_id": "abs-near-00014",
+      "lat": 45.79211774895961,
+      "lon": -68.93727375802366,
+      "block": "45_-70",
+      "y": 0,
+      "slope": 24.092792493425694,
+      "score_slope": 0.8413559322033898,
+      "score_logreg": 0.9403551451096344,
+      "score_hgb": 0.6914422240573964,
+      "source": "pseudo_near",
+      "dist_km_nearest_opp": 16.084603429941488
+    },
+    {
+      "sample_id": "abs-near-00016",
+      "lat": 40.66547687412873,
+      "lon": -80.63417641703778,
+      "block": "40_-85",
+      "y": 0,
+      "slope": 20.774013898643084,
+      "score_slope": 0.7416949152542373,
+      "score_logreg": 0.8088731068740148,
+      "score_hgb": 0.3102293102252972,
+      "source": "pseudo_near",
+      "dist_km_nearest_opp": 6.852401910337779
+    },
+    {
+      "sample_id": "abs-near-00018",
+      "lat": 39.73811914892712,
+      "lon": -106.11242892416274,
+      "block": "35_-110",
+      "y": 0,
+      "slope": 10.791307764248812,
+      "score_slope": 0.41423728813559324,
+      "score_logreg": 0.010433542689591879,
+      "score_hgb": 0.02474262369417825,
+      "source": "pseudo_near",
+      "dist_km_nearest_opp": 22.092989634527395
+    },
+    {
+      "sample_id": "abs-near-00019",
+      "lat": 39.6068445529727,
+      "lon": -105.68743816950004,
+      "block": "35_-110",
+      "y": 0,
+      "slope": 16.19754428151559,
+      "score_slope": 0.5694915254237288,
+      "score_logreg": 0.004418853136353531,
+      "score_hgb": 0.032669782907022125,
+      "source": "pseudo_near",
+      "dist_km_nearest_opp": 14.723697071497066
+    },
+    {
+      "sample_id": "abs-near-00022",
+      "lat": 40.34733040739927,
+      "lon": -105.55406774267371,
+      "block": "40_-110",
+      "y": 0,
+      "slope": 23.629670450643633,
+      "score_slope": 0.8277966101694916,
+      "score_logreg": 0.27309299506524304,
+      "score_hgb": 0.04479371879325973,
+      "source": "pseudo_near",
+      "dist_km_nearest_opp": 10.290798856250865
+    },
+    {
+      "sample_id": "abs-near-00034",
+      "lat": 40.53075911498446,
+      "lon": -80.77388664673983,
+      "block": "40_-85",
+      "y": 0,
+      "slope": 23.006358803436687,
+      "score_slope": 0.8094915254237288,
+      "score_logreg": 0.8667385010832167,
+      "score_hgb": 0.7803104697305767,
+      "source": "pseudo_near",
+      "dist_km_nearest_opp": 14.370195150195885
+    },
+    {
+      "sample_id": "abs-near-00035",
+      "lat": 34.16774154704892,
+      "lon": -118.70864818633486,
+      "block": "30_-120",
+      "y": 0,
+      "slope": 17.611739656870647,
+      "score_slope": 0.6223728813559322,
+      "score_logreg": 0.8095076960291926,
+      "score_hgb": 0.7382507870549713,
+      "source": "pseudo_near",
+      "dist_km_nearest_opp": 27.4360548251404
+    }
+  ],
+  "false_negatives_slope": [
+    {
+      "sample_id": "usgs-v3-pt287770",
+      "lat": 39.274470627,
+      "lon": -80.3881018659999,
+      "block": "35_-85",
+      "y": 1,
+      "slope": 6.625170837467885,
+      "score_slope": 0.30033898305084744,
+      "score_logreg": 0.44767512503819157,
+      "score_hgb": 0.7807919465226755,
+      "source": "usgs_landslide_inventories_us",
+      "dist_km_nearest_opp": 72.09818115992574
+    },
+    {
+      "sample_id": "usgs-v3-pt22359",
+      "lat": 36.333268731,
+      "lon": -112.45876595,
+      "block": "35_-115",
+      "y": 1,
+      "slope": 3.063460049051838,
+      "score_slope": 0.18033898305084745,
+      "score_logreg": 0.12193365591324214,
+      "score_hgb": 0.5787856478885309,
+      "source": "usgs_landslide_inventories_us",
+      "dist_km_nearest_opp": 8.845104997729536
+    },
+    {
+      "sample_id": "usgs-v3-pt289740",
+      "lat": 39.215084872,
+      "lon": -80.880309563,
+      "block": "35_-85",
+      "y": 1,
+      "slope": 5.086404605175043,
+      "score_slope": 0.25084745762711863,
+      "score_logreg": 0.3087458201450484,
+      "score_hgb": 0.7798428420455471,
+      "source": "usgs_landslide_inventories_us",
+      "dist_km_nearest_opp": 40.84120573963175
+    },
+    {
+      "sample_id": "usgs-v3-pt78779",
+      "lat": 38.5482410000001,
+      "lon": -84.5908879999999,
+      "block": "35_-85",
+      "y": 1,
+      "slope": 6.931610186424512,
+      "score_slope": 0.30983050847457627,
+      "score_logreg": 0.3318947233776789,
+      "score_hgb": 0.29256973127506125,
+      "source": "usgs_landslide_inventories_us",
+      "dist_km_nearest_opp": 10.643553361411374
+    },
+    {
+      "sample_id": "usgs-v3-pt291997",
+      "lat": 39.1647106130001,
+      "lon": -81.371465192,
+      "block": "35_-85",
+      "y": 1,
+      "slope": 8.914658227753694,
+      "score_slope": 0.3566101694915254,
+      "score_logreg": 0.5266255644502417,
+      "score_hgb": 0.5363245865409216,
+      "source": "usgs_landslide_inventories_us",
+      "dist_km_nearest_opp": 31.398559103910355
+    },
+    {
+      "sample_id": "usgs-v3-pt194436",
+      "lat": 34.263142723,
+      "lon": -118.315054637,
+      "block": "30_-120",
+      "y": 1,
+      "slope": 4.432637769784925,
+      "score_slope": 0.22983050847457628,
+      "score_logreg": 0.15883151521278174,
+      "score_hgb": 0.16967205386728434,
+      "source": "usgs_landslide_inventories_us",
+      "dist_km_nearest_opp": 6.830789199537539
+    },
+    {
+      "sample_id": "usgs-v3-pt203310",
+      "lat": 39.5712486940001,
+      "lon": -78.002530985,
+      "block": "35_-80",
+      "y": 1,
+      "slope": 6.140575393210591,
+      "score_slope": 0.2840677966101695,
+      "score_logreg": 0.3061239144146914,
+      "score_hgb": 0.45487972059390286,
+      "source": "usgs_landslide_inventories_us",
+      "dist_km_nearest_opp": 8.700734372002405
+    },
+    {
+      "sample_id": "usgs-v3-pt307948",
+      "lat": 38.9550720620001,
+      "lon": -80.1628464409999,
+      "block": "35_-85",
+      "y": 1,
+      "slope": 7.475410607652823,
+      "score_slope": 0.3288135593220339,
+      "score_logreg": 0.3884217158660748,
+      "score_hgb": 0.6497153702731802,
+      "source": "usgs_landslide_inventories_us",
+      "dist_km_nearest_opp": 32.14900609456351
+    }
+  ],
+  "threshold_slope": 0.39999999999999997
+}

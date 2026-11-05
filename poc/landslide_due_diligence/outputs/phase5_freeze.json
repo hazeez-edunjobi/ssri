@@ -1,0 +1,6 @@
+{
+  "phase": 5,
+  "status": "SKIPPED",
+  "reason": "Phase 4 did not produce a frozen corpus meeting PROTOCOL minima. No nested-CV training or test-block freeze performed.",
+  "candidates_not_frozen_for_final_eval": ["B2", "B3", "B4", "B6"]
+}

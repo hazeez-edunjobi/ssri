@@ -1,0 +1,92 @@
+{
+  "gate": "A",
+  "generated_at_utc": "2026-11-03T18:34:47.002497+00:00",
+  "updated_at_utc": "2026-11-03T18:56:56.269943+00:00",
+  "l4s_known_study_areas": [
+    "Iburi (JP)",
+    "Kodagu (IN)",
+    "Gorkha (NP)",
+    "Taiwan"
+  ],
+  "requirement": "Georeferenced landslide/non-landslide labels + constructible/compatible S2 B1–B12 + slope + DEM inputs, geographically independent of L4S train/val chips, with spatial-block splits.",
+  "candidates_reviewed": [
+    {
+      "name": "Landslide4Sense validation HDF5",
+      "path_or_url": "poc/landslide4sense/data/validation",
+      "georeferenced": false,
+      "labelled": true,
+      "bands": "14 L4S packaged",
+      "independent_of_l4s_train_geo": false,
+      "usable_for_gate_a": false,
+      "reason": "Competition chips; no CRS; same geographic family as training (not independent AOI validation)."
+    },
+    {
+      "name": "SSRI usgs_landslide_featurestacks v3",
+      "path_or_url": "data/datasets/usgs_landslide_featurestacks/v3",
+      "georeferenced": true,
+      "labelled": "point/pseudo-absence inventory derived",
+      "bands": "13 SSRI CHANNEL_NAMES",
+      "independent_of_l4s_train_geo": true,
+      "usable_for_gate_a": false,
+      "reason": "Wrong feature contract (13-ch SSRI). Points/absences reused as inventory locations only; stacks rebuilt via STAC."
+    },
+    {
+      "name": "Hokkaido / Iburi landslide dataset (karstCand)",
+      "path_or_url": "https://github.com/karstCand/HokkaidoLandslide_dataset",
+      "georeferenced": true,
+      "labelled": true,
+      "bands": "Sentinel-2 + DEM (repo documents S2+DEM; not verified locally as full B1–B12+slope)",
+      "independent_of_l4s_train_geo": false,
+      "usable_for_gate_a": false,
+      "reason": "Iburi is an L4S study area — spatial leakage vs Landslide4Sense training geography."
+    },
+    {
+      "name": "Nepal U-Net scars (Zenodo 3688363)",
+      "path_or_url": "https://zenodo.org/records/3688363",
+      "georeferenced": true,
+      "labelled": true,
+      "bands": "8-bit RGB GeoTIFF",
+      "independent_of_l4s_train_geo": "partial (Nepal; Gorkha also L4S — geographic risk)",
+      "usable_for_gate_a": false,
+      "reason": "RGB only; not 14-band S2+terrain package for DeepSlide."
+    },
+    {
+      "name": "Sen12Landslides (paulhoehn/Sen12Landslides)",
+      "path_or_url": "https://huggingface.co/datasets/paulhoehn/Sen12Landslides",
+      "georeferenced": true,
+      "labelled": true,
+      "bands": "S2 B02–B12 (10 bands) + DEM; no B01/B10 as in L4S; slope not native",
+      "independent_of_l4s_train_geo": "partial (multi-region incl. Italy etc.; overlap with L4S Asia areas unknown without audit)",
+      "usable_for_gate_a": false,
+      "reason": "Band set incompatible without fabricating missing L4S channels; full download is multi-100GB; not used."
+    },
+    {
+      "name": "USGS Landslide Inventories v3 (vector) + STAC construction",
+      "path_or_url": "https://www.usgs.gov/data/landslide-inventories-across-united-states-ver-30-february-2025",
+      "georeferenced": true,
+      "labelled": "vector inventory points buffered 40 m; in-block pseudo-absences",
+      "bands": "Constructed 14-band via Planetary Computer S2 L2A + Copernicus DEM/slope",
+      "independent_of_l4s_train_geo": true,
+      "usable_for_gate_a": true,
+      "reason": "Selected and built under production_gates/gate_a_build/; evaluated at thr=0.5."
+    }
+  ],
+  "construction": {
+    "status": "completed",
+    "path": "poc/landslide4sense/production_gates/gate_a_build/",
+    "n_chips": 24,
+    "blocks": ["35_-125", "35_-80", "35_-85"],
+    "report": "poc/landslide4sense/production_gates/gate_a_build/outputs/gate_a_eval_report.json"
+  },
+  "verdict": "FAIL",
+  "verdict_meaning": "Independent dataset constructed and evaluated; DeepSlide failed predeclared chip-F1 gates (did not beat slope baseline; F1 0.091 < 0.40).",
+  "missing_requirement": null,
+  "not_done": [
+    "Did not manufacture scar polygons",
+    "Did not treat L4S chip metrics as independent geographic validation",
+    "Did not treat Iburi STAC visual coherence as scientific validation",
+    "Did not download multi-100GB Sen12Landslides or invent missing bands",
+    "Did not tune threshold on the Gate A set",
+    "Did not modify production /api/v1/assess"
+  ]
+}

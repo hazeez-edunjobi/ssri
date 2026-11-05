@@ -1,0 +1,30 @@
+# Core dependencies for Landslide Detection Project
+streamlit>=1.28.0
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+h5py>=3.8.0
+PyYAML>=6.0
+requests==2.32.5
+tqdm==4.67.1
+
+# Deep Learning and Computer Vision
+segmentation-models-pytorch>=0.3.0
+torchmetrics>=1.0.0
+pytorch-lightning>=2.0.0
+
+# Transformers for SegFormer model
+transformers>=4.30.0
+
+# Logging and Experiment Tracking
+wandb>=0.15.0
+
+# Additional utilities
+Pillow>=9.5.0
+scikit-image>=0.20.0
+opencv-python>=4.8.0
+
+# Optional: For better performance
+# torch-scatter>=2.1.0  # Uncomment if needed for specific models
+# torch-sparse>=0.6.0   # Uncomment if needed for specific models 

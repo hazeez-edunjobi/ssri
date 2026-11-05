@@ -1,0 +1,213 @@
+{
+  "gate": "A_build_eval",
+  "started_at_utc": "2026-11-03T18:49:24.382701+00:00",
+  "acceptance": {
+    "declared_before_eval": true,
+    "threshold": 0.5,
+    "threshold_selection": "Fixed DeepSlide default; not tuned on this dataset.",
+    "label_method": {
+      "presence": "USGS v3 inventory POINT buffered to 40 m radius as positive pixels inside 128x128@10m chip centered on the point",
+      "absence": "Feature-stack pseudo-absence metadata points (min separation already applied in project catalog) with all-zero masks",
+      "limitation": "Point inventories are not scar polygons; pixel metrics vs circular buffers are approximate. Chip-level detection is the primary metric."
+    },
+    "geography": {
+      "include": "CONUS lat 24-49, lon -125 to -66",
+      "exclude_l4s_study_areas": [
+        "Iburi JP",
+        "Kodagu IN",
+        "Gorkha NP",
+        "Taiwan"
+      ],
+      "independence_basis": "USGS CONUS points are outside documented L4S Asia study areas"
+    },
+    "split": {
+      "method": "spatial 5-degree blocks; hold out entire blocks for evaluation only (no training/tuning)",
+      "role": "evaluation_only"
+    },
+    "min_chips": 24,
+    "min_regions": 3,
+    "primary_metric": "chip_level_f1",
+    "chip_positive_rule": "chip labelled positive if inventory presence; prediction positive if any pixel score>0.5 inside the 40m buffer (presence) or anywhere (absence \u2192 FP if any)",
+    "gates": {
+      "beat_majority_chip_f1": true,
+      "beat_slope_chip_f1": true,
+      "min_chip_f1": 0.4
+    },
+    "secondary_pixel_metrics": "reported vs buffer masks but do not alone determine PASS/FAIL",
+    "scientific_validation_claim": "Even if numeric gates pass, results remain limited by point-buffer labels and are NOT full scar-level scientific validation."
+  },
+  "repo": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri",
+  "selection": {
+    "presence_pool": 130077,
+    "absence_pool": 120,
+    "selected": 24,
+    "blocks": [
+      "35_-125",
+      "35_-80",
+      "35_-85"
+    ],
+    "n_presence": 12,
+    "n_absence": 12
+  },
+  "build": {
+    "n_ok": 24,
+    "n_failed": 0,
+    "failures": [],
+    "blocks": [
+      "35_-125",
+      "35_-80",
+      "35_-85"
+    ]
+  },
+  "evaluation": {
+    "n_chips": 24,
+    "class_prevalence_presence_chips": 0.5,
+    "chip_model": {
+      "precision": 0.1,
+      "recall": 0.08333333333333333,
+      "f1": 0.0909090909090909,
+      "iou": 0.047619047619047616,
+      "tp": 1,
+      "fp": 9,
+      "fn": 11,
+      "tn": 3,
+      "confusion_matrix": {
+        "tn": 3,
+        "fp": 9,
+        "fn": 11,
+        "tp": 1
+      }
+    },
+    "chip_majority": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "iou": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 12,
+      "tn": 12,
+      "confusion_matrix": {
+        "tn": 12,
+        "fp": 0,
+        "fn": 12,
+        "tp": 0
+      }
+    },
+    "chip_slope": {
+      "precision": 0.75,
+      "recall": 0.25,
+      "f1": 0.375,
+      "iou": 0.23076923076923078,
+      "tp": 3,
+      "fp": 1,
+      "fn": 9,
+      "tn": 11,
+      "confusion_matrix": {
+        "tn": 11,
+        "fp": 1,
+        "fn": 9,
+        "tp": 3
+      }
+    },
+    "pixel_vs_buffer_model": {
+      "precision": 0.0005695481584609543,
+      "recall": 0.01607142857142857,
+      "f1": 0.0011001100110011,
+      "iou": 0.000550357732526142,
+      "tp": 9,
+      "fp": 15793,
+      "fn": 551,
+      "tn": 376863,
+      "confusion_matrix": {
+        "tn": 376863,
+        "fp": 15793,
+        "fn": 551,
+        "tp": 9
+      }
+    },
+    "per_block_chip_model": {
+      "35_-125": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "iou": 0.0,
+        "tp": 0,
+        "fp": 1,
+        "fn": 4,
+        "tn": 3,
+        "confusion_matrix": {
+          "tn": 3,
+          "fp": 1,
+          "fn": 4,
+          "tp": 0
+        },
+        "n": 8
+      },
+      "35_-80": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "iou": 0.0,
+        "tp": 0,
+        "fp": 4,
+        "fn": 4,
+        "tn": 0,
+        "confusion_matrix": {
+          "tn": 0,
+          "fp": 4,
+          "fn": 4,
+          "tp": 0
+        },
+        "n": 8
+      },
+      "35_-85": {
+        "precision": 0.2,
+        "recall": 0.25,
+        "f1": 0.22222222222222224,
+        "iou": 0.125,
+        "tp": 1,
+        "fp": 4,
+        "fn": 3,
+        "tn": 0,
+        "confusion_matrix": {
+          "tn": 0,
+          "fp": 4,
+          "fn": 3,
+          "tp": 1
+        },
+        "n": 8
+      }
+    },
+    "gates": {
+      "beat_majority": {
+        "pass": true,
+        "model_f1": 0.0909090909090909,
+        "majority_f1": 0.0
+      },
+      "beat_slope": {
+        "pass": false,
+        "model_f1": 0.0909090909090909,
+        "slope_f1": 0.375
+      },
+      "min_chip_f1": {
+        "pass": false,
+        "model_f1": 0.0909090909090909,
+        "floor": 0.4
+      }
+    },
+    "numeric_pass": false
+  },
+  "limitations": [
+    "USGS points buffered to 40 m are not landslide scar polygons",
+    "Copernicus DEM used instead of ALOS PALSAR",
+    "Sentinel-2 L2A B10 zero-filled when absent",
+    "Temporal match is nearest low-cloud scene in a window around inventory date, not guaranteed event-day imagery",
+    "In-block absences may be catalog pseudo-absences or synthesized (≥5 km from USGS presence); not field-verified non-landslides",
+    "Uncalibrated scores are not risk probabilities",
+    "Per-block tags are true geographic 5° cells; absences are co-located in the same block as paired presence chips"
+  ],
+  "scientific_validation": "UNRESOLVED",
+  "verdict": "FAIL",
+  "finished_at_utc": "2026-11-03T18:56:56.269943+00:00"
+}

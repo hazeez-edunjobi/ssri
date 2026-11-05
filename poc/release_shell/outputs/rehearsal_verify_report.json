@@ -1,0 +1,98 @@
+{
+  "steps": {
+    "git": {
+      "cmd": [
+        "git",
+        "rev-parse",
+        "--abbrev-ref",
+        "HEAD"
+      ],
+      "returncode": 0,
+      "stdout_tail": "integration/ssri-shell-rc1\n",
+      "stderr_tail": ""
+    },
+    "commit": {
+      "cmd": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "returncode": 0,
+      "stdout_tail": "ba9330fd6dcafb35509754ea3113290d3cc47330\n",
+      "stderr_tail": ""
+    },
+    "new_tests": {
+      "cmd": [
+        "poetry",
+        "-C",
+        "model",
+        "run",
+        "pytest",
+        "tests/test_release_shell_softmax_contract.py",
+        "tests/test_release_shell_spatial_split.py",
+        "tests/test_release_shell_assess.py",
+        "tests/test_release_shell_validator.py",
+        "tests/test_release_shell_assess_contract.py",
+        "tests/test_release_shell_assess_route.py",
+        "tests/test_release_shell_jobs_result.py",
+        "-q",
+        "--tb=line"
+      ],
+      "returncode": 0,
+      "stdout_tail": ".....................                                                    [100%]\n21 passed in 53.88s\n",
+      "stderr_tail": ""
+    },
+    "assess_93": {
+      "cmd": [
+        "poetry",
+        "-C",
+        "model",
+        "run",
+        "pytest",
+        "tests/test_api_assess.py",
+        "tests/test_api_assess_audit.py",
+        "tests/test_demo_mode_assess.py",
+        "tests/test_model_architecture.py",
+        "tests/test_multitask_model.py",
+        "tests/test_inference.py",
+        "tests/test_evaluation_metrics.py",
+        "tests/test_training_metrics.py",
+        "-q",
+        "--tb=no"
+      ],
+      "returncode": 0,
+      "stdout_tail": "........................................................................ [ 77%]\n.....................                                                    [100%]\n93 passed in 15.75s\n",
+      "stderr_tail": ""
+    },
+    "deepslide_9": {
+      "cmd": [
+        "poetry",
+        "-C",
+        "model",
+        "run",
+        "pytest",
+        "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri-rc1-rehearsal\\poc\\landslide4sense\\integration\\test_deepslide_engine.py",
+        "-q",
+        "--tb=no"
+      ],
+      "returncode": 1,
+      "stdout_tail": "....EEEEE                                                                [100%]\n=========================== short test summary info ===========================\nERROR ..\\poc\\landslide4sense\\integration\\test_deepslide_engine.py::test_predict_packaged_l4s_chip\nERROR ..\\poc\\landslide4sense\\integration\\test_deepslide_engine.py::test_predict_raw_optical_dn_required\nERROR ..\\poc\\landslide4sense\\integration\\test_deepslide_engine.py::test_invalid_input_raises\nERROR ..\\poc\\landslide4sense\\integration\\test_deepslide_engine.py::test_geotiff_preserves_crs\nERROR ..\\poc\\landslide4sense\\integration\\test_deepslide_engine.py::test_contract_excludes_subsidence_sinkhole\n4 passed, 5 errors in 2.67s\n",
+      "stderr_tail": ""
+    },
+    "no_trained_model": {
+      "cmd": [
+        "poetry",
+        "-C",
+        "model",
+        "run",
+        "python",
+        "-c",
+        "import os;os.environ['SSRI_RELEASE_SHELL']='true';from fastapi.testclient import TestClient;from ssri_model.api.app import create_app;from tests.api_helpers import build_api_config;from pathlib import Path;c=TestClient(create_app(build_api_config(Path('outputs/tmp_verify'))));r=c.post('/api/v1/assess', json={});print(r.status_code, r.json().get('status'))"
+      ],
+      "returncode": 0,
+      "stdout_tail": "200 no_trained_model\n",
+      "stderr_tail": ""
+    }
+  },
+  "pass": false
+}

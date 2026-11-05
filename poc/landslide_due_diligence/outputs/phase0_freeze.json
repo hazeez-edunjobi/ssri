@@ -1,0 +1,48 @@
+{
+  "phase": 0,
+  "recorded_at_utc": "2026-11-03T19:33:00Z",
+  "git": {
+    "branch": "poc/landslide-due-diligence",
+    "commit_at_freeze": "78e06c391008e2599bc7fd1ecfaa7ad9bfa2028d",
+    "commit_after_protocol": "0804ce056905a4b7ea740123c28090c0b2139d96",
+    "note": "Phase 0 measured at 78e06c39; PROTOCOL.md committed as 0804ce05 before any evaluation"
+  },
+  "python": {
+    "system": "3.12.10",
+    "poetry_env": {
+      "torch": "2.15.0+cpu",
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "scikit-learn": "1.9.1",
+      "sklearn_install_note": "Installed into poetry env via pip for poc scripts only; model/pyproject.toml not modified"
+    }
+  },
+  "artifacts_sha256": {
+    "models/ssri-foundation-v1.pt": "927404169EA2362FAF41184B03C7CE3E1FCCD062732404245B5805DEBE1BAAC7",
+    "models/ssri-foundation-v2.pt": "39B41634B75CD31E9CB85F981FA6FBA33321B4EA8B0E7B74F485362DB140E0B6",
+    "data/datasets/usgs_landslide_featurestacks/v3/manifest.json": "7AF71802DD8B1B29522D45EEF65ABC7AE7379BADC8BCE6A52BC0C40321265EE1",
+    "data/catalogs/usgs_landslide_v3/manifest.json": "266131732160639BA94F97450D68BAD84DC483D0B3E88CC60F017647648B201F",
+    "PROTOCOL.md": "BD2A86BC5A883123B476F9CFD759026836740C60E09FD6A9ACE3BD088213DDFE"
+  },
+  "catalog_jsonl_bytes": 188430943,
+  "baseline_tests": {
+    "suite_assess_architecture_metrics": {
+      "command": "poetry -C model run pytest tests/test_api_assess.py tests/test_api_assess_audit.py tests/test_demo_mode_assess.py tests/test_model_architecture.py tests/test_multitask_model.py tests/test_inference.py tests/test_evaluation_metrics.py tests/test_training_metrics.py -q --tb=no",
+      "result": "93 passed",
+      "elapsed_s": 16.28
+    },
+    "suite_deepslide_isolated": {
+      "command": "poetry -C model run pytest ../poc/landslide4sense/integration/test_deepslide_engine.py -q --tb=no",
+      "result": "9 passed",
+      "elapsed_s": 8.44,
+      "note": "Isolated PoC tests; DeepSlide not wired to assess"
+    },
+    "total_passed": 102,
+    "total_failed": 0
+  },
+  "assumptions_flagged_for_owner": [
+    "Landslide-only susceptibility scope",
+    "Point labels cannot support detection claims",
+    "GO-LIMITED requires >=1500 tiles / 8 blocks / 3 held-out — may be BLOCKED if free rebuild cannot reach this"
+  ]
+}

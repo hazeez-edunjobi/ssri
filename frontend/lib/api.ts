@@ -384,3 +384,126 @@ export async function activateTrainedModel(
   if (!response.ok) throw new Error(await parseError(response));
   return response.json();
 }
+
+/** Release-shell (SSRI_RELEASE_SHELL=true) helpers for the owner upload→train page. */
+
+export type ShellCheck = {
+  name: string;
+  status: string;
+  message: string;
+  details?: Record<string, unknown>;
+};
+
+export type ShellValidation = {
+  overall: string;
+  can_train: boolean;
+  checks: ShellCheck[];
+  hazards?: Record<string, { status?: string; reason?: string }>;
+};
+
+export type ShellJobStatus = {
+  job_id: string;
+  status: string;
+  scientific_validation_status?: string;
+  result?: Record<string, unknown> | null;
+  progress?: Record<string, unknown> | null;
+  artifacts?: Record<string, unknown>;
+  error_code?: string | null;
+  error_message?: string | null;
+};
+
+function formAuthHeaders(apiKey?: string): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const key =
+    apiKey ||
+    (typeof process !== "undefined"
+      ? process.env.NEXT_PUBLIC_SSRI_API_KEY
+      : undefined);
+  if (key) headers.Authorization = `Bearer ${key}`;
+  return headers;
+}
+
+export async function getShellStatus(
+  apiKey?: string,
+): Promise<{
+  release_shell_enabled: boolean;
+  limitations: string[];
+  scientific_validation_status: string;
+}> {
+  const response = await fetch(`${apiUrl}/api/v1/release-shell/status`, {
+    headers: authHeaders(apiKey),
+  });
+  if (!response.ok) throw new Error(await parseError(response));
+  return response.json();
+}
+
+export async function uploadShellDatasetZip(
+  datasetId: string,
+  file: File,
+  apiKey?: string,
+): Promise<{ dataset_id: string; uploaded: boolean; bytes: number }> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetch(
+    `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/upload`,
+    { method: "POST", headers: formAuthHeaders(apiKey), body: form },
+  );
+  if (!response.ok) throw new Error(await parseError(response));
+  return response.json();
+}
+
+export async function validateShellDataset(
+  datasetId: string,
+  apiKey?: string,
+): Promise<{ validation: ShellValidation }> {
+  const response = await fetch(
+    `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/validate`,
+    { method: "POST", headers: authHeaders(apiKey) },
+  );
+  if (!response.ok) throw new Error(await parseError(response));
+  return response.json();
+}
+
+export async function startShellTrainingJob(
+  body: {
+    dataset_id: string;
+    epochs?: number;
+    batch_size?: number;
+    learning_rate?: number;
+    seeds?: number[];
+    device?: string;
+    model_name?: string | null;
+  },
+  apiKey?: string,
+): Promise<{ job_id: string; run_id: string; message: string; data_hash?: string }> {
+  const response = await fetch(`${apiUrl}/api/v1/release-shell/jobs`, {
+    method: "POST",
+    headers: authHeaders(apiKey),
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(await parseError(response));
+  return response.json();
+}
+
+export async function getShellJob(
+  jobId: string,
+  apiKey?: string,
+): Promise<ShellJobStatus> {
+  const response = await fetch(`${apiUrl}/api/v1/jobs/${jobId}`, {
+    headers: authHeaders(apiKey),
+  });
+  if (!response.ok) throw new Error(await parseError(response));
+  return response.json();
+}
+
+export async function getShellEvaluation(
+  modelId: string,
+  apiKey?: string,
+): Promise<Record<string, unknown>> {
+  const response = await fetch(
+    `${apiUrl}/api/v1/release-shell/models/${modelId}/evaluation`,
+    { headers: authHeaders(apiKey) },
+  );
+  if (!response.ok) throw new Error(await parseError(response));
+  return response.json();
+}

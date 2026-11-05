@@ -1,0 +1,23 @@
+{
+  "executive_verdict": "BLOCKED",
+  "production_assess_modified": false,
+  "deployed": false,
+  "gates": {
+    "A_independent_geographic_validation": "BLOCKED",
+    "B_integration_contract_isolated_prototype": "PASS",
+    "C_deployment_feasibility": "PASS_LOCAL_ONLY"
+  },
+  "approval_rule": "All three gates must PASS for APPROVED; Gate A BLOCKED ⇒ overall BLOCKED",
+  "checkpoint_sha256": "a743e627dd68a1409ddda4ad43b70b53ee92c0d504d16c890e128ba04dc9ab4f",
+  "preprocess_version": "l4s-pack-v1-div-img-mean",
+  "threshold": 0.5,
+  "pytest": "9 passed",
+  "evidence": {
+    "report_md": "poc/landslide4sense/FINAL_PRODUCTION_READINESS.md",
+    "gate_a": "poc/landslide4sense/production_gates/outputs/gate_a_discovery.json",
+    "gate_b_c": "poc/landslide4sense/production_gates/outputs/gate_b_c_results.json",
+    "tests": "poc/landslide4sense/production_gates/outputs/pytest_stdout.txt",
+    "engine": "poc/landslide4sense/integration/deepslide_engine.py"
+  },
+  "next_action": "Obtain/construct independent labelled georeferenced 14-band eval corpus outside L4S study areas, then re-run Gate A."
+}

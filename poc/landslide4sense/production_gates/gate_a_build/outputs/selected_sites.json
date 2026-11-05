@@ -1,0 +1,194 @@
+[
+  {
+    "sample_id": "usgs-v3-pt76797",
+    "lat": 37.773486,
+    "lon": -84.612498,
+    "role": "presence",
+    "block": "35_-85",
+    "timestamp": null
+  },
+  {
+    "sample_id": "usgs-v3-pt76798",
+    "lat": 37.217499,
+    "lon": -83.217306,
+    "role": "presence",
+    "block": "35_-85",
+    "timestamp": null
+  },
+  {
+    "sample_id": "usgs-v3-pt76799",
+    "lat": 37.1707680000001,
+    "lon": -83.164545,
+    "role": "presence",
+    "block": "35_-85",
+    "timestamp": null
+  },
+  {
+    "sample_id": "usgs-v3-pt76800",
+    "lat": 37.2006460000001,
+    "lon": -83.223797,
+    "role": "presence",
+    "block": "35_-85",
+    "timestamp": null
+  },
+  {
+    "sample_id": "pseudo-absence-38014e0cfc",
+    "lat": 39.0963133712471,
+    "lon": -82.20066271033302,
+    "role": "absence",
+    "block": "35_-85",
+    "timestamp": null
+  },
+  {
+    "sample_id": "pseudo-absence-517e53b4b2",
+    "lat": 39.76443872826181,
+    "lon": -81.27712998413173,
+    "role": "absence",
+    "block": "35_-85",
+    "timestamp": null
+  },
+  {
+    "sample_id": "pseudo-absence-69bd45e123",
+    "lat": 35.72839424183016,
+    "lon": -81.30933656772608,
+    "role": "absence",
+    "block": "35_-85",
+    "timestamp": null
+  },
+  {
+    "sample_id": "pseudo-absence-8220ce555c",
+    "lat": 39.25122688306663,
+    "lon": -82.0561207669268,
+    "role": "absence",
+    "block": "35_-85",
+    "timestamp": null
+  },
+  {
+    "sample_id": "usgs-v3-pt24137",
+    "lat": 39.9851,
+    "lon": -121.28246,
+    "role": "presence",
+    "block": "35_-125",
+    "timestamp": "2022/06/12 00:00:00"
+  },
+  {
+    "sample_id": "usgs-v3-pt24138",
+    "lat": 39.9916400000001,
+    "lon": -121.28079,
+    "role": "presence",
+    "block": "35_-125",
+    "timestamp": "2022/06/12 00:00:00"
+  },
+  {
+    "sample_id": "usgs-v3-pt24139",
+    "lat": 37.834976349,
+    "lon": -122.062804218,
+    "role": "presence",
+    "block": "35_-125",
+    "timestamp": "2017/01/01 00:00:00"
+  },
+  {
+    "sample_id": "usgs-v3-pt24140",
+    "lat": 37.8782288400001,
+    "lon": -122.090390495,
+    "role": "presence",
+    "block": "35_-125",
+    "timestamp": "2017/01/01 00:00:00"
+  },
+  {
+    "sample_id": "pseudo-absence-5e8e55200d",
+    "lat": 37.43816420784694,
+    "lon": -122.72292795695442,
+    "role": "absence",
+    "block": "35_-125",
+    "timestamp": null
+  },
+  {
+    "sample_id": "pseudo-absence-a8753b1b35",
+    "lat": 37.5525731440652,
+    "lon": -121.55364817089406,
+    "role": "absence",
+    "block": "35_-125",
+    "timestamp": null
+  },
+  {
+    "sample_id": "pseudo-absence-f3563fe4af",
+    "lat": 36.96282920918233,
+    "lon": -120.72117286918223,
+    "role": "absence",
+    "block": "35_-125",
+    "timestamp": null
+  },
+  {
+    "sample_id": "pseudo-absence-f796457c03",
+    "lat": 36.47225090331481,
+    "lon": -122.0158818456006,
+    "role": "absence",
+    "block": "35_-125",
+    "timestamp": null
+  },
+  {
+    "sample_id": "usgs-v3-pt81271",
+    "lat": 36.1349393831726,
+    "lon": -79.1595973839322,
+    "role": "presence",
+    "block": "35_-80",
+    "timestamp": null
+  },
+  {
+    "sample_id": "usgs-v3-pt81382",
+    "lat": 35.8711985616339,
+    "lon": -78.7208969114606,
+    "role": "presence",
+    "block": "35_-80",
+    "timestamp": null
+  },
+  {
+    "sample_id": "usgs-v3-pt81408",
+    "lat": 35.8762989634076,
+    "lon": -78.8329971090215,
+    "role": "presence",
+    "block": "35_-80",
+    "timestamp": null
+  },
+  {
+    "sample_id": "usgs-v3-pt81410",
+    "lat": 35.2322973424515,
+    "lon": -79.8057976169022,
+    "role": "presence",
+    "block": "35_-80",
+    "timestamp": null
+  },
+  {
+    "sample_id": "pseudo-absence-37aedd02ef",
+    "lat": 39.55864326137608,
+    "lon": -76.7957392199133,
+    "role": "absence",
+    "block": "35_-80",
+    "timestamp": null
+  },
+  {
+    "sample_id": "pseudo-absence-4964208dbf",
+    "lat": 39.40952907930131,
+    "lon": -77.64869842454976,
+    "role": "absence",
+    "block": "35_-80",
+    "timestamp": null
+  },
+  {
+    "sample_id": "pseudo-absence-53ec55d321",
+    "lat": 39.423367350639474,
+    "lon": -77.51698448507645,
+    "role": "absence",
+    "block": "35_-80",
+    "timestamp": null
+  },
+  {
+    "sample_id": "pseudo-absence-a359fbb496",
+    "lat": 39.81483341435758,
+    "lon": -77.13076339406084,
+    "role": "absence",
+    "block": "35_-80",
+    "timestamp": null
+  }
+]
