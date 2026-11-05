@@ -1,4 +1,4 @@
-# FINAL_STAGING_REPORT — `staging/ssri-shell-rc1`
+﻿# FINAL_STAGING_REPORT — `staging/ssri-shell-rc1`
 
 **Not merged to main. Not deployed.**
 
@@ -31,7 +31,7 @@ git diff --stat 9bb64302 0b35dc90
 
 | Ref | Full SHA |
 |-----|----------|
-| `origin/staging/ssri-shell-rc1` | `ee3317b88782f9e1a19f356af7802a01494f2ebc` *(pre–FINAL report; tip advances with this docs commit)* |
+| `origin/staging/ssri-shell-rc1` | `92864cdd1c09199af0c06a33ba5c783cace211bd (`origin/staging/ssri-shell-rc1`)
 
 History:
 
