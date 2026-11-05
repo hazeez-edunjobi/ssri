@@ -14,15 +14,21 @@ import rasterio
 from ssri_model.ml.constants import CHANNEL_COUNT, CHANNEL_NAMES, FEATURE_NODATA, LABEL_NODATA
 from ssri_model.ml.labels import label_class_names
 from ssri_model.release_shell.flags import (
+    release_shell_block_size_deg,
+    release_shell_block_size_km,
     release_shell_buffer_km,
     release_shell_min_blocks,
     release_shell_min_held_out_blocks,
     release_shell_min_tiles,
 )
 from ssri_model.release_shell.spatial_split import (
+    LOCAL_EVIDENCE_LIMITATION,
     TileGeo,
     block5,
+    block_id,
     haversine_km,
+    is_local_block_size,
+    resolve_block_size_deg,
     split_by_blocks,
 )
 
@@ -81,6 +87,10 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
     min_blocks = release_shell_min_blocks()
     min_held = release_shell_min_held_out_blocks()
     buffer_km = release_shell_buffer_km()
+    size_deg = resolve_block_size_deg(
+        block_size_deg=release_shell_block_size_deg(),
+        block_size_km=release_shell_block_size_km(),
+    )
 
     if not root.is_dir():
         return {
@@ -173,7 +183,9 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
                     if np.any(lab == cls_i):
                         label_counts[hname]["tiles"] += 1
                         if lat is not None and lon is not None:
-                            hazard_blocks[hname].add(block5(float(lat), float(lon)))
+                            hazard_blocks[hname].add(
+                                block_id(float(lat), float(lon), size_deg=size_deg)
+                            )
                         label_counts[hname]["pixels"] += int((lab == cls_i).sum())
                 if np.any(lab == LABEL_NODATA):
                     label_counts.setdefault("_nodata", Counter())["_nodata"] += 1
@@ -306,19 +318,28 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
     split_info: dict[str, Any] | None = None
     if tiles and coords_missing == 0 and crs_missing < len(samples):
         try:
+            distinct = {
+                block_id(t.lat, t.lon, size_deg=size_deg) for t in tiles
+            }
             split = split_by_blocks(
                 tiles,
                 buffer_km=buffer_km,
-                min_held_out_blocks=min(min_held, max(1, len({block5(t.lat, t.lon) for t in tiles}) // 3)),
+                min_held_out_blocks=min(min_held, max(1, len(distinct) // 3)),
+                block_size_deg=size_deg,
             )
             split_info = split.to_dict()
+            msg = (
+                f"Valid block split: train={len(split.train_blocks)} "
+                f"val={len(split.validation_blocks)} test={len(split.test_blocks)} "
+                f"blocks at {size_deg:g}°; buffer={buffer_km} km."
+            )
+            if split.local_evidence_only:
+                msg += f" {LOCAL_EVIDENCE_LIMITATION}."
             checks.append(
                 CheckResult(
                     "spatial_split",
                     "PASS",
-                    f"Valid block split: train={len(split.train_blocks)} "
-                    f"val={len(split.validation_blocks)} test={len(split.test_blocks)} "
-                    f"blocks; buffer={buffer_km} km.",
+                    msg,
                     split_info,
                 )
             )

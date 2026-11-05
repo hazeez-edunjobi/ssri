@@ -264,6 +264,38 @@ def assess_endpoint(
     query_lat = body.point.latitude if body.point is not None else None
     query_lon = body.point.longitude if body.point is not None else None
 
+    if release_shell_enabled() and shell_meta:
+        from ssri_model.release_shell.channel_schema import (
+            assert_channels_match,
+            schema_from_checkpoint_payload,
+        )
+
+        try:
+            expected = schema_from_checkpoint_payload(
+                {"release_shell": shell_meta, "model_config": payload.get("model_config") or {}}
+            )
+            # Feature tensor channel count must match checkpoint schema.
+            n_feat = int(features.shape[1]) if features.ndim == 4 else int(features.shape[0])
+            if n_feat != expected.channel_count:
+                missing = list(expected.channel_names[n_feat:]) if n_feat < expected.channel_count else []
+                raise InvalidServiceRequestError(
+                    "Input features do not match the checkpoint channel schema "
+                    f"(version {expected.version}, {expected.channel_count} channels). "
+                    + (
+                        "Missing channels: " + ", ".join(missing) + "."
+                        if missing
+                        else f"Received {n_feat} channels."
+                    )
+                )
+            # If payload advertises names, enforce order too.
+            advertised = payload.get("channel_names") or (payload.get("model_config") or {}).get(
+                "channel_names"
+            )
+            if advertised:
+                assert_channels_match(expected.channel_names, advertised, context="assess features")
+        except ValueError as exc:
+            raise InvalidServiceRequestError(str(exc)) from exc
+
     cfg = UncertaintyConfig(mc_samples=body.mc_samples, seed=42)
     samples = run_mc_dropout(model, features, config=cfg)
     embedding = embedding_from_features(features)
