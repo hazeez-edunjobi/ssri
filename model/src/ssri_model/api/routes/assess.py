@@ -90,6 +90,11 @@ class AssessResponseBody(BaseModel):
     checkpoint_dataset_version: str | None = None
     is_fixture_checkpoint: bool = False
     domain_similarity_calibrated: bool = False
+    channel_schema_version: str | None = None
+    channel_names: list[str] | None = None
+
+
+_ALLOWED_FEATURE_CHANNEL_COUNTS = frozenset({CHANNEL_COUNT, 16})
 
 
 def _load_feature_tensor(path: str) -> torch.Tensor:
@@ -97,9 +102,10 @@ def _load_feature_tensor(path: str) -> torch.Tensor:
     array = torch.as_tensor(np.load(path))
     if array.ndim == 3:
         array = array.unsqueeze(0)
-    if array.ndim != 4 or array.shape[1] != CHANNEL_COUNT:
+    if array.ndim != 4 or array.shape[1] not in _ALLOWED_FEATURE_CHANNEL_COUNTS:
         raise InvalidServiceRequestError(
-            f"features must be shaped (C,H,W) or (B,C,H,W) with C={CHANNEL_COUNT}"
+            "features must be shaped (C,H,W) or (B,C,H,W) with "
+            f"C={CHANNEL_COUNT} (v1) or C=16 (v2)"
         )
     return array.float()
 
@@ -108,9 +114,9 @@ def _array_to_tensor(array: np.ndarray) -> torch.Tensor:
     tensor = torch.as_tensor(array).float()
     if tensor.ndim == 3:
         tensor = tensor.unsqueeze(0)
-    if tensor.ndim != 4 or tensor.shape[1] != CHANNEL_COUNT:
+    if tensor.ndim != 4 or tensor.shape[1] not in _ALLOWED_FEATURE_CHANNEL_COUNTS:
         raise InvalidServiceRequestError(
-            f"acquired features must have {CHANNEL_COUNT} channels"
+            f"acquired features must have {CHANNEL_COUNT} (v1) or 16 (v2) channels"
         )
     return tensor
 
@@ -412,6 +418,15 @@ def assess_endpoint(
             notes.append(
                 "split_policy=whole_5deg_blocks_with_buffer"
             )
+    schema_version: str | None = None
+    schema_names: list[str] | None = None
+    if release_shell_enabled() and shell_meta:
+        schema_version = str(shell_meta.get("channel_schema_version") or "") or None
+        names = shell_meta.get("channel_names")
+        if isinstance(names, list):
+            schema_names = [str(n) for n in names]
+        notes.append(f"channel_schema_version={schema_version or 'unknown'}")
+
     response = AssessResponseBody(
         assessment_id=result.assessment_id,
         hazard_profiles=result_profiles,
@@ -425,6 +440,8 @@ def assess_endpoint(
         checkpoint_dataset_version=dataset_version,
         is_fixture_checkpoint=is_fixture,
         domain_similarity_calibrated=domain.calibrated,
+        channel_schema_version=schema_version,
+        channel_names=schema_names,
     )
     _persist_assessment_response(
         output_root=output_root,

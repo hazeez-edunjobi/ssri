@@ -13,6 +13,7 @@ import rasterio
 
 from ssri_model.ml.constants import CHANNEL_COUNT, CHANNEL_NAMES, LABEL_NODATA
 from ssri_model.ml.labels import label_class_names
+from ssri_model.release_shell.channel_schema import schema_from_manifest
 from ssri_model.training.safety import check_split_leakage
 
 
@@ -107,13 +108,22 @@ def validate_training_dataset(dataset_root: Path | str) -> DatasetPreview:
         except Exception as exc:  # noqa: BLE001 — surface as readable error
             errors.append(str(exc))
 
-    channels = list(manifest.get("channels") or CHANNEL_NAMES)
-    if channels and len(channels) != CHANNEL_COUNT:
-        errors.append(
-            f"Feature stack contains {len(channels)} channels in the manifest, "
-            f"but the current SSRI model expects {CHANNEL_COUNT} channels "
-            f"({', '.join(CHANNEL_NAMES)})."
-        )
+    schema = schema_from_manifest(manifest)
+    expected_count = schema.channel_count
+    expected_names = list(schema.channel_names)
+    channels = list(manifest.get("channels") or expected_names)
+    if channels and list(channels) != expected_names:
+        if len(channels) != expected_count:
+            errors.append(
+                f"Feature stack contains {len(channels)} channels in the manifest, "
+                f"but schema {schema.version} expects {expected_count} channels "
+                f"({', '.join(expected_names)})."
+            )
+        else:
+            errors.append(
+                f"Manifest channel order does not match schema {schema.version}. "
+                f"Expected: {', '.join(expected_names)}."
+            )
 
     label_classes = list(manifest.get("label_classes") or label_class_names())
     expected_labels = list(label_class_names())
@@ -152,7 +162,7 @@ def validate_training_dataset(dataset_root: Path | str) -> DatasetPreview:
             if not feature_path.exists():
                 errors.append(
                     f"Sample '{sample_id}' is missing feature_stack.npy "
-                    "(expected a 13-channel NumPy array)."
+                    f"(expected a {expected_count}-channel NumPy array)."
                 )
                 continue
             if not label_path.exists():
@@ -182,10 +192,10 @@ def validate_training_dataset(dataset_root: Path | str) -> DatasetPreview:
                 )
                 continue
             channels_found, height, width = features.shape
-            if channels_found != CHANNEL_COUNT:
+            if channels_found != expected_count:
                 errors.append(
                     f"Sample '{sample_id}' feature stack contains {channels_found} channels, "
-                    f"but the current SSRI model expects {CHANNEL_COUNT} channels."
+                    f"but schema {schema.version} expects {expected_count} channels."
                 )
             if height < 8 or width < 8:
                 warnings.append(
@@ -236,10 +246,10 @@ def validate_training_dataset(dataset_root: Path | str) -> DatasetPreview:
         try:
             stats = json.loads(statistics_path.read_text(encoding="utf-8"))
             channel_stats = stats.get("channel_stats") or {}
-            if channel_stats and len(channel_stats) != CHANNEL_COUNT:
+            if channel_stats and len(channel_stats) != expected_count:
                 warnings.append(
                     f"statistics.json describes {len(channel_stats)} channels; "
-                    f"expected {CHANNEL_COUNT}."
+                    f"expected {expected_count} for schema {schema.version}."
                 )
         except json.JSONDecodeError:
             errors.append("statistics.json is not valid JSON.")
@@ -261,8 +271,8 @@ def validate_training_dataset(dataset_root: Path | str) -> DatasetPreview:
         train_count=len(train_ids),
         validation_count=len(val_ids),
         test_count=len(test_ids),
-        channel_count=CHANNEL_COUNT,
-        channels=list(channels) if channels else list(CHANNEL_NAMES),
+        channel_count=expected_count,
+        channels=list(channels) if channels else expected_names,
         spatial_size=spatial_size,
         crs=crs,
         label_classes=list(label_classes) if label_classes else expected_labels,

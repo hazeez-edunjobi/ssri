@@ -13,7 +13,6 @@ from ssri_model.architecture.decoder import SSRIDecoder
 from ssri_model.architecture.encoder import SSRIEncoder
 from ssri_model.architecture.exceptions import InvalidInputTensorError
 from ssri_model.architecture.heads import SegmentationHead
-from ssri_model.ml.constants import CHANNEL_COUNT
 
 
 @dataclass(frozen=True)
@@ -61,9 +60,9 @@ class SSRIModel(nn.Module):
             raise InvalidInputTensorError(
                 f"Expected 4D input tensor (B, C, H, W), received ndim={features.ndim}"
             )
-        if features.shape[1] != CHANNEL_COUNT:
+        if features.shape[1] != self.in_channels:
             raise InvalidInputTensorError(
-                f"Expected {CHANNEL_COUNT} input channels, received {features.shape[1]}"
+                f"Expected {self.in_channels} input channels, received {features.shape[1]}"
             )
 
 
