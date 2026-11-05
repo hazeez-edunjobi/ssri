@@ -12,9 +12,9 @@ Identity on that tip: `hazeez-edunjobi <ifeoluwasuccess520@gmail.com>` (author +
 
 | Ref | Full SHA |
 |-----|----------|
-| `origin/staging/ssri-shell-rc1` | `3a8a83dbf9ab28e8b5524c843e85c963af4e444f` |
+| `origin/staging/ssri-shell-rc1` | `f673a85b50b663efec798256386860d9a2ca5c32` |
 
-Tests / `verify.py` on `7c20acf6ada362704a0e0f7098cd0849133c049f`; tip adds `STAGING_REPORT.md` only. See `STAGING_REPORT.md`.
+Tests / `verify.py` on `7c20acf6ada362704a0e0f7098cd0849133c049f`; `3a8a83d…` adds `STAGING_REPORT.md`; tip pins checklist. See `STAGING_REPORT.md`.
 
 ## Archive tags (post identity rewrite — see COMMIT_MAP.md)
 
