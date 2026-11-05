@@ -8,6 +8,14 @@
 
 Identity on that tip: `hazeez-edunjobi <ifeoluwasuccess520@gmail.com>` (author + committer). No `Co-authored-by` trailers.
 
+## Staging tip (VERIFIED — do not merge to main yet)
+
+| Ref | Full SHA |
+|-----|----------|
+| `origin/staging/ssri-shell-rc1` | `3a8a83dbf9ab28e8b5524c843e85c963af4e444f` |
+
+Tests / `verify.py` on `7c20acf6ada362704a0e0f7098cd0849133c049f`; tip adds `STAGING_REPORT.md` only. See `STAGING_REPORT.md`.
+
 ## Archive tags (post identity rewrite — see COMMIT_MAP.md)
 
 | Tag | Tip commit | Source branch |

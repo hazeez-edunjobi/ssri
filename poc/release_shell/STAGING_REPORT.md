@@ -10,16 +10,18 @@
 
 ## Staging branch tip (VERIFIED)
 
-Confirm after push: `git rev-parse origin/staging/ssri-shell-rc1`
+Report publish tip: **`3a8a83dbf9ab28e8b5524c843e85c963af4e444f`**
 
-Tests / `verify.py` were run on tip **`7c20acf6ada362704a0e0f7098cd0849133c049f`**. This report is a docs-only commit on top; behaviour under test is unchanged.
+Confirm live tip: `git rev-parse origin/staging/ssri-shell-rc1` (may be ahead by checklist/docs pins only).
+
+Tests / `verify.py` were run on **`7c20acf6ada362704a0e0f7098cd0849133c049f`**. Docs-only commits on top do not change behaviour under test.
 
 History on staging:
 
 1. `2b44a8c…` — merge `--no-ff` of pinned `fc4c0771…` into `origin/main` (`514c7a1b…`)
 2. `8b89e23…` — optional Poetry `deepslide` group + pinned `MERGE_CHECKLIST.md` + verify skip behaviour + `CI_DEEPSLIDE_NOTE.md`
 3. `7c20acf…` — `poetry.lock` for the optional group
-4. docs — `STAGING_REPORT.md` (this file)
+4. `3a8a83d…` — `STAGING_REPORT.md`
 
 Author/committer on these commits: `hazeez-edunjobi <ifeoluwasuccess520@gmail.com>`. No `Co-authored-by` trailers.
 
