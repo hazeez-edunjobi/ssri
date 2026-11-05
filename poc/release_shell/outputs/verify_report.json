@@ -8,7 +8,7 @@
         "HEAD"
       ],
       "returncode": 0,
-      "stdout_tail": "poc/release-shell\n",
+      "stdout_tail": "feature/hazard-factors-v2\n",
       "stderr_tail": ""
     },
     "commit": {
@@ -18,7 +18,7 @@
         "HEAD"
       ],
       "returncode": 0,
-      "stdout_tail": "78e06c391008e2599bc7fd1ecfaa7ad9bfa2028d\n",
+      "stdout_tail": "e352f8feef3f6c84adcbbcae735486bb6c70e5ac\n",
       "stderr_tail": ""
     },
     "new_tests": {
@@ -33,11 +33,13 @@
         "tests/test_release_shell_assess.py",
         "tests/test_release_shell_validator.py",
         "tests/test_release_shell_assess_contract.py",
+        "tests/test_release_shell_assess_route.py",
+        "tests/test_release_shell_jobs_result.py",
         "-q",
         "--tb=line"
       ],
       "returncode": 0,
-      "stdout_tail": "................                                                         [100%]\n16 passed in 8.16s\n",
+      "stdout_tail": ".....................                                                    [100%]\n21 passed in 15.17s\n",
       "stderr_tail": ""
     },
     "assess_93": {
@@ -59,12 +61,23 @@
         "--tb=no"
       ],
       "returncode": 0,
-      "stdout_tail": "........................................................................ [ 77%]\n.....................                                                    [100%]\n93 passed in 19.56s\n",
+      "stdout_tail": "........................................................................ [ 77%]\n.....................                                                    [100%]\n93 passed in 23.70s\n",
       "stderr_tail": ""
     },
     "deepslide_9": {
+      "cmd": [
+        "poetry",
+        "-C",
+        "model",
+        "run",
+        "pytest",
+        "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\integration\\test_deepslide_engine.py",
+        "-q",
+        "--tb=no"
+      ],
       "returncode": 0,
-      "stdout_tail": "SKIPPED \u2014 deepslide test path not present on this checkout"
+      "stdout_tail": ".........                                                                [100%]\n9 passed in 11.51s\n",
+      "stderr_tail": ""
     },
     "no_trained_model": {
       "cmd": [

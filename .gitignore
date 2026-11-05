@@ -64,3 +64,14 @@ model/data/catalogs/
 
 # Docker (local overrides)
 docker-compose.override.yml
+
+# Client CSV working copies (not for git)
+sheet 260_Abeokuta.csv
+**/260_abeokuta_COPY.csv
+
+# Local release-shell rehearsal / e2e scratch
+poc/release_shell/outputs/**/work/
+poc/release_shell/templates/_*/
+poc/release_shell/outputs/_*.txt
+model/outputs/
+model/poc/
