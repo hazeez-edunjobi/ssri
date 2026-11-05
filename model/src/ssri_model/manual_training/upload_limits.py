@@ -4,15 +4,16 @@
     Optional positive integer. Empty / unset = no row limit (default).
 
 ``SSRI_UPLOAD_MAX_BYTES``
-    Maximum upload payload size in bytes. Default ``2147483648`` (2 GiB).
+    Maximum upload payload size in bytes. Default ``1073741824`` (1 GiB).
 """
 
 from __future__ import annotations
 
 import os
 
-# Default byte ceiling: generous, but prevents unbounded disk/memory fill.
-DEFAULT_UPLOAD_MAX_BYTES = 2 * 1024 * 1024 * 1024  # 2 GiB
+# Default byte ceiling: generous enough for large Stage 2.5 / CSV uploads,
+# but prevents unbounded disk/memory fill. Override with SSRI_UPLOAD_MAX_BYTES.
+DEFAULT_UPLOAD_MAX_BYTES = 1 * 1024 * 1024 * 1024  # 1 GiB
 
 
 def upload_max_rows() -> int | None:
@@ -32,7 +33,7 @@ def upload_max_rows() -> int | None:
 
 
 def upload_max_bytes() -> int:
-    """Return the upload byte ceiling (default 2 GiB)."""
+    """Return the upload byte ceiling (default 1 GiB)."""
     raw = os.environ.get("SSRI_UPLOAD_MAX_BYTES", "").strip()
     if not raw:
         return DEFAULT_UPLOAD_MAX_BYTES

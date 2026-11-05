@@ -37,9 +37,9 @@ def test_upload_max_rows_default_unlimited(monkeypatch: pytest.MonkeyPatch) -> N
     assert upload_max_rows() is None
 
 
-def test_upload_max_bytes_default_2gib(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_upload_max_bytes_default_1gib(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("SSRI_UPLOAD_MAX_BYTES", raising=False)
-    assert upload_max_bytes() == 2 * 1024 * 1024 * 1024
+    assert upload_max_bytes() == 1 * 1024 * 1024 * 1024
 
 
 def test_iter_csv_rows_streams_and_is_not_a_list() -> None:

@@ -20,10 +20,20 @@
 ## What changed
 
 1. **`SSRI_UPLOAD_MAX_ROWS`** (new) — optional positive int; **default unset = no row limit**. Enforced in streaming `iter_csv_rows`.
-2. **`SSRI_UPLOAD_MAX_BYTES`** (new) — default **2147483648 (2 GiB)**. Shared helper `reject_if_upload_too_large` used by CSV convert, classic zip ingest, and platform upload. Oversize → **HTTP 413** with a readable message (`UPLOAD_TOO_LARGE`).
+2. **`SSRI_UPLOAD_MAX_BYTES`** (new) — default **1073741824 (1 GiB)**. Shared helper `reject_if_upload_too_large` used by CSV convert, classic zip ingest, and platform upload. Oversize → **HTTP 413** with a readable message (`UPLOAD_TOO_LARGE`).
 3. CSV parse **streams** row-by-row into point maps (no full `list[dict]` of every row).
 4. Validator rules, spatial-split logic, minimums, and gates **unchanged**.
-5. Legacy flag-off behaviour: row cap removed on the shared CSV path (it was never flag-gated). Byte default raised 500 MiB → 2 GiB on that shared path.
+5. Legacy flag-off behaviour: row cap removed on the shared CSV path (it was never flag-gated). Byte default raised 500 MiB → **1 GiB** on that shared path.
+
+### Legacy paths whose limits changed
+
+| Path | Before | After |
+|------|--------|-------|
+| `manual_training/csv_import.py` | Hard `MAX_CSV_ROWS = 250_000`; no byte check | Unlimited rows (optional `SSRI_UPLOAD_MAX_ROWS`); byte check via `reject_if_upload_too_large` |
+| `manual_training/ingest.py` | Hard `MAX_UPLOAD_BYTES = 500 MiB` | Shared `upload_max_bytes()` default **1 GiB** |
+| `platform/service.py` | Hard `MAX_UPLOAD_BYTES = 500 MiB`; HTTP 400 | Shared default **1 GiB**; HTTP **413** |
+| `api/routes/training.py` | Upload errors → 400 | `UPLOAD_TOO_LARGE` → **413** |
+| `release_shell/routes.py` | Upload errors → 400 | `UPLOAD_TOO_LARGE` → **413** |
 
 Module: `model/src/ssri_model/manual_training/upload_limits.py`.
 
@@ -34,7 +44,7 @@ Module: `model/src/ssri_model/manual_training/upload_limits.py`.
 | Variable | Default | Meaning |
 |----------|---------|---------|
 | `SSRI_UPLOAD_MAX_ROWS` | unset / empty → **unlimited** | Optional CSV row ceiling |
-| `SSRI_UPLOAD_MAX_BYTES` | `2147483648` (2 GiB) | Upload payload byte ceiling |
+| `SSRI_UPLOAD_MAX_BYTES` | `1073741824` (1 GiB) | Upload payload byte ceiling |
 
 ---
 
@@ -69,7 +79,7 @@ Output: `poc/release_shell/outputs/upload_cap_rehearsal/rehearsal.json`
 ## Risks
 
 - Point/grid structures still scale with cell count (streaming removes the **row-list** blow-up, not the grid itself).
-- Default 2 GiB may exceed some reverse-proxy limits; set `SSRI_UPLOAD_MAX_BYTES` down or raise the proxy to match.
+- Default 1 GiB may exceed some reverse-proxy limits; set `SSRI_UPLOAD_MAX_BYTES` down or raise the proxy to match.
 - Optional `SSRI_UPLOAD_MAX_ROWS` can re-impose a row ceiling for ops that want one.
 
 ---
