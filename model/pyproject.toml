@@ -35,6 +35,16 @@ ruff = "^0.8"
 mypy = "^1.13"
 fakeredis = "^2.26"
 
+# Optional: DeepSlide isolated engine tests only (poc/landslide4sense).
+# Install with: poetry install --with deepslide
+# Not required for production / release-shell / assess.
+[tool.poetry.group.deepslide]
+optional = true
+
+[tool.poetry.group.deepslide.dependencies]
+segmentation-models-pytorch = ">=0.3.3"
+h5py = ">=3.10"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
