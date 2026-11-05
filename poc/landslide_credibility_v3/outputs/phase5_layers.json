@@ -1,0 +1,49 @@
+{
+  "phase": "3b_environment_layers",
+  "status": "NOT_ATTACHED",
+  "reason": "Base B2/B3 failed Tier A vs slope-only (ΔAUC CI lower ≤ 0). Protocol keep-rule requires LOBO ΔAUC lower CI > 0 vs previous best before retaining a layer. Free local rasters for NLCD/ESA WorldCover, WorldClim/CHIRPS, USGS/GLiM lithology, and soils were not present under corpus/external; no paid downloads.",
+  "pre_registered_order": [
+    {
+      "id": "L1_land_cover",
+      "source": "NLCD or ESA WorldCover",
+      "licence": "NLCD public domain / WorldCover CC-BY 4.0",
+      "resolution": "30 m / 10 m",
+      "temporal_fit": "static snapshot; not event-dated",
+      "status": "BLOCKED_MISSING_FILE",
+      "owner_request": "Supply a CONUS land-cover raster or allow a free STAC fetch path under corpus/external/landcover/"
+    },
+    {
+      "id": "L2_precip_climatology",
+      "source": "WorldClim or CHIRPS long-term mean",
+      "licence": "WorldClim / CHIRPS open research terms",
+      "resolution": "~1 km / ~5 km",
+      "temporal_fit": "climatology only (no event-date rainfall)",
+      "status": "BLOCKED_MISSING_FILE",
+      "owner_request": "Supply WorldClim bio12 or CHIRPS mean annual precip GeoTIFF under corpus/external/precip/"
+    },
+    {
+      "id": "L3_lithology",
+      "source": "USGS geology or GLiM",
+      "licence": "USGS public domain / GLiM academic",
+      "resolution": "polygon → rasterized",
+      "temporal_fit": "static geology",
+      "status": "BLOCKED_MISSING_FILE",
+      "owner_request": "Supply lithology raster or shapefile under corpus/external/lithology/"
+    },
+    {
+      "id": "L4_soils",
+      "source": "SSURGO/STATSGO or SoilGrids",
+      "licence": "USDA / ISRIC open terms",
+      "resolution": "variable",
+      "temporal_fit": "static soil properties",
+      "status": "BLOCKED_MISSING_FILE",
+      "owner_request": "Supply soils raster under corpus/external/soils/"
+    }
+  ],
+  "delta_auc_table": [
+    {"step": "B1_slope", "vs": null, "NEAR_delta_point": 0.0, "NEAR_delta_ci95": [0.0, 0.0], "kept": true, "note": "shipped baseline"},
+    {"step": "B2_logreg", "vs": "B1_slope", "NEAR_delta_point": -0.1696, "NEAR_delta_ci95": [-0.2513, 0.0339], "kept": false},
+    {"step": "B3_hgb", "vs": "B1_slope", "NEAR_delta_point": -0.2079, "NEAR_delta_ci95": [-0.2797, 0.0429], "kept": false},
+    {"step": "L1..L4", "vs": "previous best", "NEAR_delta_point": null, "NEAR_delta_ci95": null, "kept": false, "note": "not scored — missing rasters + base models not better than slope"}
+  ]
+}

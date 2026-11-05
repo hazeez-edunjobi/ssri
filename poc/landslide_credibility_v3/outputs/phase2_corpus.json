@@ -1,0 +1,128 @@
+{
+  "protocol_v3_sha256": "70FE823F9D7ED7DB0D09F7D06DC60F31693F55FCF986E9FE1CFB8C78558D8678",
+  "v2_manifest_sha256": "E0D31A4FCE9377CDF840FA3EAC46CDF5944B3F08ACB8DDAC44409B0473781913",
+  "n_lobo_near": 1475,
+  "n_lobo_far": 1209,
+  "n_lobo_slope_matched": 1609,
+  "n_spent_v2": 309,
+  "fresh_holdout": {
+    "requested_blocks": [
+      "40_-115",
+      "30_-105",
+      "35_-105",
+      "45_-115",
+      "55_-150",
+      "20_-155",
+      "15_-65"
+    ],
+    "populated_blocks": [
+      "35_-105",
+      "40_-115"
+    ],
+    "n": 14,
+    "feature_log": {
+      "fail": 0,
+      "void": 0,
+      "ok": 14
+    },
+    "meets_tier_b_min": false
+  },
+  "lobo_blocks": [
+    "30_-115",
+    "30_-120",
+    "35_-110",
+    "35_-115",
+    "35_-80",
+    "35_-85",
+    "35_-90",
+    "35_-95",
+    "40_-100",
+    "40_-110",
+    "40_-75",
+    "40_-85",
+    "40_-95",
+    "45_-125",
+    "45_-70"
+  ],
+  "spent_blocks": [
+    "35_-125",
+    "40_-120",
+    "40_-125",
+    "45_-120",
+    "45_-75"
+  ],
+  "channel_audit_lobo_near": {
+    "elevation": {
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 612.4458210160975,
+      "std": 680.7717250235604
+    },
+    "slope": {
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 14.041973193879718,
+      "std": 9.720875659165928
+    },
+    "aspect_sin": {
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 0.01999484523692347,
+      "std": 0.6614951313772274
+    },
+    "aspect_cos": {
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": -0.028814019731967823,
+      "std": 0.7491289272181805
+    },
+    "plan_curvature": {
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": -0.0002447887443523306,
+      "std": 0.029976429070558242
+    },
+    "profile_curvature": {
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": -1.6377069142738338e-05,
+      "std": 0.0026273188803016836
+    },
+    "twi": {
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 6.158294069229599,
+      "std": 1.646252213690594
+    },
+    "relative_relief_1km": {
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 202.2894147208532,
+      "std": 155.26407673490033
+    },
+    "valley_depth": {
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 98.41659878645376,
+      "std": 88.0980198212158
+    },
+    "tpi": {
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 4.430519272127353,
+      "std": 42.00067093080639
+    }
+  },
+  "file_hashes": {
+    "lobo_near.jsonl": "4DBBC96A32E9CBBD5259555C0B2FC93ABF5D0FB8CBB4820C315201144089A6CC",
+    "lobo_far.jsonl": "DFD52C89AE14542967CF093421E542C9C8A3F42867F9DB81747F47B9B9194AA1",
+    "lobo_slope_matched.jsonl": "6CCC836E129CC65DD2DEFA757A4827C8ACB11D7552D6523020258AACF9893FE9",
+    "spent_v2_near.jsonl": "137D8543411EBC69DC4E6B1943B0460A6BF2D2F017A6B40442CC5A918BA390D9",
+    "sealed_fresh.jsonl": "1C63FDB549678606BE43227203C705E3C372FE259561528CE4F690540178B04E",
+    "PROTOCOL_v3.md": "70FE823F9D7ED7DB0D09F7D06DC60F31693F55FCF986E9FE1CFB8C78558D8678"
+  },
+  "environment_layers": {
+    "status": "NOT_ATTACHED_IN_BUILD",
+    "note": "Layer rasters evaluated in train_eval only if free STAC fetch succeeds; otherwise layer steps BLOCKED with exact error"
+  }
+}

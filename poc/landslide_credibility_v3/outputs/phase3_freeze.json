@@ -1,0 +1,32 @@
+{
+  "protocol_v3_sha256": "70FE823F9D7ED7DB0D09F7D06DC60F31693F55FCF986E9FE1CFB8C78558D8678",
+  "frozen_at": "2026-11-03T22:44:04.151854+00:00",
+  "NEAR": {
+    "logreg_sha256": "398AC94C084D24FB883D72A5E72EDAC5CC22C8A2C49698EEA6FE1732D5B7E546",
+    "hgb_sha256": "D0334477CE5C5F5C08A908761290B7782E35F70EC6B44B7B7EF594EA0E3800D4",
+    "logreg_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide_credibility_v3\\corpus\\models\\NEAR_logreg.pkl",
+    "hgb_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide_credibility_v3\\corpus\\models\\NEAR_hgb.pkl",
+    "thr_slope": 0.39999999999999997,
+    "thr_logreg": 0.525,
+    "thr_hgb": 0.49999999999999994
+  },
+  "FAR": {
+    "logreg_sha256": "606473BBFF820F239AA2EAA62B6DE9114E0A04CA212FD6D300589B63CA103794",
+    "hgb_sha256": "23DD648A8F12D0CC07227A70F1CE103B537EAA73EADBD59D0BAFEBB516498FD3",
+    "logreg_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide_credibility_v3\\corpus\\models\\FAR_logreg.pkl",
+    "hgb_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide_credibility_v3\\corpus\\models\\FAR_hgb.pkl",
+    "thr_slope": 0.35,
+    "thr_logreg": 0.6625000000000001,
+    "thr_hgb": 0.675
+  },
+  "SLOPE_MATCHED": {
+    "logreg_sha256": "193F20813E57D264214741D3FDF2B5FB6BE1ECBC263E2832D0CA0C43ED8E93B7",
+    "hgb_sha256": "21226AB1E1023966A5AC1B138A53C14DF37588D8AA1D9FB1CF5C494AE2A4BB8C",
+    "logreg_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide_credibility_v3\\corpus\\models\\SLOPE_MATCHED_logreg.pkl",
+    "hgb_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide_credibility_v3\\corpus\\models\\SLOPE_MATCHED_hgb.pkl",
+    "thr_slope": 0.075,
+    "thr_logreg": 0.475,
+    "thr_hgb": 0.42499999999999993
+  },
+  "note": "Frozen before sealed holdout opened"
+}

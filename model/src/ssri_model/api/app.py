@@ -33,6 +33,7 @@ from ssri_model.api.routes import (
     platform,
     training,
 )
+from ssri_model.release_shell import routes as release_shell_routes
 
 
 def _configure_cors(app: FastAPI, config: APIConfig) -> None:
@@ -112,6 +113,8 @@ def create_app(
     app.include_router(jobs.router, prefix=config.api_prefix)
     app.include_router(training.router, prefix=config.api_prefix)
     app.include_router(platform.router, prefix=config.api_prefix)
+    # Release shell (upload→validate→train→eval). Behaviour gated by SSRI_RELEASE_SHELL.
+    app.include_router(release_shell_routes.router, prefix=config.api_prefix)
 
     return app
 

@@ -267,6 +267,8 @@ class JobDetailResponseBody(BaseModel):
     submitted_by_key_id: str
     auth_role: str
     artifacts: dict[str, Any] = Field(default_factory=dict)
+    result: dict[str, Any] | None = None
+    progress: dict[str, Any] | None = None
     error_code: str | None = None
     error_message: str | None = None
 

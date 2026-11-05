@@ -20,16 +20,34 @@ from ssri_model.jobs.service import JobService
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
+def _job_progress(record: JobRecord) -> dict[str, object] | None:
+    """Surface training progress when the payload carries a run_id."""
+    payload = record.payload or {}
+    run_id = payload.get("run_id")
+    output_root = payload.get("output_root")
+    if not run_id or not output_root:
+        return None
+    try:
+        from ssri_model.manual_training.storage import TrainingStorage
+
+        return TrainingStorage(str(output_root)).read_progress(str(run_id))
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _job_to_response(record: JobRecord) -> JobDetailResponseBody:
     artifacts: dict[str, object] = {}
-    if record.status == JobStatus.COMPLETED:
-        result = record.result or {}
+    result = record.result
+    if record.status == JobStatus.COMPLETED and result:
         artifacts = {
             "prediction": result.get("prediction_path"),
             "confidence": result.get("confidence_path"),
             "probabilities": result.get("probability_path"),
             "metadata": result.get("metadata_path"),
             "manifest_path": result.get("manifest_path"),
+            "evaluation_path": result.get("evaluation_path"),
+            "checkpoint_path": result.get("checkpoint_path"),
+            "model_id": result.get("model_id"),
         }
     return JobDetailResponseBody(
         job_id=record.job_id,
@@ -43,6 +61,8 @@ def _job_to_response(record: JobRecord) -> JobDetailResponseBody:
         submitted_by_key_id=record.submitted_by_key_id,
         auth_role=record.auth_role,
         artifacts=artifacts,
+        result=result,
+        progress=_job_progress(record),
         error_code=record.error_code,
         error_message=record.error_message,
     )

@@ -1,0 +1,716 @@
+{
+  "steps": {
+    "1_no_trained_model": {
+      "status_code": 200,
+      "status": "no_trained_model",
+      "pass": true
+    },
+    "2_broken_zip": {
+      "upload": 200,
+      "overall": "FAIL",
+      "can_train": false,
+      "train_status": 400,
+      "pass": true
+    },
+    "3_featurestacks_v3": {
+      "upload": 200,
+      "overall": "FAIL",
+      "can_train": false,
+      "channel_quality": "FAIL",
+      "channel_message": "One or more channels are all-sentinel or constant (known failure mode for ndvi/ndwi/clay/iron when filled with -9999). ndvi: ~100% nodata/sentinel (-9999.0); ndwi: ~100% nodata/sentinel (-9999.0); clay_mineral_ratio: ~100% nodata/sentinel (-9999.0); iron_oxide_index: ~100% nodata/sentinel (-9999.0)",
+      "disabled_hazards": [
+        "subsidence",
+        "landslide",
+        "sinkhole"
+      ],
+      "pass": true
+    },
+    "4_synthetic_train": {
+      "upload": 200,
+      "validation_overall": "WARN",
+      "can_train": true,
+      "start_status": 202,
+      "job_status": "completed",
+      "has_result": true,
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "evaluation_present": true,
+      "pass": true,
+      "job_id": "job-f9a91a15535557fc",
+      "dataset_id": "ds_4a54384735ce",
+      "checkpoint_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri-rc1-rehearsal\\poc\\release_shell\\outputs\\rehearsal_rc1_tmp\\service-outputs\\training\\models\\ssri-model-7e227c4f85\\best.pt",
+      "model_id": "ssri-model-7e227c4f85",
+      "evaluation": {
+        "status": "completed",
+        "scientific_validation_status": "NOT_VALIDATED",
+        "seeds": [
+          42,
+          43,
+          44
+        ],
+        "per_seed": {
+          "42": {
+            "status": "completed",
+            "scientific_validation_status": "NOT_VALIDATED",
+            "score_framing": "relative susceptibility rankings",
+            "checkpoint_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri-rc1-rehearsal\\poc\\release_shell\\outputs\\rehearsal_rc1_tmp\\service-outputs\\training\\models\\ssri-model-7e227c4f85\\best.pt",
+            "checkpoint_sha256": "22500F75B1E955578B7BDB4DF5AD6AD5B04091D68A03DF54889595B1CD15B5CA",
+            "data_hash": "9709C05E93A8B26C788166ADBBBF87794CD1113AD5D2841A8AA586846E9A6772",
+            "split_policy": "whole_5deg_blocks_with_buffer",
+            "split_manifest": {
+              "test": [
+                "SYNTHETIC_tile_10",
+                "SYNTHETIC_tile_01",
+                "SYNTHETIC_tile_06"
+              ],
+              "validation": [
+                "SYNTHETIC_tile_02",
+                "SYNTHETIC_tile_08"
+              ],
+              "train": [
+                "SYNTHETIC_tile_04",
+                "SYNTHETIC_val_placeholder",
+                "SYNTHETIC_tile_00",
+                "SYNTHETIC_tile_07",
+                "SYNTHETIC_tile_05",
+                "SYNTHETIC_tile_11",
+                "SYNTHETIC_tile_03",
+                "SYNTHETIC_tile_09"
+              ]
+            },
+            "seeds": [
+              42
+            ],
+            "hazards": {
+              "subsidence": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.4539794921875,
+                "pr_auc": 0.3037095563401998,
+                "threshold_from_validation": 0.5,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "iou": 0.0,
+                "confusion": {
+                  "tp": 0,
+                  "fp": 0,
+                  "fn": 64,
+                  "tn": 128
+                },
+                "baselines": {
+                  "majority_constant_score": 0.0,
+                  "slope_only_auc": 0.4810791015625,
+                  "slope_threshold": 0.95,
+                  "delta_auc_vs_slope": -0.027099609375,
+                  "delta_auc_ci95": [
+                    -0.0709228515625,
+                    0.023681640625
+                  ],
+                  "model_auc_ci95": [
+                    0.44384765625,
+                    0.464111328125
+                  ]
+                },
+                "per_block": {
+                  "30_-90": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "35_-125": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "40_-110": {
+                    "n": 64,
+                    "roc_auc": null
+                  }
+                },
+                "frac_held_out_blocks_auc_gt_0_5": 0.0,
+                "brier_informational": 0.23464235622788843,
+                "ece_informational": 0.1035414677268515,
+                "warn_near_constant_output": false,
+                "n_test_pixels_subsampled": 192
+              },
+              "landslide": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.503173828125,
+                "pr_auc": 0.6570207301822527,
+                "threshold_from_validation": 0.5,
+                "precision": 0.5,
+                "recall": 0.0078125,
+                "f1": 0.015384615384615385,
+                "iou": 0.007751937984496124,
+                "confusion": {
+                  "tp": 1,
+                  "fp": 1,
+                  "fn": 127,
+                  "tn": 63
+                },
+                "baselines": {
+                  "majority_constant_score": 0.0,
+                  "slope_only_auc": 0.5189208984375,
+                  "slope_threshold": 0.95,
+                  "delta_auc_vs_slope": -0.0157470703125,
+                  "delta_auc_ci95": [
+                    -0.052001953125,
+                    0.0135498046875
+                  ],
+                  "model_auc_ci95": [
+                    0.498779296875,
+                    0.507568359375
+                  ]
+                },
+                "per_block": {
+                  "30_-90": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "35_-125": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "40_-110": {
+                    "n": 64,
+                    "roc_auc": null
+                  }
+                },
+                "frac_held_out_blocks_auc_gt_0_5": 0.0,
+                "brier_informational": 0.3084574017477579,
+                "ece_informational": 0.29059843408564734,
+                "warn_near_constant_output": false,
+                "n_test_pixels_subsampled": 192
+              },
+              "sinkhole": {
+                "status": "insufficient_pixels",
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "message": "Not enough labelled pixels on held-out blocks."
+              }
+            },
+            "limitations": [
+              "trained only on the uploaded data's geography; not validated elsewhere",
+              "slope alone often matches or beats trained models",
+              "scores are relative susceptibility rankings, not probabilities or risk estimates",
+              "scientific status remains NOT_VALIDATED; not independently reviewed",
+              "must never be used for insurance, engineering, safety, or emergency decisions"
+            ],
+            "notes": [
+              "Evaluation uses held-out blocks only.",
+              "ECE and Brier are informational only (not gates).",
+              "Never claim validated risk, probability, or detection."
+            ]
+          },
+          "43": {
+            "status": "completed",
+            "scientific_validation_status": "NOT_VALIDATED",
+            "score_framing": "relative susceptibility rankings",
+            "checkpoint_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri-rc1-rehearsal\\poc\\release_shell\\outputs\\rehearsal_rc1_tmp\\service-outputs\\training\\models\\ssri-model-66c4ae277e\\best.pt",
+            "checkpoint_sha256": "8AAD7F74E289F7C948D00BDABEC4D58009D9A81DEBA26C72C130D59B73D57556",
+            "data_hash": "9709C05E93A8B26C788166ADBBBF87794CD1113AD5D2841A8AA586846E9A6772",
+            "split_policy": "whole_5deg_blocks_with_buffer",
+            "split_manifest": {
+              "test": [
+                "SYNTHETIC_tile_10",
+                "SYNTHETIC_tile_01",
+                "SYNTHETIC_tile_06"
+              ],
+              "validation": [
+                "SYNTHETIC_tile_02",
+                "SYNTHETIC_tile_08"
+              ],
+              "train": [
+                "SYNTHETIC_tile_04",
+                "SYNTHETIC_val_placeholder",
+                "SYNTHETIC_tile_00",
+                "SYNTHETIC_tile_07",
+                "SYNTHETIC_tile_05",
+                "SYNTHETIC_tile_11",
+                "SYNTHETIC_tile_03",
+                "SYNTHETIC_tile_09"
+              ]
+            },
+            "seeds": [
+              43
+            ],
+            "hazards": {
+              "subsidence": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.5638427734375,
+                "pr_auc": 0.37017745178721234,
+                "threshold_from_validation": 0.5,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "iou": 0.0,
+                "confusion": {
+                  "tp": 0,
+                  "fp": 0,
+                  "fn": 64,
+                  "tn": 128
+                },
+                "baselines": {
+                  "majority_constant_score": 0.0,
+                  "slope_only_auc": 0.4810791015625,
+                  "slope_threshold": 0.95,
+                  "delta_auc_vs_slope": 0.082763671875,
+                  "delta_auc_ci95": [
+                    0.0491943359375,
+                    0.123291015625
+                  ],
+                  "model_auc_ci95": [
+                    0.563720703125,
+                    0.56396484375
+                  ]
+                },
+                "per_block": {
+                  "30_-90": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "35_-125": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "40_-110": {
+                    "n": 64,
+                    "roc_auc": null
+                  }
+                },
+                "frac_held_out_blocks_auc_gt_0_5": 0.0,
+                "brier_informational": 0.2219410226384206,
+                "ece_informational": 0.05351570512478551,
+                "warn_near_constant_output": false,
+                "n_test_pixels_subsampled": 192
+              },
+              "landslide": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.5184326171875,
+                "pr_auc": 0.7002255437871747,
+                "threshold_from_validation": 0.5,
+                "precision": 1.0,
+                "recall": 0.015625,
+                "f1": 0.03076923076923077,
+                "iou": 0.015625,
+                "confusion": {
+                  "tp": 2,
+                  "fp": 0,
+                  "fn": 126,
+                  "tn": 64
+                },
+                "baselines": {
+                  "majority_constant_score": 0.0,
+                  "slope_only_auc": 0.5189208984375,
+                  "slope_threshold": 0.95,
+                  "delta_auc_vs_slope": -0.00048828125,
+                  "delta_auc_ci95": [
+                    -0.028076171875,
+                    0.0201416015625
+                  ],
+                  "model_auc_ci95": [
+                    0.50537109375,
+                    0.531494140625
+                  ]
+                },
+                "per_block": {
+                  "30_-90": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "35_-125": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "40_-110": {
+                    "n": 64,
+                    "roc_auc": null
+                  }
+                },
+                "frac_held_out_blocks_auc_gt_0_5": 0.0,
+                "brier_informational": 0.2918780244528363,
+                "ece_informational": 0.26522312359884376,
+                "warn_near_constant_output": false,
+                "n_test_pixels_subsampled": 192
+              },
+              "sinkhole": {
+                "status": "insufficient_pixels",
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "message": "Not enough labelled pixels on held-out blocks."
+              }
+            },
+            "limitations": [
+              "trained only on the uploaded data's geography; not validated elsewhere",
+              "slope alone often matches or beats trained models",
+              "scores are relative susceptibility rankings, not probabilities or risk estimates",
+              "scientific status remains NOT_VALIDATED; not independently reviewed",
+              "must never be used for insurance, engineering, safety, or emergency decisions"
+            ],
+            "notes": [
+              "Evaluation uses held-out blocks only.",
+              "ECE and Brier are informational only (not gates).",
+              "Never claim validated risk, probability, or detection."
+            ]
+          },
+          "44": {
+            "status": "completed",
+            "scientific_validation_status": "NOT_VALIDATED",
+            "score_framing": "relative susceptibility rankings",
+            "checkpoint_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri-rc1-rehearsal\\poc\\release_shell\\outputs\\rehearsal_rc1_tmp\\service-outputs\\training\\models\\ssri-model-4311b43e88\\best.pt",
+            "checkpoint_sha256": "5FF06B04046B21A3351C3FF73B34F4A3669925381BFB0DA016679B4CE04CA6BD",
+            "data_hash": "9709C05E93A8B26C788166ADBBBF87794CD1113AD5D2841A8AA586846E9A6772",
+            "split_policy": "whole_5deg_blocks_with_buffer",
+            "split_manifest": {
+              "test": [
+                "SYNTHETIC_tile_10",
+                "SYNTHETIC_tile_01",
+                "SYNTHETIC_tile_06"
+              ],
+              "validation": [
+                "SYNTHETIC_tile_02",
+                "SYNTHETIC_tile_08"
+              ],
+              "train": [
+                "SYNTHETIC_tile_04",
+                "SYNTHETIC_val_placeholder",
+                "SYNTHETIC_tile_00",
+                "SYNTHETIC_tile_07",
+                "SYNTHETIC_tile_05",
+                "SYNTHETIC_tile_11",
+                "SYNTHETIC_tile_03",
+                "SYNTHETIC_tile_09"
+              ]
+            },
+            "seeds": [
+              44
+            ],
+            "hazards": {
+              "subsidence": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.5037841796875,
+                "pr_auc": 0.33235903755290314,
+                "threshold_from_validation": 0.5,
+                "precision": 0.3783783783783784,
+                "recall": 0.21875,
+                "f1": 0.2772277227722772,
+                "iou": 0.16091954022988506,
+                "confusion": {
+                  "tp": 14,
+                  "fp": 23,
+                  "fn": 50,
+                  "tn": 105
+                },
+                "baselines": {
+                  "majority_constant_score": 0.0,
+                  "slope_only_auc": 0.4810791015625,
+                  "slope_threshold": 0.95,
+                  "delta_auc_vs_slope": 0.022705078125,
+                  "delta_auc_ci95": [
+                    0.0035400390625,
+                    0.048828125
+                  ],
+                  "model_auc_ci95": [
+                    0.4892578125,
+                    0.518310546875
+                  ]
+                },
+                "per_block": {
+                  "30_-90": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "35_-125": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "40_-110": {
+                    "n": 64,
+                    "roc_auc": null
+                  }
+                },
+                "frac_held_out_blocks_auc_gt_0_5": 0.0,
+                "brier_informational": 0.24100926208439724,
+                "ece_informational": 0.14079363907997805,
+                "warn_near_constant_output": false,
+                "n_test_pixels_subsampled": 192
+              },
+              "landslide": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.48779296875,
+                "pr_auc": 0.6714107122203751,
+                "threshold_from_validation": 0.5,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0,
+                "iou": 0.0,
+                "confusion": {
+                  "tp": 0,
+                  "fp": 0,
+                  "fn": 128,
+                  "tn": 64
+                },
+                "baselines": {
+                  "majority_constant_score": 0.0,
+                  "slope_only_auc": 0.5189208984375,
+                  "slope_threshold": 0.95,
+                  "delta_auc_vs_slope": -0.0311279296875,
+                  "delta_auc_ci95": [
+                    -0.09375,
+                    0.0245361328125
+                  ],
+                  "model_auc_ci95": [
+                    0.4658203125,
+                    0.509765625
+                  ]
+                },
+                "per_block": {
+                  "30_-90": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "35_-125": {
+                    "n": 64,
+                    "roc_auc": null
+                  },
+                  "40_-110": {
+                    "n": 64,
+                    "roc_auc": null
+                  }
+                },
+                "frac_held_out_blocks_auc_gt_0_5": 0.0,
+                "brier_informational": 0.3383362045770335,
+                "ece_informational": 0.3389360955140243,
+                "warn_near_constant_output": false,
+                "n_test_pixels_subsampled": 192
+              },
+              "sinkhole": {
+                "status": "insufficient_pixels",
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "message": "Not enough labelled pixels on held-out blocks."
+              }
+            },
+            "limitations": [
+              "trained only on the uploaded data's geography; not validated elsewhere",
+              "slope alone often matches or beats trained models",
+              "scores are relative susceptibility rankings, not probabilities or risk estimates",
+              "scientific status remains NOT_VALIDATED; not independently reviewed",
+              "must never be used for insurance, engineering, safety, or emergency decisions"
+            ],
+            "notes": [
+              "Evaluation uses held-out blocks only.",
+              "ECE and Brier are informational only (not gates).",
+              "Never claim validated risk, probability, or detection."
+            ]
+          }
+        },
+        "hazards": {
+          "subsidence": {
+            "disabled_at_validation": false,
+            "status": "ENABLED",
+            "reason": "Meets default minimums.",
+            "has_positive_labels": true,
+            "gate_status": "trained, no demonstrated skill beyond slope",
+            "seed_gates": [
+              "trained, no demonstrated skill beyond slope",
+              "trained, no demonstrated skill beyond slope",
+              "trained, no demonstrated skill beyond slope"
+            ],
+            "per_seed": {
+              "42": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.4539794921875,
+                "delta_auc_vs_slope": -0.027099609375,
+                "delta_auc_ci95": [
+                  -0.0709228515625,
+                  0.023681640625
+                ]
+              },
+              "43": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.5638427734375,
+                "delta_auc_vs_slope": 0.082763671875,
+                "delta_auc_ci95": [
+                  0.0491943359375,
+                  0.123291015625
+                ]
+              },
+              "44": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.5037841796875,
+                "delta_auc_vs_slope": 0.022705078125,
+                "delta_auc_ci95": [
+                  0.0035400390625,
+                  0.048828125
+                ]
+              }
+            },
+            "seeds_passed": 0
+          },
+          "landslide": {
+            "disabled_at_validation": false,
+            "status": "ENABLED",
+            "reason": "Meets default minimums.",
+            "has_positive_labels": true,
+            "gate_status": "trained, no demonstrated skill beyond slope",
+            "seed_gates": [
+              "trained, no demonstrated skill beyond slope",
+              "trained, no demonstrated skill beyond slope",
+              "trained, no demonstrated skill beyond slope"
+            ],
+            "per_seed": {
+              "42": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.503173828125,
+                "delta_auc_vs_slope": -0.0157470703125,
+                "delta_auc_ci95": [
+                  -0.052001953125,
+                  0.0135498046875
+                ]
+              },
+              "43": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.5184326171875,
+                "delta_auc_vs_slope": -0.00048828125,
+                "delta_auc_ci95": [
+                  -0.028076171875,
+                  0.0201416015625
+                ]
+              },
+              "44": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": 0.48779296875,
+                "delta_auc_vs_slope": -0.0311279296875,
+                "delta_auc_ci95": [
+                  -0.09375,
+                  0.0245361328125
+                ]
+              }
+            },
+            "seeds_passed": 0
+          },
+          "sinkhole": {
+            "disabled_at_validation": false,
+            "status": "ENABLED",
+            "reason": "Meets default minimums.",
+            "has_positive_labels": true,
+            "gate_status": "trained, no demonstrated skill beyond slope",
+            "seed_gates": [
+              "trained, no demonstrated skill beyond slope",
+              "trained, no demonstrated skill beyond slope",
+              "trained, no demonstrated skill beyond slope"
+            ],
+            "per_seed": {
+              "42": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": null,
+                "delta_auc_vs_slope": null,
+                "delta_auc_ci95": null
+              },
+              "43": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": null,
+                "delta_auc_vs_slope": null,
+                "delta_auc_ci95": null
+              },
+              "44": {
+                "gate_status": "trained, no demonstrated skill beyond slope",
+                "roc_auc": null,
+                "delta_auc_vs_slope": null,
+                "delta_auc_ci95": null
+              }
+            },
+            "seeds_passed": 0
+          }
+        },
+        "training_region": {
+          "blocks": [
+            "30_-115",
+            "30_-120",
+            "30_-90",
+            "35_-100",
+            "35_-115",
+            "35_-125",
+            "35_-85",
+            "40_-110",
+            "40_-125",
+            "40_-90",
+            "45_-125",
+            "45_-80"
+          ],
+          "extent": {
+            "lat_min": 30.5,
+            "lat_max": 47.5,
+            "lon_min": -122.5,
+            "lon_max": -75.5
+          },
+          "n_tiles": 13
+        },
+        "primary_checkpoint": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri-rc1-rehearsal\\poc\\release_shell\\outputs\\rehearsal_rc1_tmp\\service-outputs\\training\\models\\ssri-model-7e227c4f85\\best.pt",
+        "score_framing": "relative susceptibility rankings"
+      }
+    },
+    "5_assess_selected": {
+      "status_code": 200,
+      "profile_statuses": [
+        {
+          "hazard": "subsidence",
+          "status": "not_available",
+          "score": null,
+          "gate_status": "trained, no demonstrated skill beyond slope"
+        },
+        {
+          "hazard": "landslide",
+          "status": "not_available",
+          "score": null,
+          "gate_status": "trained, no demonstrated skill beyond slope"
+        },
+        {
+          "hazard": "sinkhole",
+          "status": "not_available",
+          "score": null,
+          "gate_status": "trained, no demonstrated skill beyond slope"
+        }
+      ],
+      "has_checkpoint_sha": true,
+      "has_limitations": true,
+      "notes_sample": [
+        "Ranking confidence bands are software heuristics only; status remains NOT_VALIDATED. Scores are relative susceptibility rankings, not probabilities or risk estimates.",
+        "domain_similarity_calibrated=false",
+        "domain_similarity_reason=no_SSRI_DOMAIN_CENTROID_PATH",
+        "requested_by=development",
+        "request_id=assess-e55de79c0f77",
+        "checkpoint_sha256=22c5c5e4d0c5a89440b04532f70fd943c2fc2c1dae1aa6341b7c42deebc9e22a",
+        "is_fixture_checkpoint=false",
+        "score_framing=relative_susceptibility_rankings",
+        "scientific_validation_status=NOT_VALIDATED",
+        "limitation=trained only on the uploaded data's geography; not validated elsewhere"
+      ],
+      "pass": true,
+      "checkpoint": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri-rc1-rehearsal\\poc\\release_shell\\outputs\\rehearsal_rc1_tmp\\service-outputs\\training\\models\\ssri-model-7e227c4f85\\best.pt"
+    },
+    "6_outside_region": {
+      "status_code": 200,
+      "outside_count": 3,
+      "profiles": [
+        {
+          "hazard": "subsidence",
+          "status": "outside_training_region",
+          "score": null
+        },
+        {
+          "hazard": "landslide",
+          "status": "outside_training_region",
+          "score": null
+        },
+        {
+          "hazard": "sinkhole",
+          "status": "outside_training_region",
+          "score": null
+        }
+      ],
+      "pass": true
+    }
+  },
+  "clone_commit": "ba9330fd6dcafb35509754ea3113290d3cc47330",
+  "pass": true
+}

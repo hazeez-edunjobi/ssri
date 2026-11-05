@@ -1,0 +1,269 @@
+{
+  "status": "OK",
+  "protocol_v2_sha256": "5F63E3625717B25750868985621C6C161BDC9B31C295B7585E47BCD77796FEF5",
+  "n_primary": 1784,
+  "n_far_set": 1445,
+  "counts": {
+    "catalog_filtered": 152287,
+    "before_thin": 50000,
+    "after_thin": 16234,
+    "after_source_cap": 4054,
+    "presence_selected": 900,
+    "absence_near_sampled": 900,
+    "absence_far_sampled": 900,
+    "after_buffer_primary": {
+      "buffer_km": 50.0,
+      "dropped_trainval": 16,
+      "dropped_test": 0,
+      "n_before": 1800,
+      "n_after": 1784
+    },
+    "feature_log_primary": {
+      "dem_fail": 0,
+      "void_drop": 0,
+      "n_ok": 1784
+    },
+    "feature_log_far": {
+      "dem_fail": 346,
+      "void_drop": 0,
+      "n_ok": 1445
+    }
+  },
+  "split_of_blocks": {
+    "35_-110": "train",
+    "45_-70": "validation",
+    "35_-90": "train",
+    "40_-120": "test",
+    "30_-115": "train",
+    "35_-95": "train",
+    "40_-125": "test",
+    "40_-95": "validation",
+    "35_-115": "validation",
+    "35_-85": "train",
+    "35_-80": "train",
+    "40_-85": "train",
+    "45_-120": "test",
+    "40_-110": "train",
+    "30_-120": "train",
+    "40_-75": "train",
+    "45_-125": "train",
+    "35_-125": "test",
+    "45_-75": "test",
+    "40_-100": "train"
+  },
+  "blocks_by_split": {
+    "train": [
+      "30_-115",
+      "30_-120",
+      "35_-110",
+      "35_-80",
+      "35_-85",
+      "35_-90",
+      "35_-95",
+      "40_-100",
+      "40_-110",
+      "40_-75",
+      "40_-85",
+      "45_-125"
+    ],
+    "validation": [
+      "35_-115",
+      "40_-95",
+      "45_-70"
+    ],
+    "test": [
+      "35_-125",
+      "40_-120",
+      "40_-125",
+      "45_-120",
+      "45_-75"
+    ]
+  },
+  "min_train_test_nn_km": 54.330820970833045,
+  "channel_audit": {
+    "elevation": {
+      "n": 1784,
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 617.5026548927308,
+      "std": 660.2031176095887
+    },
+    "slope": {
+      "n": 1784,
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 13.78621397974336,
+      "std": 9.87225092824441
+    },
+    "aspect_sin": {
+      "n": 1784,
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 0.01774565539476311,
+      "std": 0.6598596612580544
+    },
+    "aspect_cos": {
+      "n": 1784,
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": -0.02097618994020003,
+      "std": 0.7508863553258966
+    },
+    "plan_curvature": {
+      "n": 1784,
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": -0.00041599128712319886,
+      "std": 0.029150612524888278
+    },
+    "profile_curvature": {
+      "n": 1784,
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": -6.599275755973893e-05,
+      "std": 0.0026680060769495107
+    },
+    "twi": {
+      "n": 1784,
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 6.3260110552710715,
+      "std": 1.8283957928319041
+    },
+    "relative_relief_1km": {
+      "n": 1784,
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 213.06940354706407,
+      "std": 163.7068393166
+    },
+    "valley_depth": {
+      "n": 1784,
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 101.2508924331387,
+      "std": 91.48259999954901
+    },
+    "tpi": {
+      "n": 1784,
+      "frac_nan": 0.0,
+      "frac_constant": 0.0,
+      "mean": 2.9356986959557223,
+      "std": 42.64440063063908
+    }
+  },
+  "prevalence_by_split": {
+    "train": {
+      "1": 800,
+      "0": 512
+    },
+    "validation": {
+      "1": 7,
+      "0": 156
+    },
+    "test": {
+      "1": 84,
+      "0": 225
+    }
+  },
+  "prevalence_by_block": {
+    "35_-80": {
+      "1": 51,
+      "0": 30
+    },
+    "35_-85": {
+      "1": 655,
+      "0": 32
+    },
+    "35_-110": {
+      "1": 6,
+      "0": 63
+    },
+    "35_-115": {
+      "1": 5,
+      "0": 23
+    },
+    "35_-125": {
+      "1": 34,
+      "0": 49
+    },
+    "30_-120": {
+      "1": 4,
+      "0": 48
+    },
+    "40_-110": {
+      "1": 7,
+      "0": 44
+    },
+    "30_-115": {
+      "1": 4,
+      "0": 24
+    },
+    "40_-125": {
+      "1": 39,
+      "0": 42
+    },
+    "45_-125": {
+      "1": 43,
+      "0": 27
+    },
+    "40_-85": {
+      "1": 10,
+      "0": 43
+    },
+    "45_-70": {
+      "1": 1,
+      "0": 90
+    },
+    "45_-120": {
+      "1": 7,
+      "0": 56
+    },
+    "40_-75": {
+      "1": 9,
+      "0": 12
+    },
+    "35_-90": {
+      "1": 5,
+      "0": 87
+    },
+    "45_-75": {
+      "1": 1,
+      "0": 52
+    },
+    "40_-100": {
+      "1": 4,
+      "0": 35
+    },
+    "35_-95": {
+      "1": 2,
+      "0": 67
+    },
+    "40_-120": {
+      "1": 3,
+      "0": 26
+    },
+    "40_-95": {
+      "1": 1,
+      "0": 43
+    }
+  },
+  "frac_presences_dated": 0.17957351290684623,
+  "dropped_features": [
+    "ndvi",
+    "ndwi",
+    "clay_mineral_ratio",
+    "iron_oxide_index",
+    "gravity",
+    "magnetics",
+    "sentinel",
+    "event_date_features"
+  ],
+  "file_hashes": {
+    "samples_near.jsonl": "8C7FBB62B4B5B4DF5D6F324E1099CB31A81E1F63AC2E666D194FD5F825F053E4",
+    "samples_far.jsonl": "09498F70AA8980F70FC99A5D9B91575E018F91B06672780C0199A8CEB9F81A60",
+    "PROTOCOL_v2.md": "5F63E3625717B25750868985621C6C161BDC9B31C295B7585E47BCD77796FEF5",
+    "config.json": "EB292723C2A5EB912F235EEEF9C32FC221D56DE519636AB743F6CD90309F39B1"
+  },
+  "primary_absence_scheme": "NEAR"
+}

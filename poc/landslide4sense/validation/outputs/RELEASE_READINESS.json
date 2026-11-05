@@ -1,0 +1,212 @@
+{
+  "title": "SSRI DeepSlide Landslide Integration Gate \u2014 Release Readiness",
+  "generated_at_utc": "2026-11-03T18:12:03.655107+00:00",
+  "overall_verdict": "BLOCKED",
+  "integration_authorized": false,
+  "integration_performed": false,
+  "scope": "landslide_only",
+  "model": {
+    "name": "DeepSlide MobileNetV2 U-Net (smp)",
+    "checkpoint": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\weights\\mobilenetv2.pth",
+    "sha256": "a743e627dd68a1409ddda4ad43b70b53ee92c0d504d16c890e128ba04dc9ab4f",
+    "source": "https://huggingface.co/harshinde/DeepSlide_Models/blob/main/mobilenetv2.pth",
+    "license": "MIT"
+  },
+  "checklist": [
+    {
+      "criterion": "phase1_model_authenticated",
+      "result": "PASS",
+      "evidence": "SHA256 match=True; missing_keys=0; source=https://huggingface.co/harshinde/DeepSlide_Models/blob/main/mobilenetv2.pth"
+    },
+    {
+      "criterion": "phase2_georeferenced_input_ok",
+      "result": "BLOCKED",
+      "evidence": "STAC stack has real CRS and 14 bands, but value domain does not match Landslide4Sense competition tensors used to train DeepSlide; competition scaling is unpublished. Not a defensible model-compatible input."
+    },
+    {
+      "criterion": "phase3_held_out_gates_pass",
+      "result": "PASS",
+      "evidence": "micro_F1=0.5292360221937686; gates={'beat_majority_micro_f1': {'pass': True, 'model_f1': 0.5292360221937686, 'majority_f1': 0.0}, 'beat_slope_micro_f1_by_0_10': {'pass': True, 'model_f1': 0.5292360221937686, 'slope_f1': 0.03338161484825007, 'delta': 0.49585440734551856}, 'absolute_micro_f1_floor_0_50': {'pass': True, 'model_f1': 0.5292360221937686, 'floor': 0.5}}; scientific_acceptance=UNRESOLVED"
+    },
+    {
+      "criterion": "phase3_scientific_validation",
+      "result": "UNRESOLVED",
+      "evidence": "Even if numeric gates pass, scientific_acceptance remains UNRESOLVED unless an independent spatially blocked inventory study is completed. This milestone does not claim scientific validation."
+    },
+    {
+      "criterion": "phase4_georeferenced_output_ok",
+      "result": "FAIL",
+      "evidence": "CRS written=EPSG:32653; empty_prediction=True; domain_matched=False; GeoTIFF carries real CRS and matches input affine, but predictions are domain-shifted uncalibrated scores, not validated landslide risk."
+    },
+    {
+      "criterion": "phase5_deployment_feasibility_ok",
+      "result": "FAIL",
+      "evidence": "isolated_CPU_ok peak_rss=424.6015625 MB; live_render_verified=False; assess_compatible=False"
+    },
+    {
+      "criterion": "ssri_input_contract_compatible_or_new_pipeline_ready",
+      "result": "FAIL",
+      "evidence": "SSRI assess uses 13-channel Stage 2.5 stack; DeepSlide needs 14-band L4S. No new ingest pipeline implemented."
+    }
+  ],
+  "held_out_summary": {
+    "dataset": "Landslide4Sense validation chips 1\u201340 (HF ibm-nasa-geospatial)",
+    "n_chips": 40,
+    "prevalence": 0.011444091796875,
+    "threshold": 0.5,
+    "micro": {
+      "precision": 0.487585664532075,
+      "recall": 0.5786666666666667,
+      "f1": 0.5292360221937686,
+      "iou": 0.3598374927452118,
+      "tp": 4340,
+      "fp": 4561,
+      "fn": 3160,
+      "tn": 643299,
+      "confusion_matrix": {
+        "tn": 643299,
+        "fp": 4561,
+        "fn": 3160,
+        "tp": 4340
+      }
+    },
+    "majority_f1": 0.0,
+    "slope_f1": 0.03338161484825007,
+    "numeric_gates_pass": true,
+    "scientific_acceptance": "UNRESOLVED"
+  },
+  "geographic_inference": {
+    "real_crs_geotiff_written": true,
+    "crs": "EPSG:32653",
+    "empty_predictions": true,
+    "defensible_domain_match": false,
+    "artifacts": {
+      "input": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\validation\\outputs\\georef\\input_14band.tif",
+      "prediction": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\validation\\outputs\\georef\\prediction_georef.tif",
+      "preview": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\validation\\outputs\\georef\\preview_georef.png"
+    }
+  },
+  "deployment": {
+    "device": "cpu",
+    "checkpoint_mb": 25.57,
+    "model_load_s": 4.785,
+    "infer_per_chip_s_mean": 0.0452,
+    "infer_per_chip_s_p50": 0.0423,
+    "batch4_s": 0.1179,
+    "rss_mb_start": 236.69921875,
+    "rss_mb_after_load": 404.6953125,
+    "rss_mb_after_infer": 416.7890625,
+    "rss_mb_after_batch4": 424.6015625,
+    "deps": [
+      "torch",
+      "segmentation-models-pytorch",
+      "h5py",
+      "numpy",
+      "rasterio (geo path)"
+    ]
+  },
+  "deployment_gates": {
+    "single_chip_cpu_ok": true,
+    "peak_rss_under_1500mb": true,
+    "peak_rss_mb": 424.6015625,
+    "live_render_verified": false,
+    "assess_route_compatible_without_new_ingest": false,
+    "worker_path_compatible_without_new_ingest": false
+  },
+  "acceptance_criteria": {
+    "declared_before_final_test_eval": true,
+    "declared_at_utc": "2026-11-03T18:00:00Z",
+    "scope": "landslide_detection_only",
+    "threshold_policy": {
+      "decision_threshold": 0.5,
+      "selection": "Fixed at DeepSlide documented default (sigmoid > 0.5). Not tuned on the evaluation set.",
+      "scientific_note": "Raw sigmoid outputs are uncalibrated segmentation scores, not risk probabilities."
+    },
+    "held_out_eval": {
+      "dataset": "Landslide4Sense validation split (HF mirror with masks)",
+      "rationale": "DeepSlide trained on Landslide4Sense; public train chips are leakage-prone. Validation split is the competition held-out set with labels on HF mirrors.",
+      "minimum_chips": 30,
+      "gates": {
+        "beat_majority_micro_f1": {
+          "required": true,
+          "rule": "model_micro_f1 > majority_micro_f1"
+        },
+        "beat_slope_micro_f1_by": {
+          "required": true,
+          "delta": 0.1,
+          "rule": "model_micro_f1 - slope_micro_f1 >= 0.10"
+        },
+        "absolute_micro_f1_floor": {
+          "required": true,
+          "min_f1": 0.5,
+          "rationale": "Floor below official IARAI U-Net validation F1 0.5782 to allow smaller subsample variance; not a claim of matching the leaderboard."
+        }
+      },
+      "scientific_acceptance": {
+        "policy": "Even if numeric gates pass, scientific_acceptance remains UNRESOLVED unless an independent spatially blocked inventory study is completed. This milestone does not claim scientific validation."
+      }
+    },
+    "georeferenced_pipeline": {
+      "required": true,
+      "rules": [
+        "Input stack must include 14 bands in L4S order with documented provenance",
+        "Output GeoTIFF must carry a real CRS (not None) and affine matching the input window",
+        "Do not invent CRS for L4S HDF5 chips",
+        "Do not map SSRI 13-channel stack into 14 bands"
+      ]
+    },
+    "deployment": {
+      "required_checks": [
+        "model_load_s measured on CPU",
+        "per_chip_infer_s measured",
+        "peak_rss_mb measured",
+        "compare against unknown Render RAM with conservative 512MB-class caution"
+      ],
+      "pass_rule": "Single-chip CPU inference completes; peak RSS for model+one chip < 1500 MB; no claim of verified production deploy without live Render test"
+    },
+    "pass_for_integration_requires": [
+      "phase1_model_authenticated",
+      "phase2_georeferenced_input_ok",
+      "phase3_held_out_gates_pass",
+      "phase4_georeferenced_output_ok",
+      "phase5_deployment_feasibility_ok",
+      "ssri_input_contract_compatible_or_new_pipeline_ready"
+    ]
+  },
+  "remediation_plan": [
+    {
+      "priority": 1,
+      "action": "Reproduce Landslide4Sense competition band scaling (or retrain/fine-tune DeepSlide on physically unit STAC stacks with spatial-block holdout).",
+      "why": "STAC georeferenced stacks are CRS-valid but domain-shifted; georef inference produced empty masks (max sigmoid\u22480.01)."
+    },
+    {
+      "priority": 2,
+      "action": "Build SSRI 14-band ingest (S2 B1\u2013B12 + DEM/slope) with CRS, replacing reliance on the 13-channel Stage 2.5 stack for landslide-only path.",
+      "why": "Assess/worker cannot feed DeepSlide without a new feature pipeline."
+    },
+    {
+      "priority": 3,
+      "action": "Obtain ALOS PALSAR DEM/slope (or justify Copernicus DEM) and a real B10 source if required; keep B10 fill documented.",
+      "why": "L4S used ALOS PALSAR; STAC path used Copernicus GLO-30 and zero-filled B10."
+    },
+    {
+      "priority": 4,
+      "action": "After domain-matched georef works, run labelled georeferenced AOI evaluation and a live Render memory/cold-start test with authorization.",
+      "why": "Phase 4 map usefulness and Phase 5 production verification remain open."
+    },
+    {
+      "priority": 5,
+      "action": "Do not integrate behind /api/v1/assess until all PASS FOR INTEGRATION gates clear.",
+      "why": "Integration gate explicitly forbids partial pass."
+    }
+  ],
+  "limitations": [
+    "Landslide only \u2014 no subsidence/sinkhole claim",
+    "L4S competition chips have no CRS; cannot georeference them honestly",
+    "Competition value scaling unpublished; STAC physical units \u2260 training domain",
+    "Held-out numeric pass on HF validation labels; scientific validation UNRESOLVED",
+    "Sigmoid scores are uncalibrated \u2014 not risk probabilities",
+    "Production Render live test not authorized/executed",
+    "SSRI 13-channel assess path incompatible without new ingest"
+  ]
+}

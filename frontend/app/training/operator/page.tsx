@@ -229,16 +229,36 @@ export default function TrainingPage() {
       <div className="mx-auto max-w-5xl px-4 pt-8 md:px-8">
         <LandPhoto
           unsplash="geology"
-          alt="Mountain ridges where landslide risk is read from the terrain"
-          caption="Train on real terrain"
+          alt="Mountain ridges used for relative landslide susceptibility ranking demos"
+          caption="Train on labelled terrain tiles"
         />
       </div>
       <div className="mx-auto grid max-w-5xl gap-6 px-4 py-8 md:grid-cols-[1fr_280px] md:px-8">
         <section className="space-y-6">
+          <div className="rounded-2xl border border-bark/20 bg-chalk px-4 py-3 text-xs text-bark">
+            <p className="font-display text-sm text-bark">Known limitations</p>
+            <ul className="mt-2 list-disc space-y-1 pl-4 text-stone">
+              <li>
+                Scores are <strong>relative susceptibility rankings</strong>, not
+                probabilities or risk estimates. Status stays{" "}
+                <strong>NOT_VALIDATED</strong>.
+              </li>
+              <li>
+                Models apply only to the uploaded data&apos;s geography; slope alone
+                often matches or beats trained models.
+              </li>
+              <li>
+                Must never be used for insurance, engineering, safety, or emergency
+                decisions. SYNTHETIC demos are fake data.
+              </li>
+            </ul>
+          </div>
           <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-900">
             Training completion means the model finished learning from your data.
-            It does <strong>not</strong> mean the model is scientifically validated
-            or production-ready.
+            It does <strong>not</strong> mean the model is scientifically reviewed
+            or production-ready. Prefer gate status{" "}
+            <em>evaluated</em> vs <em>trained, no demonstrated skill beyond slope</em>
+            — never &quot;validated&quot;.
           </div>
 
           {error && (

@@ -1,0 +1,172 @@
+{
+  "phase": "2_and_4",
+  "acceptance": {
+    "bands_present_14": true,
+    "crs_present": true,
+    "domain_matched_to_training": false,
+    "phase2_georeferenced_input_ok": false,
+    "phase2_reason": "STAC stack has real CRS and 14 bands, but value domain does not match Landslide4Sense competition tensors used to train DeepSlide; competition scaling is unpublished. Not a defensible model-compatible input.",
+    "phase4_geotiff_has_real_crs": true,
+    "phase4_aligned": true,
+    "phase4_scientifically_valid_map": false,
+    "phase4_reason": "GeoTIFF carries real CRS and matches input affine, but predictions are domain-shifted uncalibrated scores, not validated landslide risk."
+  },
+  "stack": {
+    "ok": true,
+    "s2_item": "S2B_MSIL2A_20180805T015649_R060_T53SKU_20201010T213349",
+    "dem_item": "Copernicus_DSM_COG_10_N34_00_E132_00_DEM",
+    "crs": "EPSG:32653",
+    "transform": [
+      10.0,
+      0.0,
+      265890.0,
+      0.0,
+      -10.0,
+      3811190.0
+    ],
+    "bbox_wgs84": [
+      132.45,
+      34.4,
+      132.47,
+      34.42
+    ],
+    "shape": [
+      14,
+      128,
+      128
+    ],
+    "bands": [
+      {
+        "band": "B01",
+        "index": 1,
+        "max": 0.19763055443763733,
+        "min": 0.040374305099248886,
+        "fill": null
+      },
+      {
+        "band": "B02",
+        "index": 2,
+        "max": 0.8399999737739563,
+        "min": 0.029200000688433647,
+        "fill": null
+      },
+      {
+        "band": "B03",
+        "index": 3,
+        "max": 0.9247999787330627,
+        "min": 0.029400000348687172,
+        "fill": null
+      },
+      {
+        "band": "B04",
+        "index": 4,
+        "max": 1.0592000484466553,
+        "min": 0.026200000196695328,
+        "fill": null
+      },
+      {
+        "band": "B05",
+        "index": 5,
+        "max": 0.6232937574386597,
+        "min": 0.030768750235438347,
+        "fill": null
+      },
+      {
+        "band": "B06",
+        "index": 6,
+        "max": 0.622056245803833,
+        "min": 0.022687500342726707,
+        "fill": null
+      },
+      {
+        "band": "B07",
+        "index": 7,
+        "max": 0.6003937721252441,
+        "min": 0.024981249123811722,
+        "fill": null
+      },
+      {
+        "band": "B08",
+        "index": 8,
+        "max": 1.0592000484466553,
+        "min": 0.01850000023841858,
+        "fill": null
+      },
+      {
+        "band": "B09",
+        "index": 9,
+        "max": 0.4141680598258972,
+        "min": 0.0309597235172987,
+        "fill": null
+      },
+      {
+        "band": "B10",
+        "index": 10,
+        "max": 0.0,
+        "min": 0.0,
+        "fill": "zeros_fill_missing_L2A_B10"
+      },
+      {
+        "band": "B11",
+        "index": 11,
+        "max": 0.722906231880188,
+        "min": 0.015200000256299973,
+        "fill": null
+      },
+      {
+        "band": "B12",
+        "index": 12,
+        "max": 0.7441187500953674,
+        "min": 0.013343749567866325,
+        "fill": null
+      },
+      {
+        "band": "slope_deg",
+        "index": 13,
+        "min": 0.0,
+        "max": 27.220659255981445
+      },
+      {
+        "band": "dem_m",
+        "index": 14,
+        "min": 0.0,
+        "max": 21.40842056274414
+      }
+    ],
+    "b10_zeros_fill": true,
+    "domain_warning": "Values are native STAC physical units (S2 reflectance-ish, DEM meters, slope degrees). L4S/DeepSlide training used competition HDF5 tensors with different scaling. Predictions are therefore domain-shifted and not scientifically comparable to L4S metrics. B10 filled with zeros (absent from L2A).",
+    "input_tif": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\validation\\outputs\\georef\\input_14band.tif",
+    "stack_npy": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\validation\\outputs\\georef\\input_stack_14chw.npy"
+  },
+  "inference": {
+    "ok": true,
+    "model_load_s": 4.242,
+    "infer_s": 0.069,
+    "prediction_tif": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\validation\\outputs\\georef\\prediction_georef.tif",
+    "preview": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\landslide4sense\\validation\\outputs\\georef\\preview_georef.png",
+    "crs": "EPSG:32653",
+    "transform": [
+      10.0,
+      0.0,
+      265890.0,
+      0.0,
+      -10.0,
+      3811190.0
+    ],
+    "crs_aligned_with_input": true,
+    "georeferenced": true,
+    "qa": {
+      "empty_prediction": true,
+      "all_positive": false,
+      "prob_min": 1.175084363147505e-09,
+      "prob_max": 0.010585985146462917,
+      "prob_mean": 8.013494516490027e-05,
+      "pred_pos": 0,
+      "has_nan_prob": false,
+      "has_inf_prob": false
+    },
+    "label": "uncalibrated_segmentation_score_not_risk",
+    "domain_matched_to_deepslide_training": false
+  },
+  "verdict": "TECHNICAL_GEOREF_OK_DOMAIN_BLOCKED"
+}

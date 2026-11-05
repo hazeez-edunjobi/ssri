@@ -1,0 +1,7 @@
+acceptance_tmp/
+rehearsal/usgs_featurestacks_v3_upload.zip
+rehearsal/featurestacks_v3_stage25/
+tmp_verify/
+**/best.pt
+**/latest.pt
+**/*.pt

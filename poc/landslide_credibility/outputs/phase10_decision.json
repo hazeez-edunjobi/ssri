@@ -1,0 +1,10 @@
+{
+  "decision": "NO-GO",
+  "credibility_level": "L1",
+  "tier_a": false,
+  "tier_b": false,
+  "production_integration_authorized": false,
+  "reason": "No candidate beat slope-only with block-bootstrap CI lower bound > 0 on leakage-controlled CONUS holdout",
+  "l4_requires": "Independent human scientific review",
+  "l5_requires": "Prospective validation on post-freeze events"
+}

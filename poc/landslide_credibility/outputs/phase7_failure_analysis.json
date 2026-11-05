@@ -1,0 +1,14 @@
+{
+  "phase": 7,
+  "primary_scheme": "NEAR",
+  "headline": "Slope-only is the strongest honest baseline; multivariate models do not beat it with block-bootstrap CI separation.",
+  "does_complexity_earn_keep": false,
+  "terrain_alone_adequate_for_tier_a": false,
+  "notes": [
+    "Slope test AUC 0.821 already strong; logreg slightly worse (0.803); HGB point 0.850 but ΔAUC CI [-0.070, 0.091] includes 0",
+    "Logreg per-block AUC <0.7 on several large western blocks (35_-125, 40_-125, 45_-120)",
+    "Partial dependence on slope is non-decreasing for logreg (plausibility PASS)",
+    "Validation set had only 7 positives — calibration unstable (high ECE)",
+    "Added environment layers not evaluated (Phase 5 skipped by protocol gate)"
+  ]
+}
