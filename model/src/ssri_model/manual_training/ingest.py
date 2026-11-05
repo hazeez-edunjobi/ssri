@@ -13,9 +13,9 @@ from ssri_model.manual_training.exceptions import (
     UnsafePathError,
 )
 from ssri_model.manual_training.storage import DatasetRecord, TrainingStorage
+from ssri_model.manual_training.upload_limits import reject_if_upload_too_large
 from ssri_model.manual_training.validation import DatasetPreview, validate_training_dataset
 
-MAX_UPLOAD_BYTES = 500 * 1024 * 1024  # 500 MiB
 ALLOWED_ZIP_SUFFIXES = {".zip"}
 
 
@@ -72,11 +72,7 @@ def ingest_zip_bytes(
             "(manifest.json, statistics.json, train/, validation/).",
             code="UNSUPPORTED_UPLOAD",
         )
-    if len(content) > MAX_UPLOAD_BYTES:
-        raise ManualTrainingError(
-            f"Upload is {len(content)} bytes; maximum allowed is {MAX_UPLOAD_BYTES} bytes.",
-            code="UPLOAD_TOO_LARGE",
-        )
+    reject_if_upload_too_large(len(content))
     if not zipfile.is_zipfile(io.BytesIO(content)):
         raise ManualTrainingError(
             "The uploaded file is not a valid zip archive.",

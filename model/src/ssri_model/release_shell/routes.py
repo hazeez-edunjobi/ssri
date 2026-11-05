@@ -98,8 +98,9 @@ async def shell_upload(
             content=raw,
         )
     except ManualTrainingError as exc:
+        status = 413 if exc.code == "UPLOAD_TOO_LARGE" else 400
         return JSONResponse(
-            status_code=400,
+            status_code=status,
             content={"error": {"code": exc.code, "message": exc.message}},
         )
     return {"dataset_id": dataset_id, "uploaded": True, "bytes": len(raw)}

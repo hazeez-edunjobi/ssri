@@ -21,11 +21,11 @@ from rasterio.transform import Affine
 
 from ssri_model.dataset.catalog import write_manifest, write_statistics
 from ssri_model.manual_training.exceptions import ManualTrainingError
+from ssri_model.manual_training.upload_limits import reject_if_upload_too_large, upload_max_rows
 from ssri_model.ml.constants import CHANNEL_COUNT, CHANNEL_NAMES, FEATURE_NODATA, LABEL_NODATA
 from ssri_model.ml.labels import label_class_names
 from ssri_model.ml.splits import DatasetSplit
 
-MAX_CSV_ROWS = 250_000
 TILE = 16
 MIN_TILE = 8
 
@@ -111,9 +111,10 @@ def convert_csv_dataset(
     dataset_name: str,
 ) -> dict:
     """Write a Stage 2.5 tree under ``dataset_root`` and return conversion analysis."""
+    reject_if_upload_too_large(len(content))
     declared_crs = require_crs(crs)
-    tables = _read_tables(filename, content)
-    kind, layers, labels, rows = _interpret(tables)
+    tables = _read_table_blobs(filename, content)
+    kind, layers, labels, rows = _interpret_blobs(tables)
     xs, ys, x_spacing, y_spacing = _grid_axes(layers[next(iter(layers))])
     _align_layers(layers, labels, xs, ys)
     analysis = _analysis(
@@ -189,9 +190,9 @@ def convert_csv_dataset(
     return analysis
 
 
-def _read_tables(filename: str, content: bytes) -> list[tuple[str, list[dict[str, str]]]]:
+def _read_table_blobs(filename: str, content: bytes) -> list[tuple[str, bytes]]:
     if filename.lower().endswith(".zip"):
-        tables: list[tuple[str, list[dict[str, str]]]] = []
+        tables: list[tuple[str, bytes]] = []
         with zipfile.ZipFile(io.BytesIO(content)) as archive:
             for info in archive.infolist():
                 if info.is_dir() or not info.filename.lower().endswith(".csv"):
@@ -202,42 +203,205 @@ def _read_tables(filename: str, content: bytes) -> list[tuple[str, list[dict[str
                         f"CSV entry '{info.filename}' uses an unsafe path.",
                         code="UNSAFE_PATH",
                     )
-                tables.append((Path(name).stem, _parse_csv(name, archive.read(info))))
+                tables.append((Path(name).stem, archive.read(info)))
         if not tables:
             raise ManualTrainingError("The zip does not contain a CSV layer.", code="CSV_EMPTY")
         return tables
-    stem = Path(filename).stem
-    return [(stem, _parse_csv(filename, content))]
+    return [(Path(filename).stem, content)]
 
 
-def _parse_csv(filename: str, content: bytes) -> list[dict[str, str]]:
+def iter_csv_rows(filename: str, content: bytes):
+    """Yield cleaned CSV data rows one at a time (streaming; no full-row list).
+
+    SYNTHETIC and production uploads share this path. Row count is limited only
+    when ``SSRI_UPLOAD_MAX_ROWS`` is set; default is unlimited.
+    """
     try:
-        text = content.decode("utf-8-sig")
-    except UnicodeDecodeError as exc:
+        stream = io.TextIOWrapper(io.BytesIO(content), encoding="utf-8-sig", newline="")
+    except Exception as exc:  # pragma: no cover - BytesIO wrapper is reliable
         raise ManualTrainingError(
             f"{filename} is not valid UTF-8 text.",
             code="CSV_ENCODING",
         ) from exc
-    reader = csv.DictReader(io.StringIO(text))
+    reader = csv.DictReader(stream)
     if not reader.fieldnames:
         raise ManualTrainingError(
             f"{filename} needs a header row. Expected columns such as X, Y, and the SSRI features.",
             code="CSV_HEADER",
         )
-    rows: list[dict[str, str]] = []
-    for index, row in enumerate(reader, start=2):
-        if index - 1 > MAX_CSV_ROWS:
-            raise ManualTrainingError(
-                f"{filename} has more than {MAX_CSV_ROWS} data rows. "
-                "Split the grid or upload a smaller area.",
-                code="CSV_TOO_LARGE",
-            )
-        if not any((value or "").strip() for value in row.values()):
-            continue
-        rows.append({(key or "").strip(): (value or "").strip() for key, value in row.items()})
-    if not rows:
+    max_rows = upload_max_rows()
+    yielded = 0
+    try:
+        for index, row in enumerate(reader, start=1):
+            if max_rows is not None and index > max_rows:
+                raise ManualTrainingError(
+                    f"{filename} has more than {max_rows} data rows. "
+                    "Split the grid, upload a smaller area, or raise SSRI_UPLOAD_MAX_ROWS.",
+                    code="CSV_TOO_LARGE",
+                )
+            if not any((value or "").strip() for value in row.values()):
+                continue
+            yielded += 1
+            yield {(key or "").strip(): (value or "").strip() for key, value in row.items()}
+    except UnicodeDecodeError as exc:
+        raise ManualTrainingError(
+            f"{filename} is not valid UTF-8 text.",
+            code="CSV_ENCODING",
+        ) from exc
+    if yielded == 0:
         raise ManualTrainingError(f"{filename} has a header but no data rows.", code="CSV_EMPTY")
-    return rows
+
+
+def _interpret_blobs(
+    tables: list[tuple[str, bytes]],
+) -> tuple[str, dict[str, dict[tuple[float, float], float]], dict[tuple[float, float], int] | None, int]:
+    if len(tables) == 1:
+        name, blob = tables[0]
+        return _interpret_single_blob(name, blob)
+
+    layers: dict[str, dict[tuple[float, float], float]] = {}
+    labels: dict[tuple[float, float], int] | None = None
+    total = 0
+    for name, blob in tables:
+        key = name.lower()
+        row_iter = iter_csv_rows(f"{name}.csv", blob)
+        first = next(row_iter)
+        mapping = _column_map(first)
+        if key in {"label", "labels"}:
+            labels, count = _labels_stream(first, row_iter, mapping)
+            total += count
+            continue
+        if key not in CHANNEL_ALIASES and "z" in mapping and key not in CHANNEL_ALIASES:
+            raise ManualTrainingError(
+                f"CSV layer '{name}.csv' does not match an SSRI feature. "
+                "Name the file after a feature, for example elevation.csv.",
+                code="CSV_LAYER",
+            )
+        channel = CHANNEL_ALIASES.get(key, key)
+        if "z" not in mapping:
+            raise ManualTrainingError(
+                f"{name}.csv must use X,Y,Z columns.",
+                code="CSV_COLUMN",
+            )
+        points, count = _points_stream(first, row_iter, mapping, "z", filename=name)
+        layers[channel] = points
+        total += count
+    return "multi_layer", layers, labels, total
+
+
+def _interpret_single_blob(
+    name: str,
+    blob: bytes,
+) -> tuple[str, dict[str, dict[tuple[float, float], float]], dict[tuple[float, float], int] | None, int]:
+    row_iter = iter_csv_rows(f"{name}.csv" if not name.endswith(".csv") else name, blob)
+    first = next(row_iter)
+    mapping = _column_map(first)
+    features = [channel for channel in CHANNEL_NAMES if channel in mapping]
+    if features:
+        layers, labels, count = _multi_feature_stream(first, row_iter, mapping, features)
+        return "multi_feature", layers, labels, count
+    if "z" not in mapping:
+        raise ManualTrainingError(
+            "CSV is missing required feature values. Use a Z column or the SSRI feature columns.",
+            code="CSV_COLUMN",
+        )
+    layer_name = CHANNEL_ALIASES.get(name.lower(), name)
+    points, count = _points_stream(first, row_iter, mapping, "z", filename=name)
+    return "single_layer", {layer_name: points}, None, count
+
+
+def _multi_feature_stream(
+    first: dict[str, str],
+    rest,
+    mapping: dict[str, str],
+    features: list[str],
+) -> tuple[dict[str, dict[tuple[float, float], float]], dict[tuple[float, float], int] | None, int]:
+    layers = {channel: {} for channel in features}
+    labels: dict[tuple[float, float], int] | None = {} if "label" in mapping else None
+    count = 0
+    for index, row in enumerate(_chain_rows(first, rest), start=2):
+        count += 1
+        x = _number(row.get(mapping["x"], ""), filename="features", row_number=index, column="X")
+        y = _number(row.get(mapping["y"], ""), filename="features", row_number=index, column="Y")
+        key = (_key(x), _key(y))
+        for channel in features:
+            raw = row.get(mapping[channel], "")
+            value = FEATURE_NODATA if raw == "" else _number(
+                raw, filename="features", row_number=index, column=channel
+            )
+            if key in layers[channel]:
+                raise ManualTrainingError(
+                    f"Duplicate spatial coordinate detected: X={x}, Y={y}.",
+                    code="CSV_DUPLICATE",
+                )
+            layers[channel][key] = value
+        if labels is not None:
+            if key in labels:
+                raise ManualTrainingError(
+                    f"Duplicate spatial coordinate detected: X={x}, Y={y}.",
+                    code="CSV_DUPLICATE",
+                )
+            labels[key] = _label_value(row.get(mapping["label"], "").strip(), row_number=index)
+    return layers, labels, count
+
+
+def _chain_rows(first: dict[str, str], rest):
+    yield first
+    yield from rest
+
+
+def _points_stream(
+    first: dict[str, str],
+    rest,
+    mapping: dict[str, str],
+    value_key: str,
+    *,
+    filename: str,
+) -> tuple[dict[tuple[float, float], float], int]:
+    points: dict[tuple[float, float], float] = {}
+    count = 0
+    for index, row in enumerate(_chain_rows(first, rest), start=2):
+        count += 1
+        x = _number(row.get(mapping["x"], ""), filename=filename, row_number=index, column="X")
+        y = _number(row.get(mapping["y"], ""), filename=filename, row_number=index, column="Y")
+        raw = row.get(mapping[value_key], "")
+        value = FEATURE_NODATA if raw == "" else _number(
+            raw, filename=filename, row_number=index, column=value_key
+        )
+        key = (_key(x), _key(y))
+        if key in points:
+            raise ManualTrainingError(
+                f"Duplicate spatial coordinate detected: X={x}, Y={y}.",
+                code="CSV_DUPLICATE",
+            )
+        points[key] = value
+    return points, count
+
+
+def _labels_stream(
+    first: dict[str, str],
+    rest,
+    mapping: dict[str, str],
+) -> tuple[dict[tuple[float, float], int], int]:
+    column = mapping.get("label", mapping.get("z", "Z"))
+    if "label" not in mapping and "z" in mapping:
+        mapping = {**mapping, "label": mapping["z"]}
+        column = mapping["label"]
+    labels: dict[tuple[float, float], int] = {}
+    count = 0
+    for index, row in enumerate(_chain_rows(first, rest), start=2):
+        count += 1
+        x = _number(row.get(mapping["x"], ""), filename="labels", row_number=index, column="X")
+        y = _number(row.get(mapping["y"], ""), filename="labels", row_number=index, column="Y")
+        raw = row.get(column, "").strip()
+        key = (_key(x), _key(y))
+        if key in labels:
+            raise ManualTrainingError(
+                f"Duplicate spatial coordinate detected: X={x}, Y={y}.",
+                code="CSV_DUPLICATE",
+            )
+        labels[key] = _label_value(raw, row_number=index)
+    return labels, count
 
 
 def _column_map(row: dict[str, str]) -> dict[str, str]:
@@ -260,94 +424,6 @@ def _column_map(row: dict[str, str]) -> dict[str, str]:
             code="CSV_COLUMN",
         )
     return mapping
-
-
-def _interpret(
-    tables: list[tuple[str, list[dict[str, str]]]],
-) -> tuple[str, dict[str, dict[tuple[float, float], float]], dict[tuple[float, float], int] | None, int]:
-    if len(tables) == 1:
-        name, rows = tables[0]
-        mapping = _column_map(rows[0])
-        features = [channel for channel in CHANNEL_NAMES if channel in mapping]
-        if features:
-            layers = {channel: _points(rows, mapping, channel, filename=name) for channel in features}
-            labels = _labels(rows, mapping) if "label" in mapping else None
-            kind = "multi_feature"
-            return kind, layers, labels, len(rows)
-        if "z" not in mapping:
-            raise ManualTrainingError(
-                "CSV is missing required feature values. Use a Z column or the SSRI feature columns.",
-                code="CSV_COLUMN",
-            )
-        layer_name = CHANNEL_ALIASES.get(name.lower(), name)
-        return "single_layer", {layer_name: _points(rows, mapping, "z", filename=name)}, None, len(rows)
-
-    layers = {}
-    labels = None
-    total = 0
-    for name, rows in tables:
-        mapping = _column_map(rows[0])
-        total += len(rows)
-        key = name.lower()
-        if key in {"label", "labels"}:
-            labels = _labels(rows, {**mapping, "label": mapping.get("z", mapping.get("label", "Z"))})
-            continue
-        if key not in CHANNEL_ALIASES and "z" in mapping and key not in CHANNEL_ALIASES:
-            raise ManualTrainingError(
-                f"CSV layer '{name}.csv' does not match an SSRI feature. "
-                "Name the file after a feature, for example elevation.csv.",
-                code="CSV_LAYER",
-            )
-        channel = CHANNEL_ALIASES.get(key, key)
-        if "z" not in mapping:
-            raise ManualTrainingError(
-                f"{name}.csv must use X,Y,Z columns.",
-                code="CSV_COLUMN",
-            )
-        layers[channel] = _points(rows, mapping, "z", filename=name)
-    return "multi_layer", layers, labels, total
-
-
-def _points(
-    rows: list[dict[str, str]],
-    mapping: dict[str, str],
-    value_key: str,
-    *,
-    filename: str,
-) -> dict[tuple[float, float], float]:
-    points: dict[tuple[float, float], float] = {}
-    for index, row in enumerate(rows, start=2):
-        x = _number(row.get(mapping["x"], ""), filename=filename, row_number=index, column="X")
-        y = _number(row.get(mapping["y"], ""), filename=filename, row_number=index, column="Y")
-        raw = row.get(mapping[value_key], "")
-        value = FEATURE_NODATA if raw == "" else _number(
-            raw, filename=filename, row_number=index, column=value_key
-        )
-        key = (_key(x), _key(y))
-        if key in points:
-            raise ManualTrainingError(
-                f"Duplicate spatial coordinate detected: X={x}, Y={y}.",
-                code="CSV_DUPLICATE",
-            )
-        points[key] = value
-    return points
-
-
-def _labels(rows: list[dict[str, str]], mapping: dict[str, str]) -> dict[tuple[float, float], int]:
-    column = mapping["label"]
-    labels: dict[tuple[float, float], int] = {}
-    for index, row in enumerate(rows, start=2):
-        x = _number(row.get(mapping["x"], ""), filename="labels", row_number=index, column="X")
-        y = _number(row.get(mapping["y"], ""), filename="labels", row_number=index, column="Y")
-        raw = row.get(column, "").strip()
-        key = (_key(x), _key(y))
-        if key in labels:
-            raise ManualTrainingError(
-                f"Duplicate spatial coordinate detected: X={x}, Y={y}.",
-                code="CSV_DUPLICATE",
-            )
-        labels[key] = _label_value(raw, row_number=index)
-    return labels
 
 
 def _label_value(raw: str, *, row_number: int) -> int:
