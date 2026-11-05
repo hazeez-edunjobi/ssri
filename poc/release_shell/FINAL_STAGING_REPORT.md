@@ -31,13 +31,15 @@ git diff --stat 9bb64302 0b35dc90
 
 | Ref | Full SHA |
 |-----|----------|
-| `origin/staging/ssri-shell-rc1` | `92864cdd1c09199af0c06a33ba5c783cace211bd (`origin/staging/ssri-shell-rc1`)
+| `origin/staging/ssri-shell-rc1` | `6578c0eb2e7a8d709bab5025ee2586e118aadaba` |
+| Matrix / verify tip | `ee3317b88782f9e1a19f356af7802a01494f2ebc` (code + 1 GiB default; docs-only commits follow) |
 
 History:
 
 1. `eff5219…` — merge `--no-ff` of `0b35dc90…` (`fix/upload-line-cap`)
-2. `ee3317b…` — default `SSRI_UPLOAD_MAX_BYTES` **1 GiB** + legacy path inventory in `UPLOAD_CAP_REPORT.md`
-3. This report / rehearsal script commits (docs + SYNTHETIC rehearsal helper)
+2. `ee3317b…` — default `SSRI_UPLOAD_MAX_BYTES` **1 GiB** + legacy path inventory
+3. `92864cd…` — `FINAL_STAGING_REPORT.md` + `rehearse_stage25_300k.py`
+4. `6578c0e…` — tip pin in this report
 
 Confirm live tip: `git rev-parse origin/staging/ssri-shell-rc1`
 
