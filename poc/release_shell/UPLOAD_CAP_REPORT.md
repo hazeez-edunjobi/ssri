@@ -74,10 +74,8 @@ Output: `poc/release_shell/outputs/upload_cap_rehearsal/rehearsal.json`
 
 ---
 
-## Branch tip
+## Branch tip (VERIFIED)
 
-Confirm after push:
+`9bb643024b318087c4cb528a1cf56fd11a581020` (`origin/fix/upload-line-cap`)
 
-```powershell
-git rev-parse origin/fix/upload-line-cap
-```
+Author/committer: `hazeez-edunjobi <ifeoluwasuccess520@gmail.com>`. No `Co-authored-by` trailers.
