@@ -116,6 +116,26 @@ def test_depth_to_bedrock_not_silently_relabelled() -> None:
     assert layer.name != "overburden_thickness"
 
 
+def test_overburden_thickness_flags_negative_z() -> None:
+    lines = ["X,Y,Z", "0,0,10", "100,0,-3", "0,100,12", "100,100,-1.5"]
+    layer = ingest_point_grid_csv(
+        ("\n".join(lines) + "\n").encode(),
+        filename="SYNTHETIC_neg_overburden.csv",
+        layer_name="overburden_thickness",
+        crs="EPSG:32631",
+    )
+    assert layer.name == "overburden_thickness"
+    assert any("UNIT_SANITY" in m and "negative" in m.lower() for m in layer.messages)
+    # Same negatives under depth_to_bedrock must not use the thickness unit warning.
+    depth = ingest_point_grid_csv(
+        ("\n".join(lines) + "\n").encode(),
+        filename="SYNTHETIC_neg_depth.csv",
+        layer_name="depth_to_bedrock",
+        crs="EPSG:32631",
+    )
+    assert not any("UNIT_SANITY" in m for m in depth.messages)
+
+
 def test_lineament_density_and_distance_known_vector() -> None:
     # Horizontal line y=0 from x=-1 to x=1; cell at origin → distance 0
     geojson = {

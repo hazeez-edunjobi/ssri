@@ -1,0 +1,12 @@
+status=FEATURE_LAYER_ONLY
+trainable=False
+value_min=-212.760467529297
+value_max=221.468399047852
+row_count=308153
+missing_cells=7129
+ASSUMED_CRS=EPSG:32631 (ASSUMED-FOR-TEST — not geological truth)
+layer_name=overburden_thickness
+MSG: This upload is a single feature layer only. It cannot be used alone as a supervised training dataset. Add the remaining SSRI channels (or schema v2 extras) and labelled hazards to train.
+MSG: Grid has 7129 missing cell(s). SSRI does not fill gaps; provide complete cells or a mask before training.
+MSG: UNIT_SANITY WARN: 11250 negative value(s) in layer 'overburden_thickness'. Thickness should be ≥ 0 metres; confirm units and whether negatives are sentinels. If this is depth-to-bedrock, declare that name instead — SSRI will not silently relabel it as overburden_thickness.
+unit_sanity_negative_flagged=True
