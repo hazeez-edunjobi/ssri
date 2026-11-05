@@ -188,7 +188,7 @@ async def upload_dataset_zip(
     except ManualTrainingError as exc:
         from fastapi.responses import JSONResponse
 
-        status = 400
+        status = 413 if exc.code == "UPLOAD_TOO_LARGE" else 400
         return JSONResponse(status_code=status, content=_error_payload(exc))  # type: ignore[return-value]
     return {
         "dataset": record.to_dict(),
