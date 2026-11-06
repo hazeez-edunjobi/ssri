@@ -75,3 +75,5 @@ poc/release_shell/templates/_*/
 poc/release_shell/outputs/_*.txt
 model/outputs/
 model/poc/
+
+poc/release_shell/outputs/hazard_factors_v2_rehearsal/SYNTHETIC_*.csv
