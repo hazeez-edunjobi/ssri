@@ -345,3 +345,88 @@ def evaluate_checkpoint_on_held_out(
         ],
     }
     return report
+
+
+def find_evaluation_report(checkpoint_path: Path | str) -> Path | None:
+    """Locate the aggregate held-out evaluation report stored next to a checkpoint."""
+    ckpt = Path(checkpoint_path).resolve()
+    for candidate in (
+        ckpt.parent / "release_shell_evaluation.json",
+        ckpt.parent.parent / "release_shell_evaluation.json",
+    ):
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def summarize_evaluation_for_report(report: dict[str, Any]) -> dict[str, Any]:
+    """Trim an aggregate evaluation report to what the assessment report shows.
+
+    Everything returned here is copied verbatim from the stored evaluation — no
+    metric is inferred or fabricated. Metrics are always frames as relative
+    susceptibility rankings, and the status stays NOT_VALIDATED.
+    """
+    seeds = list(report.get("seeds") or [])
+    per_seed = report.get("per_seed") or {}
+    meta_hazards = report.get("hazards") or {}
+    rep_key = str(seeds[0]) if seeds else (next(iter(per_seed), None))
+    rep_eval = per_seed.get(rep_key) or {} if rep_key is not None else {}
+    rep_eval = rep_eval if isinstance(rep_eval, dict) else {}
+
+    names = list(meta_hazards.keys()) or list((rep_eval.get("hazards") or {}).keys())
+    hazards_out: dict[str, Any] = {}
+    for name in names:
+        meta_h = meta_hazards.get(name) or {}
+        raw_h = (rep_eval.get("hazards") or {}).get(name) or {}
+        baselines = raw_h.get("baselines") or {}
+        per_block: dict[str, Any] = {}
+        for block, entry in (raw_h.get("per_block") or {}).items():
+            per_block[str(block)] = {
+                "n": entry.get("n"),
+                "n_pos": entry.get("n_pos"),
+                "roc_auc": entry.get("roc_auc"),
+            }
+        seed_aucs: dict[str, Any] = {}
+        for seed_key, ev in per_seed.items():
+            hz = ((ev or {}).get("hazards") or {}).get(name) or {}
+            if hz.get("roc_auc") is not None:
+                seed_aucs[str(seed_key)] = hz.get("roc_auc")
+        hazards_out[str(name)] = {
+            "gate_status": meta_h.get("gate_status") or raw_h.get("gate_status"),
+            "representative_seed": rep_key,
+            "roc_auc": raw_h.get("roc_auc"),
+            "roc_auc_ci95": baselines.get("model_auc_ci95"),
+            "delta_auc_vs_slope": baselines.get("delta_auc_vs_slope"),
+            "delta_auc_ci95": baselines.get("delta_auc_ci95"),
+            "slope_only_auc": baselines.get("slope_only_auc"),
+            "frac_held_out_blocks_auc_gt_0_5": raw_h.get(
+                "frac_held_out_blocks_auc_gt_0_5"
+            ),
+            "per_block": per_block or None,
+            "seed_aucs": seed_aucs,
+        }
+
+    return {
+        "status": report.get("status"),
+        "split_policy": rep_eval.get("split_policy"),
+        "seeds": seeds,
+        "scientific_validation_status": report.get("scientific_validation_status")
+        or "NOT_VALIDATED",
+        "score_framing": report.get("score_framing")
+        or "relative susceptibility rankings",
+        "hazards": hazards_out,
+    }
+
+
+def load_evaluation_summary(checkpoint_path: Path | str) -> dict[str, Any] | None:
+    """Load and trim the evaluation report beside ``checkpoint_path`` if present."""
+    path = find_evaluation_report(checkpoint_path)
+    if path is None:
+        return None
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return summarize_evaluation_for_report(raw)

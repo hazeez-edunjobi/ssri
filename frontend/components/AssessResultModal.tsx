@@ -56,6 +56,12 @@ type AssessResultModalProps = {
   result: AssessResponse | null;
   locationLabel: string | null;
   point?: { latitude: number; longitude: number } | null;
+  projectedPoint?: {
+    crs: string;
+    x: number;
+    y: number;
+    axis_order: string;
+  } | null;
   settings?: ShellSettings | null;
   onClose: () => void;
   onViewMap: () => void;
@@ -68,6 +74,7 @@ export function AssessResultModal({
   result,
   locationLabel,
   point,
+  projectedPoint,
   settings,
   onClose,
   onViewMap,
@@ -80,6 +87,7 @@ export function AssessResultModal({
       result,
       locationLabel,
       point: point ?? null,
+      projectedPoint: projectedPoint ?? null,
       settings: settings ?? null,
     });
     const blob = new Blob([html], { type: "text/html" });

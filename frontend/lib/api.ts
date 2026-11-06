@@ -53,6 +53,39 @@ export type HazardProfile = {
   primary_drivers?: string[];
 };
 
+export type PerBlockEval = {
+  n: number | null;
+  n_pos: number | null;
+  roc_auc: number | null;
+};
+
+export type EvaluationHazardSummary = {
+  gate_status: string | null;
+  representative_seed: string | null;
+  roc_auc: number | null;
+  roc_auc_ci95: [number, number] | null;
+  delta_auc_vs_slope: number | null;
+  delta_auc_ci95: [number, number] | null;
+  slope_only_auc: number | null;
+  frac_held_out_blocks_auc_gt_0_5: number | null;
+  per_block: Record<string, PerBlockEval> | null;
+  seed_aucs: Record<string, number>;
+};
+
+/**
+ * Trimmed held-out evaluation attached to a release-shell assessment. Copied
+ * verbatim from the stored evaluation: relative susceptibility rankings only,
+ * status stays NOT_VALIDATED.
+ */
+export type AssessmentEvaluationSummary = {
+  status: string | null;
+  split_policy: string | null;
+  seeds: number[];
+  scientific_validation_status: string;
+  score_framing: string;
+  hazards: Record<string, EvaluationHazardSummary>;
+};
+
 export type AssessResponse = {
   assessment_id: string;
   hazard_profiles: HazardProfile[];
@@ -69,6 +102,10 @@ export type AssessResponse = {
   /** Ordered channels the checkpoint was trained on (backend echo). */
   channel_schema_version?: string | null;
   channel_names?: string[] | null;
+  /** Checkpoint file id (stem) when the release shell is enabled. */
+  checkpoint_id?: string | null;
+  /** Held-out evaluation trimmed for the report; null when not available. */
+  evaluation_summary?: AssessmentEvaluationSummary | null;
 };
 
 export type JobStatusResponse = {

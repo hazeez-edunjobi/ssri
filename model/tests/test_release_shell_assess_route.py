@@ -19,6 +19,8 @@ from tests.inference_helpers import save_inference_checkpoint
 def _shell_meta(*, gate: str = STATUS_EVALUATED, disabled: bool = False) -> dict:
     return {
         "data_hash": "DEADBEEF",
+        "crs": "EPSG:4326",
+        "block_size_deg": 5.0,
         "training_region": {
             "blocks": ["35_-120"],
             "extent": {
@@ -131,3 +133,96 @@ def test_assess_route_outside_region_returns_outside_training_region(
     profiles = _by_hazard(response.json())
     assert profiles["landslide"]["status"] == "outside_training_region"
     assert profiles["landslide"]["score"] is None
+
+
+def test_assess_route_no_checkpoint_returns_no_trained_model(tmp_path, monkeypatch):
+    monkeypatch.setenv("SSRI_RELEASE_SHELL", "true")
+    client = TestClient(create_app(build_api_config(tmp_path)))
+    features = tmp_path / "features.npy"
+    np.save(features, np.random.randn(CHANNEL_COUNT, 8, 8).astype(np.float32))
+    response = client.post(
+        "/api/v1/assess",
+        json={"features": str(features), "point": {"latitude": 37.0, "longitude": -120.0}},
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["status"] == "no_trained_model"
+    assert body["scientific_validation_status"] == "NOT_VALIDATED"
+    assert "Upload" in body["message"]
+
+
+def test_assess_route_schema_mismatch_is_rejected_with_plain_language(tmp_path, monkeypatch):
+    client, ckpt, _ = _client_and_assets(
+        tmp_path, monkeypatch, meta=_shell_meta(gate=STATUS_EVALUATED)
+    )
+    mismatched = tmp_path / "features_v2.npy"
+    np.save(mismatched, np.random.randn(16, 8, 8).astype(np.float32))
+    response = _assess(client, ckpt, str(mismatched), lat=37.0, lon=-120.0)
+    assert response.status_code in {400, 422}, response.text
+    message = json.dumps(response.json())
+    assert "channel" in message.lower()
+    assert "Traceback" not in message
+
+
+def _write_evaluation(tmp_path) -> None:
+    per_seed = {}
+    for seed in ("42", "43", "44"):
+        per_seed[seed] = {
+            "split_policy": "whole_5deg_blocks_with_buffer",
+            "hazards": {
+                "landslide": {
+                    "gate_status": STATUS_EVALUATED,
+                    "roc_auc": 0.71,
+                    "baselines": {
+                        "model_auc_ci95": [0.62, 0.80],
+                        "delta_auc_vs_slope": 0.11,
+                        "delta_auc_ci95": [0.03, 0.19],
+                        "slope_only_auc": 0.60,
+                    },
+                    "per_block": {"35_-120": {"n": 40, "n_pos": 12, "roc_auc": 0.74}},
+                    "frac_held_out_blocks_auc_gt_0_5": 0.8,
+                }
+            },
+        }
+    report = {
+        "status": "completed",
+        "scientific_validation_status": "NOT_VALIDATED",
+        "seeds": [42, 43, 44],
+        "per_seed": per_seed,
+        "hazards": {"landslide": {"gate_status": STATUS_EVALUATED}},
+        "score_framing": "relative susceptibility rankings",
+    }
+    (tmp_path / "release_shell_evaluation.json").write_text(
+        json.dumps(report), encoding="utf-8"
+    )
+
+
+def test_assess_response_carries_checkpoint_id_and_evaluation_summary(tmp_path, monkeypatch):
+    client, ckpt, features = _client_and_assets(
+        tmp_path, monkeypatch, meta=_shell_meta(gate=STATUS_EVALUATED)
+    )
+    _write_evaluation(tmp_path)
+    body = _assess(client, ckpt, features, lat=37.0, lon=-120.0).json()
+
+    assert body["checkpoint_id"] == "shell"
+    summary = body["evaluation_summary"]
+    assert summary is not None
+    assert summary["seeds"] == [42, 43, 44]
+    assert summary["scientific_validation_status"] == "NOT_VALIDATED"
+    lands = summary["hazards"]["landslide"]
+    assert lands["roc_auc"] == 0.71
+    assert lands["roc_auc_ci95"] == [0.62, 0.80]
+    assert lands["delta_auc_vs_slope"] == 0.11
+    assert lands["per_block"]["35_-120"]["n_pos"] == 12
+    assert set(lands["seed_aucs"]) == {"42", "43", "44"}
+    # Training CRS + block size surface as notes for the report.
+    assert "assess_crs=EPSG:4326" in body["notes"]
+    assert any(n.startswith("block_size_deg=") for n in body["notes"])
+
+
+def test_assess_evaluation_summary_absent_when_no_report(tmp_path, monkeypatch):
+    client, ckpt, features = _client_and_assets(
+        tmp_path, monkeypatch, meta=_shell_meta(gate=STATUS_EVALUATED)
+    )
+    body = _assess(client, ckpt, features, lat=37.0, lon=-120.0).json()
+    assert body["evaluation_summary"] is None

@@ -5,12 +5,18 @@
  * probability, detection or validation. Status stays NOT_VALIDATED. Everything
  * shown here is copied from the API response; nothing is inferred or fabricated.
  */
-import type { AssessResponse, ShellSettings } from "./api";
+import type { AssessResponse, AssessmentEvaluationSummary, ShellSettings } from "./api";
 
 export type ReportInput = {
   result: AssessResponse;
   locationLabel: string | null;
   point?: { latitude: number; longitude: number } | null;
+  projectedPoint?: {
+    crs: string;
+    x: number;
+    y: number;
+    axis_order: string;
+  } | null;
   settings?: ShellSettings | null;
   generatedAt?: Date;
 };
@@ -57,8 +63,75 @@ function scoreOf(profile: {
   return null;
 }
 
+function num(value: number | null | undefined, digits = 3): string {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value.toFixed(digits)
+    : "—";
+}
+
+function ci95(ci: [number, number] | null | undefined): string {
+  if (!ci || ci.length !== 2) return "—";
+  return `[${num(ci[0])}, ${num(ci[1])}]`;
+}
+
+function evaluationSection(summary: AssessmentEvaluationSummary | null | undefined): string {
+  if (!summary) {
+    return `<p class="muted">Not attached to this point assessment. AUC with confidence interval, delta vs slope baseline, the per-block table and seeds live in the model's held-out evaluation (release-shell models/&lt;id&gt;/evaluation).</p>`;
+  }
+  const seedLabel =
+    summary.seeds && summary.seeds.length > 0
+      ? summary.seeds.join(", ")
+      : "not reported";
+  const rows = Object.entries(summary.hazards ?? {})
+    .map(([name, h]) => {
+      const auc =
+        h.roc_auc == null ? "—" : `${num(h.roc_auc)} ${ci95(h.roc_auc_ci95)}`;
+      const delta =
+        h.delta_auc_vs_slope == null
+          ? "—"
+          : `${h.delta_auc_vs_slope >= 0 ? "+" : ""}${num(h.delta_auc_vs_slope)} ${ci95(h.delta_auc_ci95)}`;
+      const frac =
+        h.frac_held_out_blocks_auc_gt_0_5 == null
+          ? "—"
+          : `${(h.frac_held_out_blocks_auc_gt_0_5 * 100).toFixed(0)}%`;
+      const seedAucs = Object.entries(h.seed_aucs ?? {})
+        .map(([s, v]) => `seed ${s}: ${num(v)}`)
+        .join("; ");
+      return `<tr>
+        <td>${escapeHtml(name)}</td>
+        <td>${escapeHtml(h.gate_status ?? "—")}</td>
+        <td>${escapeHtml(auc)}</td>
+        <td>${escapeHtml(delta)}</td>
+        <td>${escapeHtml(frac)}</td>
+        <td>${escapeHtml(seedAucs || "—")}</td>
+      </tr>`;
+    })
+    .join("");
+
+  const blockTables = Object.entries(summary.hazards ?? {})
+    .filter(([, h]) => h.per_block && Object.keys(h.per_block).length > 0)
+    .map(([name, h]) => {
+      const blockRows = Object.entries(h.per_block ?? {})
+        .map(
+          ([block, entry]) =>
+            `<tr><td>${escapeHtml(block)}</td><td>${escapeHtml(entry.n ?? "—")}</td><td>${escapeHtml(entry.n_pos ?? "—")}</td><td>${escapeHtml(num(entry.roc_auc))}</td></tr>`,
+        )
+        .join("");
+      return `<h3>Per-block held-out AUC — ${escapeHtml(name)}</h3>
+      <table><thead><tr><th>Block</th><th>n</th><th>n positive</th><th>AUC</th></tr></thead><tbody>${blockRows}</tbody></table>`;
+    })
+    .join("");
+
+  return `<p class="muted">Relative susceptibility rankings only. Status NOT_VALIDATED. Seeds: ${escapeHtml(seedLabel)}. Split policy: ${escapeHtml(summary.split_policy ?? "not reported")}. Representative seed: ${escapeHtml(Object.values(summary.hazards ?? {})[0]?.representative_seed ?? "—")}.</p>
+  <table>
+    <thead><tr><th>Hazard</th><th>Gate</th><th>ROC AUC (95% CI)</th><th>ΔAUC vs slope (95% CI)</th><th>Blocks AUC&gt;0.5</th><th>Per-seed AUC</th></tr></thead>
+    <tbody>${rows || `<tr><td colspan="6">No evaluation rows.</td></tr>`}</tbody>
+  </table>
+  ${blockTables}`;
+}
+
 export function buildAssessmentReportHtml(input: ReportInput): string {
-  const { result, locationLabel, point, settings } = input;
+  const { result, locationLabel, point, projectedPoint, settings } = input;
   const generatedAt = (input.generatedAt ?? new Date()).toISOString();
   const notes = result.notes ?? [];
   const dataHash = noteValue(notes, "data_hash");
@@ -96,11 +169,13 @@ export function buildAssessmentReportHtml(input: ReportInput): string {
     .join("");
 
   const blockSize =
-    settings?.block_size_deg != null
-      ? `${settings.block_size_deg}° (override)`
-      : settings
-        ? `${settings.default_block_size_deg}° (default)`
-        : "not reported";
+    noteValue(notes, "block_size_deg") != null
+      ? `${noteValue(notes, "block_size_deg")}° (checkpoint)`
+      : settings?.block_size_deg != null
+        ? `${settings.block_size_deg}° (override)`
+        : settings
+          ? `${settings.default_block_size_deg}° (default)`
+          : "not reported";
 
   return `<!doctype html>
 <html lang="en">
@@ -134,14 +209,18 @@ export function buildAssessmentReportHtml(input: ReportInput): string {
     <dt>AOI / point</dt><dd>${escapeHtml(locationLabel ?? "not provided")}</dd>
     <dt>Latitude (WGS84, °N)</dt><dd>${point ? point.latitude.toFixed(6) : "not provided"}</dd>
     <dt>Longitude (WGS84, °E)</dt><dd>${point ? point.longitude.toFixed(6) : "not provided"}</dd>
-    <dt>Training CRS</dt><dd>${
-      noteValue(notes, "assess_crs") ?? "not reported by the API"
+    <dt>Training CRS</dt><dd>${escapeHtml(noteValue(notes, "assess_crs") ?? "not reported by the API")}</dd>
+    <dt>Location in training CRS</dt><dd>${
+      projectedPoint
+        ? `${escapeHtml(projectedPoint.crs)}: x ${projectedPoint.x.toFixed(3)}, y ${projectedPoint.y.toFixed(3)} (${escapeHtml(projectedPoint.axis_order)})`
+        : "not provided"
     }</dd>
   </dl>
 
   <h2>Checkpoint</h2>
   <dl>
     <dt>Assessment id</dt><dd>${escapeHtml(result.assessment_id)}</dd>
+    <dt>Checkpoint id</dt><dd>${escapeHtml(result.checkpoint_id ?? "not reported by the API")}</dd>
     <dt>Model version</dt><dd>${escapeHtml(result.model_version)}</dd>
     <dt>Checkpoint sha256</dt><dd>${escapeHtml(result.checkpoint_sha256)}</dd>
     <dt>Dataset name</dt><dd>${escapeHtml(result.checkpoint_dataset_name ?? "—")}</dd>
@@ -168,11 +247,7 @@ export function buildAssessmentReportHtml(input: ReportInput): string {
   <p class="muted">Rankings appear only where the gate status is evaluated (or an unevaluated preview is explicitly enabled).</p>
 
   <h2>Evaluation summary</h2>
-  <p class="muted">${
-    noteValue(notes, "evaluation")
-      ? escapeHtml(noteValue(notes, "evaluation"))
-      : "Not attached to this point assessment. AUC with confidence interval, delta vs slope baseline, the per-block table and seeds live in the model's evaluation report (release-shell models/&lt;id&gt;/evaluation)."
-  }</p>
+  ${evaluationSection(result.evaluation_summary)}
 
   <h2>Limitations</h2>
   <ul>${localEvidence.map((l) => `<li>${escapeHtml(l)}</li>`).join("") || "<li>None reported.</li>"}</ul>

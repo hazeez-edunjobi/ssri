@@ -1025,6 +1025,7 @@ function AssessmentWorkspace() {
                 : null
         }
         point={mode === "point" ? point : null}
+        projectedPoint={projectedPoint}
         settings={shellSettings}
         onClose={() => setModalOpen(false)}
         onViewMap={() => setModalOpen(false)}
