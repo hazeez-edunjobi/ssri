@@ -45,6 +45,26 @@ def release_shell_buffer_km() -> float:
     return float(os.getenv("SSRI_RELEASE_SHELL_BUFFER_KM", "50"))
 
 
+def release_shell_block_size_deg() -> float | None:
+    """Optional override in degrees. Empty → use km override or default 5°."""
+    raw = os.getenv("SSRI_RELEASE_SHELL_BLOCK_SIZE_DEG", "").strip()
+    return float(raw) if raw else None
+
+
+def release_shell_block_size_km() -> float | None:
+    """Optional local block size in kilometres (e.g. 5–20 for site AOIs)."""
+    raw = os.getenv("SSRI_RELEASE_SHELL_BLOCK_SIZE_KM", "").strip()
+    return float(raw) if raw else None
+
+
+def preview_unevaluated_scores() -> bool:
+    """When true, gated-but-trained hazards may return unevaluated preview scores.
+
+    Default OFF. Recorded on every assess response. Does not remove NOT_VALIDATED.
+    """
+    return _env_flag("SSRI_PREVIEW_UNEVALUATED_SCORES", default=False)
+
+
 def default_limitations() -> list[str]:
     return [
         "trained only on the uploaded data's geography; not validated elsewhere",

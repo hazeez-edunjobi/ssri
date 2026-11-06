@@ -27,6 +27,7 @@ psycopg = { version = "^3.2", extras = ["binary"] }
 boto3 = "^1.43.89"
 netcdf4 = "^1.7.4"
 httpx = "^0.28"
+pyproj = "^3.6.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"

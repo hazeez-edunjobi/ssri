@@ -104,6 +104,54 @@ def build_shell_meta(
             },
         )
 
+    from ssri_model.release_shell.channel_schema import SCHEMA_V1, schema_for_version
+    from ssri_model.release_shell.spatial_split import LOCAL_EVIDENCE_LIMITATION, is_local_block_size
+
+    manifest_path = Path(dataset_root) / "manifest.json"
+    channel_schema_version = SCHEMA_V1
+    channel_names = None
+    local_evidence_only = False
+    block_size_deg = 5.0
+    if manifest_path.exists():
+        try:
+            man = json.loads(manifest_path.read_text(encoding="utf-8"))
+            channel_schema_version = str(
+                man.get("channel_schema_version")
+                or (man.get("channel_schema") or {}).get("version")
+                or SCHEMA_V1
+            )
+            channel_names = man.get("channel_names") or (man.get("channel_schema") or {}).get(
+                "channel_names"
+            )
+            block_size_deg = float(
+                man.get("block_size_deg")
+                or (man.get("spatial_split") or {}).get("block_size_deg")
+                or 5.0
+            )
+            local_evidence_only = bool(
+                man.get("local_evidence_only")
+                or (man.get("spatial_split") or {}).get("local_evidence_only")
+                or is_local_block_size(block_size_deg)
+            )
+        except (json.JSONDecodeError, TypeError, ValueError):
+            pass
+    schema = (
+        schema_for_version(channel_schema_version)
+        if not channel_names
+        else schema_for_version(channel_schema_version)
+    )
+    if channel_names:
+        from ssri_model.release_shell.channel_schema import ChannelSchema
+
+        schema = ChannelSchema(channel_schema_version, tuple(str(n) for n in channel_names))
+
+    limitations = [
+        "trained only on the uploaded data's geography; not validated elsewhere",
+        "scientific status remains NOT_VALIDATED; not independently reviewed",
+    ]
+    if local_evidence_only:
+        limitations.insert(0, LOCAL_EVIDENCE_LIMITATION)
+
     return {
         "schema": "ssri_release_shell_meta_v1",
         "seeds": seeds,
@@ -113,6 +161,11 @@ def build_shell_meta(
         "scientific_validation_status": "NOT_VALIDATED",
         "score_framing": "relative susceptibility rankings",
         "data_hash": None,
+        "channel_schema_version": schema.version,
+        "channel_names": list(schema.channel_names),
+        "block_size_deg": block_size_deg,
+        "local_evidence_only": local_evidence_only,
+        "limitations": limitations,
     }
 
 

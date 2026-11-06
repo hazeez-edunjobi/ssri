@@ -11,3 +11,7 @@
 - FeatureStacks v3 as-shipped has four all-sentinel spectral channels → validation **FAIL** / hazards disabled until repaired.
 - DeepSlide remains an isolated research engine — **not** wired into assess.
 - Default product behaviour with `SSRI_RELEASE_SHELL` unset/false is unchanged (legacy assess requires checkpoint).
+- Schema **v2** checkpoints require matching 16-channel inputs; mismatched assess inputs are rejected with missing channel names.
+- Optional `SSRI_PREVIEW_UNEVALUATED_SCORES` (default OFF) may return preview scores for trained-but-ungated hazards; status stays **NOT_VALIDATED** and limitations are listed. Disabled / unlabelled / outside-region hazards still return null scores.
+- Local block sizes (< 5°) are **local evidence only; not validated beyond this site**.
+- Client Abeokuta CSV CRS, units, and Z meaning remain **UNKNOWN** until the client confirms (see `CLIENT_CSV_FINDINGS.md`).

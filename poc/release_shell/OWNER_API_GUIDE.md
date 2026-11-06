@@ -45,7 +45,17 @@ Start API: `poetry -C model run uvicorn ssri_model.api.app:app --port 8000`
 7. **Assess**  
    Before any train: `POST /api/v1/assess` `{}` → `no_trained_model`.  
    After: `POST /api/v1/assess` with `checkpoint` + `features` and preferably `point` (lat/lon) for region check.  
-   Each hazard returns `status`/`score`/`reason` — **score is null** unless gate is `evaluated` and inside training region. Outside geography → `outside_training_region`.
+   Each hazard returns `status`/`score`/`reason` — **score is null** unless gate is `evaluated` and inside training region. Outside geography → `outside_training_region`.  
+   Checkpoint channel schema must match the feature stack; mismatches name the missing channels.  
+   Optional: `SSRI_PREVIEW_UNEVALUATED_SCORES=true` returns unevaluated preview scores (still NOT_VALIDATED).
+
+### Local block size
+
+```text
+SSRI_RELEASE_SHELL_BLOCK_SIZE_KM=10   # or SSRI_RELEASE_SHELL_BLOCK_SIZE_DEG=...
+```
+
+When below 5°, responses include **local evidence only; not validated beyond this site**.
 
 ## Must never
 
