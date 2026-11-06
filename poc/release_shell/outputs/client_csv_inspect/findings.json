@@ -1,0 +1,135 @@
+{
+  "source_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\sheet 260_Abeokuta.csv",
+  "copy_path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\release_shell\\outputs\\client_csv_inspect\\260_abeokuta_COPY.csv",
+  "bytes": 10143316,
+  "line_count_including_header_estimate": 308154,
+  "data_rows": 308153,
+  "delimiter_detected": "','",
+  "header_present": true,
+  "header_row": [
+    "X",
+    "Y",
+    "Z"
+  ],
+  "first_lines": [
+    "X,Y,Z",
+    "-115500,777400,57.4293403625488",
+    "-115400,777400,57.2909126281738",
+    "-115300,777400,57.1491737365723",
+    "-115200,777400,57.0647087097168"
+  ],
+  "columns": 3,
+  "x_min": -163800.0,
+  "x_max": -107800.0,
+  "y_min": 777400.0,
+  "y_max": 833500.0,
+  "x_range": [
+    -163800.0,
+    -107800.0
+  ],
+  "y_range": [
+    777400.0,
+    833500.0
+  ],
+  "z_min": -212.760467529297,
+  "z_max": 221.468399047852,
+  "z_mean": 58.74412677305655,
+  "z_range": [
+    -212.760467529297,
+    221.468399047852
+  ],
+  "z_stdev": 32.70081668533223,
+  "z_p01": -42.5989952087402,
+  "z_p50": 60.8742637634277,
+  "z_p99": 129.275772094727,
+  "z_histogram": {
+    "n_bins": 20,
+    "edges": [
+      -212.760467529297,
+      -191.04902420043953,
+      -169.33758087158208,
+      -147.62613754272465,
+      -125.9146942138672,
+      -104.20325088500974,
+      -82.49180755615231,
+      -60.780364227294854,
+      -39.0689208984374,
+      -17.35747756957994,
+      4.353965759277514,
+      26.065409088134942,
+      47.77685241699237,
+      69.48829574584983,
+      91.19973907470728,
+      112.91118240356474,
+      134.6226257324222,
+      156.33406906127965,
+      178.0455123901371,
+      199.75695571899456,
+      221.46839904785202
+    ],
+    "counts": [
+      19,
+      39,
+      55,
+      126,
+      157,
+      252,
+      762,
+      2064,
+      3062,
+      6877,
+      32048,
+      56784,
+      83458,
+      82118,
+      31584,
+      6742,
+      1675,
+      229,
+      75,
+      27
+    ]
+  },
+  "negative_z_count": 11250,
+  "sentinel_like_count": 0,
+  "nodata_candidate_counts": {},
+  "unique_x": 561,
+  "unique_y": 562,
+  "dominant_x_spacing": [
+    [
+      100.0,
+      560
+    ]
+  ],
+  "dominant_y_spacing": [
+    [
+      100.0,
+      561
+    ]
+  ],
+  "x_spacing_unique_count": 1,
+  "y_spacing_unique_count": 1,
+  "expected_full_grid_cells": 315282,
+  "observed_unique_xy": 308153,
+  "missing_grid_cells": 7129,
+  "gap_spatial_pattern": "clustered",
+  "gap_connected_components": 4,
+  "gap_largest_component_cells": 1952,
+  "gap_bbox_xy": [
+    -163800.0,
+    -107800.0,
+    777400.0,
+    833500.0
+  ],
+  "gap_note": "7129 gaps in 4 connected component(s); largest holds 1952 cells (27%). Pattern consistent with AOI/mask edges or contiguous voids rather than random salt-and-pepper holes.",
+  "duplicate_xy_rows": 0,
+  "blank_rows": 0,
+  "bad_rows": 0,
+  "crs": "UNKNOWN \u2014 not declared in file",
+  "value_meaning": "UNKNOWN \u2014 client must confirm",
+  "units": "UNKNOWN",
+  "hypothesis_crs": {
+    "status": "UNKNOWN",
+    "note": "Coordinates may belong to a Nigerian projected grid (possibly Transverse Mercator near 4.5E without false easting). Not confirmed."
+  }
+}

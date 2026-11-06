@@ -19,10 +19,10 @@
 | Delimiter | **comma** `,` (not tab/space) |
 | Header | **Present:** `X,Y,Z` |
 | Columns | 3 |
-| X range | −163 800 … −107 800 |
-| Y range | 777 400 … 833 500 |
-| Z range | −212.76 … 221.47 |
-| Z mean / stdev | ~58.74 / ~32.70 |
+| X min / max | **−163 800** … **−107 800** |
+| Y min / max | **777 400** … **833 500** |
+| Z min / max / mean | **−212.76** … **221.47** / **~58.74** |
+| Z stdev | ~32.70 |
 | Z p01 / p50 / p99 | ~−42.6 / ~60.9 / ~129.3 |
 | Unique X / Y | 561 / 562 |
 | Spacing | **100** in X and Y (single spacing each) |
@@ -30,8 +30,30 @@
 | Expected full grid | 561 × 562 = 315 282 cells |
 | Missing cells | **7 129** (gaps; not silently fillable) |
 | Duplicate X,Y | **0** |
-| Classic nodata (−9999 etc.) | **None observed** |
-| Negative Z values | Present (p01 negative) — meaning UNKNOWN |
+| Classic nodata (−9999 etc.) | **None observed** (`sentinel_like_count` = 0) |
+| Negative Z values | **11 250** rows (meaning UNKNOWN) |
+
+## Z histogram (20 bins, VERIFIED)
+
+Counts rise toward mid-positive values then fall — peak near ~60–90 (bins covering roughly 48–91). Full edges/counts are in `findings.json` → `z_histogram`.
+
+| Approx Z band | Count (order-of-magnitude) |
+|---------------|----------------------------|
+| < −40 | tens–low hundreds |
+| −40 … 0 | low thousands |
+| 0 … 90 | majority (~250k+) |
+| > 90 | thousands tapering to tens above ~180 |
+
+## Where the 7 129 gaps are (VERIFIED)
+
+| Metric | Value |
+|--------|-------|
+| Pattern | **clustered** (not scattered salt-and-pepper) |
+| Connected components (4-neighbour lattice) | **4** |
+| Largest component | **1 952** cells (~27% of gaps) |
+| Gap bbox (X min/max, Y min/max) | −163 800 … −107 800, 777 400 … 833 500 |
+
+**Interpretation:** Gaps form a small number of contiguous voids consistent with AOI/mask edges or blocky holes, not randomly dispersed missing cells.
 
 ## Corrections vs first-look notes
 
