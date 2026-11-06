@@ -10,6 +10,16 @@
 - One uncommitted file at resume: `frontend/lib/api.ts` (mid-Task-2 plain-language error context). Committed as `WIP Task 2` (no work discarded).
 - Baseline re-run GREEN: frontend `typecheck` / `lint` / `build` pass; backend release-shell subset `28 passed`.
 
+## Recovery — unexpected working-tree revert, repaired (this session, LOCAL ONLY)
+- **Finding (VERIFIED):** on resume the working tree was *damaged/stale*, not carrying last-session WIP. `git diff` showed `validator.py` −171 and `.gitignore` −17 that were **semantic** reverts, not line endings (`--ignore-space-at-eol --stat` gave the identical result).
+  - worktree `.gitignore` was **byte-identical to `main`** (`git diff main -- .gitignore` empty); HEAD legitimately adds 17 ignore lines.
+  - worktree `validator.py` was 428 lines (an intermediate pre-v2 state); **HEAD is 579 lines and correct** — it contains the v2 code (`OVERBURDEN_THICKNESS`, `schema_from_manifest`, `validate_point_grid_layer` / `unit_sanity`, `labels_present`).
+  - **Mechanism: UNKNOWN.** `git stash list` empty; `git reflog` shows no checkout/restore/stash-pop touching these files; no rebase/merge/cherry-pick in progress. Attribution: external revert (harness/tool), not a recorded git operation.
+- **Safety copy (VERIFIED):** full pre-recovery diff at `poc/release_shell/outputs/recovery/working_tree_before_recovery.patch`, modified files copied to `poc/release_shell/outputs/recovery/files/` (now git-ignored). Nothing discarded.
+- **Action:** restored only `validator.py` and `.gitignore` from HEAD (`git checkout HEAD -- …`). Confirmed the pre-recovery patch held **no genuine new additions** in those two files (only reverts).
+- **Genuine new WIP preserved as its own labelled commits:** `6c6f7dd` dashboard assess handler (`page.tsx`), `a230a34` rehearsal Playwright spec + `test:rehearsal` script, `6881ad3` ignore the recovery folder.
+- **Post-recovery verification (VERIFIED):** backend release-shell + hazard-v2 subset **85 passed**; frontend `typecheck` / `lint` / **17 tests** / `build` all GREEN. Counts unchanged vs baseline → no regression from the repair.
+
 ## Task status on this branch
 - Task 1 ALIGNMENT AUDIT — DONE (commit `28471f9`, `ALIGNMENT_TABLE.md`).
   - 3 real hazards (subsidence/landslide/sinkhole); `liquefaction` invented class removed (M1–M3).
