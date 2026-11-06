@@ -1,3 +1,26 @@
+# PROGRESS — finish/frontend-align-rc3 (FRONTEND ALIGNMENT, LOCAL ONLY)
+
+**Branch:** `finish/frontend-align-rc3` from local `main`
+**Remote:** do not push · **Identity:** hazeez-edunjobi \<ifeoluwasuccess520@gmail.com\> · no Co-authored-by
+**Flag:** `SSRI_RELEASE_SHELL` stays default OFF; behaviour with the flag off is unchanged.
+
+## Step 0 — state re-establishment (this session)
+- No rebase / merge / cherry-pick in progress.
+- 22 commits ahead of `main`; author AND committer on all are `hazeez-edunjobi` (SHAs in older reports are stale — history was rewritten locally).
+- One uncommitted file at resume: `frontend/lib/api.ts` (mid-Task-2 plain-language error context). Committed as `WIP Task 2` (no work discarded).
+- Baseline re-run GREEN: frontend `typecheck` / `lint` / `build` pass; backend release-shell subset `28 passed`.
+
+## Task status on this branch
+- Task 1 ALIGNMENT AUDIT — DONE (commit `28471f9`, `ALIGNMENT_TABLE.md`).
+  - 3 real hazards (subsidence/landslide/sinkhole); `liquefaction` invented class removed (M1–M3).
+  - Dashboard/operator/shell hazard lists derive from the backend registry (`settings.hazards`); status endpoint exposes registry + channel schemas (M4/M5/M6/M7).
+  - `AssessResultModal` colour map no longer keyed by hazard name (M8); `parseError` plain-language (M9); `lib/report.ts` HTML export added (M10).
+- Lint / typecheck / build — DONE (commit `085791f` "Make frontend lint pass under ESLint 9 flat config").
+- `frontend/lib/report.ts` report builder + reworked `AssessResultModal` — DONE (Task 1).
+- Task 2 UPLOAD FLOW CHECK — IN PROGRESS. Stopped mid-way while adding plain-language context to API error calls in batches (training endpoints done; the remaining release-shell + health calls still lack context). Resumes below.
+
+---
+
 # PROGRESS — feature/hazard-factors-v2 (LOCAL ONLY)
 
 **Branch:** `feature/hazard-factors-v2` from local `main`  
