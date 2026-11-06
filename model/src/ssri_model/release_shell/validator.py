@@ -11,8 +11,12 @@ from typing import Any
 import numpy as np
 import rasterio
 
-from ssri_model.ml.constants import CHANNEL_COUNT, CHANNEL_NAMES, FEATURE_NODATA, LABEL_NODATA
+from ssri_model.ml.constants import FEATURE_NODATA, LABEL_NODATA
 from ssri_model.ml.labels import label_class_names
+from ssri_model.release_shell.channel_schema import (
+    OVERBURDEN_THICKNESS,
+    schema_from_manifest,
+)
 from ssri_model.release_shell.flags import (
     release_shell_block_size_deg,
     release_shell_block_size_km,
@@ -91,6 +95,16 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
         block_size_deg=release_shell_block_size_deg(),
         block_size_km=release_shell_block_size_km(),
     )
+    manifest: dict[str, Any] = {}
+    man_path = root / "manifest.json"
+    if man_path.exists():
+        try:
+            manifest = json.loads(man_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            manifest = {}
+    schema = schema_from_manifest(manifest)
+    channel_names = list(schema.channel_names)
+    channel_count = schema.channel_count
 
     if not root.is_dir():
         return {
@@ -130,8 +144,9 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
     coords_missing = 0
     tiles: list[TileGeo] = []
     channel_stats: dict[str, dict[str, float]] = {
-        name: {"nodata_frac": 0.0, "constant_frac": 0.0, "n": 0} for name in CHANNEL_NAMES
+        name: {"nodata_frac": 0.0, "constant_frac": 0.0, "n": 0} for name in channel_names
     }
+    overburden_negative = 0
     label_counts: dict[str, Counter] = {h: Counter() for h in hazards}
     hazard_blocks: dict[str, set[str]] = {h: set() for h in hazards}
     synthetic_flags: list[bool] = []
@@ -151,10 +166,10 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
             channel_fail += 1
             continue
         arr = np.load(feat_path)
-        if arr.ndim != 3 or arr.shape[0] != CHANNEL_COUNT:
+        if arr.ndim != 3 or arr.shape[0] != channel_count:
             shape_fail += 1
             continue
-        for i, name in enumerate(CHANNEL_NAMES):
+        for i, name in enumerate(channel_names):
             ch = arr[i].astype(np.float64)
             nodata_m = ~np.isfinite(ch) | (ch == FEATURE_NODATA)
             frac_nd = float(nodata_m.mean()) if ch.size else 1.0
@@ -164,6 +179,8 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
             st["nodata_frac"] = (st["nodata_frac"] * st["n"] + frac_nd) / (st["n"] + 1)
             st["constant_frac"] = (st["constant_frac"] * st["n"] + const) / (st["n"] + 1)
             st["n"] += 1
+            if name == OVERBURDEN_THICKNESS and finite.size and float(np.nanmin(finite)) < 0:
+                overburden_negative += 1
 
         crs = None
         lat = meta.get("centroid_lat", meta.get("lat"))
@@ -214,8 +231,9 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
                 "schema_shapes",
                 "FAIL",
                 f"Invalid feature/label samples: channel/layout issues={channel_fail}, "
-                f"shape issues={shape_fail}. Expected feature_stack.npy shape (13,H,W) "
-                f"with channels {list(CHANNEL_NAMES)}.",
+                f"shape issues={shape_fail}. Expected feature_stack.npy shape "
+                f"({channel_count},H,W) for schema {schema.version} "
+                f"with channels {channel_names}.",
             )
         )
     else:
@@ -281,6 +299,36 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
                 "PASS",
                 "No channel is entirely nodata/constant.",
                 {"channels": channel_stats},
+            )
+        )
+
+    if overburden_negative:
+        checks.append(
+            CheckResult(
+                "overburden_units",
+                "WARN",
+                f"{overburden_negative} sample(s) have negative overburden_thickness "
+                "values. Thickness should be ≥ 0 metres; confirm units and whether "
+                "negatives are sentinels.",
+            )
+        )
+
+    total_labelled_tiles = sum(int(label_counts[h]["tiles"]) for h in hazards)
+    if samples and total_labelled_tiles == 0:
+        checks.append(
+            CheckResult(
+                "labels_present",
+                "FAIL",
+                "No labelled pixels found for any hazard. Training refuses without labels. "
+                "Upload a label inventory or labelled tiles (classes 0/1/2).",
+            )
+        )
+    else:
+        checks.append(
+            CheckResult(
+                "labels_present",
+                "PASS" if total_labelled_tiles > 0 else "WARN",
+                f"Labelled tiles across hazards: {total_labelled_tiles}.",
             )
         )
 

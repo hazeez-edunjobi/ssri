@@ -17,7 +17,10 @@ import numpy as np
 from ssri_model.manual_training.exceptions import ManualTrainingError
 from ssri_model.manual_training.upload_limits import reject_if_upload_too_large, upload_max_rows
 from ssri_model.ml.constants import FEATURE_NODATA
-from ssri_model.release_shell.channel_schema import normalize_layer_name
+from ssri_model.release_shell.channel_schema import (
+    OVERBURDEN_THICKNESS,
+    normalize_layer_name,
+)
 
 try:
     from pyproj import CRS, Transformer
@@ -330,6 +333,18 @@ def ingest_point_grid_csv(
         )
     if duplicates:
         messages.append(f"Skipped {duplicates} duplicate X/Y row(s); first value kept.")
+
+    # Unit sanity: thickness cannot be negative (depth-to-bedrock is a different name).
+    if name == OVERBURDEN_THICKNESS and finite_vals:
+        negative_n = sum(1 for v in finite_vals if v < 0)
+        if negative_n:
+            messages.append(
+                f"UNIT_SANITY WARN: {negative_n} negative value(s) in layer "
+                f"'{OVERBURDEN_THICKNESS}'. Thickness should be ≥ 0 metres; "
+                "confirm units and whether negatives are sentinels. "
+                "If this is depth-to-bedrock, declare that name instead — "
+                "SSRI will not silently relabel it as overburden_thickness."
+            )
 
     return PointGridLayer(
         name=name,
