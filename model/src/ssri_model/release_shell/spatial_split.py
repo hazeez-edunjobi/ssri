@@ -38,12 +38,28 @@ def resolve_block_size_deg(
     return DEFAULT_BLOCK_SIZE_DEG
 
 
+def _block_coord(value: float) -> str:
+    """Format a floored block coordinate so fine block sizes stay distinct.
+
+    Integral coordinates (the historic 5 deg default) render exactly as before
+    (``30`` / ``-120``). Non-integral coordinates, which arise from km-based
+    local block sizes, keep enough precision to remain separate blocks; the old
+    ``int()`` truncation collapsed them into ~1 degree buckets.
+    """
+    nearest = round(value)
+    if abs(value - nearest) < 1e-9:
+        return str(int(nearest))
+    return f"{value:.6f}".rstrip("0").rstrip(".")
+
+
 def block_id(lat: float, lon: float, *, size_deg: float = DEFAULT_BLOCK_SIZE_DEG) -> str:
     """Stable block id for a lat/lon at the given block size in degrees."""
     s = float(size_deg)
     if s <= 0:
         raise ValueError("size_deg must be positive.")
-    return f"{int(math.floor(lat / s) * s)}_{int(math.floor(lon / s) * s)}"
+    lat_block = math.floor(lat / s) * s
+    lon_block = math.floor(lon / s) * s
+    return f"{_block_coord(lat_block)}_{_block_coord(lon_block)}"
 
 
 def block5(lat: float, lon: float) -> str:

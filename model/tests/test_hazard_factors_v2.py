@@ -28,6 +28,7 @@ from ssri_model.release_shell.spatial_split import (
     TileGeo,
     assert_block_disjoint,
     block_id,
+    block_size_deg_from_km,
     split_by_blocks,
 )
 
@@ -193,6 +194,21 @@ def test_local_block_sizes_and_disjointness() -> None:
     assert split5.local_evidence_only is False
     assert_block_disjoint(split5.train_blocks, split5.validation_blocks, split5.test_blocks)
     assert block_id(32.5, -117.5, size_deg=5.0) == "30_-120"
+
+
+def test_km_block_ids_do_not_collapse_to_integer_degrees() -> None:
+    """Regression: int() truncation collapsed km blocks into ~1 degree buckets."""
+    # A ~56 km north-south span at 5 km blocks must yield many distinct blocks,
+    # not a handful of integer-degree buckets.
+    size_deg = block_size_deg_from_km(5.0)
+    lats = [7.0 + i * 0.05 for i in range(12)]  # ~0.55 deg ~ 61 km
+    ids = {block_id(lat, 3.3, size_deg=size_deg) for lat in lats}
+    assert len(ids) >= 11, sorted(ids)
+
+    # Integral (5 deg) ids stay byte-identical to the historic format.
+    assert block_id(32.5, -117.5, size_deg=5.0) == "30_-120"
+    # 0.0-style coordinates still render without a decimal point.
+    assert block_id(0.0, 0.0, size_deg=5.0) == "0_0"
 
 
 def test_preview_unevaluated_scores_on_and_off() -> None:
