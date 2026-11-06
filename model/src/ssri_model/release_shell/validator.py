@@ -11,12 +11,15 @@ from typing import Any
 import numpy as np
 import rasterio
 
+from ssri_model.manual_training.exceptions import ManualTrainingError
 from ssri_model.ml.constants import FEATURE_NODATA, LABEL_NODATA
 from ssri_model.ml.labels import label_class_names
 from ssri_model.release_shell.channel_schema import (
     OVERBURDEN_THICKNESS,
+    normalize_layer_name,
     schema_from_manifest,
 )
+from ssri_model.release_shell.point_grid_csv import ingest_point_grid_csv
 from ssri_model.release_shell.flags import (
     release_shell_block_size_deg,
     release_shell_block_size_km,
@@ -511,4 +514,112 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
         "n_samples": len(samples),
         "median_nn_km": nn_km,
         "score_framing": "relative susceptibility rankings (not probabilities or risk)",
+    }
+
+
+def validate_point_grid_layer(
+    content: bytes,
+    *,
+    filename: str,
+    layer_name: str,
+    crs: str,
+    working_crs: str | None = None,
+) -> dict[str, Any]:
+    """Validate a single declared feature-layer upload (point-grid CSV).
+
+    Always FEATURE_LAYER_ONLY — a single layer cannot supervise training.
+    Surfaces a visible ``unit_sanity`` WARN/FAIL (for example negative
+    ``overburden_thickness``) instead of hiding it inside a free-text message.
+    """
+    checks: list[CheckResult] = []
+    try:
+        layer = ingest_point_grid_csv(
+            content,
+            filename=filename,
+            layer_name=layer_name,
+            crs=crs,
+            working_crs=working_crs,
+        )
+    except ManualTrainingError as exc:
+        code = exc.code
+        status = "FAIL"
+        checks.append(CheckResult("crs_declared", status, exc.message, {"code": code}))
+        return {
+            "overall": "FAIL",
+            "can_train": False,
+            "layer_name": normalize_layer_name(layer_name) or layer_name,
+            "checks": [c.to_dict() for c in checks],
+            "messages": [],
+            "status": "FEATURE_LAYER_ONLY",
+            "trainable": False,
+            "scientific_validation_status": "NOT_VALIDATED",
+        }
+
+    checks.append(
+        CheckResult(
+            "crs_declared",
+            "PASS",
+            f"Declared CRS '{layer.crs}' parsed; working CRS '{layer.working_crs}'.",
+            {"crs": layer.crs, "working_crs": layer.working_crs},
+        )
+    )
+    checks.append(
+        CheckResult(
+            "grid_regular",
+            "PASS",
+            f"Regular grid {len(layer.xs)} x {len(layer.ys)}; "
+            f"spacing X={layer.x_spacing:g} Y={layer.y_spacing:g}.",
+            {"x_spacing": layer.x_spacing, "y_spacing": layer.y_spacing},
+        )
+    )
+    if layer.missing_cells:
+        checks.append(
+            CheckResult(
+                "gaps",
+                "WARN",
+                f"{layer.missing_cells} missing grid cell(s). SSRI does not fill gaps; "
+                "provide complete cells or a mask before training.",
+                {"missing_cells": layer.missing_cells},
+            )
+        )
+    else:
+        checks.append(CheckResult("gaps", "PASS", "No missing grid cells."))
+
+    # Unit sanity: a declared thickness cannot be negative.
+    unit_messages = [m for m in layer.messages if "UNIT_SANITY" in m]
+    if unit_messages:
+        checks.append(
+            CheckResult(
+                "unit_sanity",
+                "WARN",
+                unit_messages[0],
+                {"value_min": layer.value_min, "value_max": layer.value_max},
+            )
+        )
+    else:
+        checks.append(
+            CheckResult(
+                "unit_sanity",
+                "PASS",
+                f"No negative {layer.name} values; "
+                f"range {layer.value_min} … {layer.value_max}.",
+                {"value_min": layer.value_min, "value_max": layer.value_max},
+            )
+        )
+
+    fails = [c for c in checks if c.status == "FAIL"]
+    overall = "FAIL" if fails else ("WARN" if any(c.status == "WARN" for c in checks) else "PASS")
+    return {
+        "overall": overall,
+        "can_train": False,
+        "layer_name": layer.name,
+        "checks": [c.to_dict() for c in checks],
+        "messages": list(layer.messages),
+        "row_count": layer.row_count,
+        "missing_cells": layer.missing_cells,
+        "value_min": layer.value_min,
+        "value_max": layer.value_max,
+        "status": layer.status,
+        "trainable": layer.trainable,
+        "scientific_validation_status": "NOT_VALIDATED",
     }
