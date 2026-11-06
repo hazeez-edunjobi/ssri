@@ -311,7 +311,7 @@ export async function getTrainingRequirements(
   const response = await fetch(`${apiUrl}/api/v1/training/requirements`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not load training requirements"));
   return response.json();
 }
 
@@ -331,7 +331,7 @@ export async function createTrainingDataset(
     headers: authHeaders(apiKey),
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not create the dataset"));
   return response.json();
 }
 
@@ -341,7 +341,7 @@ export async function listTrainingDatasets(
   const response = await fetch(`${apiUrl}/api/v1/training/datasets`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not list datasets"));
   return response.json();
 }
 
@@ -367,7 +367,7 @@ export async function uploadTrainingDatasetZip(
     `${apiUrl}/api/v1/training/datasets/${datasetId}/upload`,
     { method: "POST", headers, body: form },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Upload failed"));
   return response.json();
 }
 
@@ -383,7 +383,7 @@ export async function validateTrainingDataset(
     `${apiUrl}/api/v1/training/datasets/${datasetId}/validate`,
     { method: "POST", headers: authHeaders(apiKey) },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Validation failed"));
   return response.json();
 }
 
@@ -411,7 +411,7 @@ export async function startTrainingJob(
     headers: authHeaders(apiKey),
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not start training"));
   return response.json();
 }
 
@@ -422,7 +422,7 @@ export async function getTrainingJob(
   const response = await fetch(`${apiUrl}/api/v1/training/jobs/${jobId}`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not read the training job"));
   return response.json();
 }
 
@@ -432,7 +432,7 @@ export async function listTrainedModels(
   const response = await fetch(`${apiUrl}/api/v1/training/models`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not list trained models"));
   return response.json();
 }
 
@@ -442,7 +442,7 @@ export async function getActiveTrainedModel(
   const response = await fetch(`${apiUrl}/api/v1/training/models/active`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not read the active model"));
   return response.json();
 }
 
@@ -455,7 +455,7 @@ export async function activateTrainedModel(
     headers: authHeaders(apiKey),
     body: JSON.stringify({ model_id: modelId }),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not activate the model"));
   return response.json();
 }
 
