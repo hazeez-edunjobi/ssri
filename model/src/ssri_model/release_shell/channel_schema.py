@@ -126,3 +126,19 @@ def schema_from_checkpoint_payload(payload: dict) -> ChannelSchema:
     if names:
         return ChannelSchema(str(version), tuple(str(n) for n in names))
     return schema_for_version(str(version))
+
+
+def schema_from_manifest(manifest: dict | None) -> ChannelSchema:
+    """Resolve schema from a dataset manifest; default v1 when unset."""
+    man = manifest or {}
+    version = str(
+        man.get("channel_schema_version")
+        or (man.get("channel_schema") or {}).get("version")
+        or SCHEMA_V1
+    )
+    names = man.get("channel_names") or man.get("channels") or (
+        (man.get("channel_schema") or {}).get("channel_names")
+    )
+    if names:
+        return ChannelSchema(version, tuple(str(n) for n in names))
+    return schema_for_version(version)

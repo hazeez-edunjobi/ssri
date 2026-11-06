@@ -97,20 +97,29 @@ def load_feature_statistics(path: Path | str) -> FeatureStatistics:
     if not isinstance(raw_stats, Mapping):
         raise StatisticsError("statistics.json must contain a 'channel_stats' object")
 
-    missing_channels = [name for name in CHANNEL_NAMES if name not in raw_stats]
+    from ssri_model.release_shell.channel_schema import CHANNEL_NAMES_V1, CHANNEL_NAMES_V2
+
+    version = str(payload.get("channel_schema_version") or "").strip().lower()
+    if version in {"v2", "2"} or all(name in raw_stats for name in CHANNEL_NAMES_V2):
+        expected_names: tuple[str, ...] = CHANNEL_NAMES_V2
+    else:
+        expected_names = CHANNEL_NAMES_V1
+
+    allowed = set(CHANNEL_NAMES_V2)
+    missing_channels = [name for name in expected_names if name not in raw_stats]
     if missing_channels:
         raise StatisticsError(
             "Statistics missing channels: " + ", ".join(missing_channels)
         )
 
-    extra_channels = [name for name in raw_stats if name not in CHANNEL_NAMES]
+    extra_channels = [name for name in raw_stats if name not in allowed]
     if extra_channels:
         raise StatisticsError(
             "Statistics contain unknown channels: " + ", ".join(extra_channels)
         )
 
     channels: dict[str, ChannelStatistics] = {}
-    for name in CHANNEL_NAMES:
+    for name in expected_names:
         try:
             channels[name] = _parse_channel_stats(name, raw_stats[name])
         except (TypeError, ValueError) as exc:
@@ -118,12 +127,13 @@ def load_feature_statistics(path: Path | str) -> FeatureStatistics:
                 f"Invalid statistics payload for channel '{name}'"
             ) from exc
 
-    if len(channels) != CHANNEL_COUNT:
+    if len(channels) != len(expected_names):
         raise StatisticsError(
-            f"Expected statistics for {CHANNEL_COUNT} channels, received {len(channels)}"
+            f"Expected statistics for {len(expected_names)} channels, "
+            f"received {len(channels)}"
         )
 
-    return FeatureStatistics(channel_names=CHANNEL_NAMES, channels=channels)
+    return FeatureStatistics(channel_names=expected_names, channels=channels)
 
 
 def compute_feature_statistics_from_arrays(

@@ -43,6 +43,13 @@ CHANNEL_NORMALIZATION: dict[str, NormalizationMethod] = {
     "magnetics": NormalizationMethod.Z_SCORE,
 }
 
+# Schema v2 extras — merged when building a v2 NormalizationConfig.
+CHANNEL_NORMALIZATION_V2_EXTRA: dict[str, NormalizationMethod] = {
+    "overburden_thickness": NormalizationMethod.MIN_MAX,
+    "lineament_density": NormalizationMethod.Z_SCORE,
+    "lineament_distance": NormalizationMethod.MIN_MAX,
+}
+
 
 @dataclass(frozen=True)
 class NormalizationConfig:
@@ -52,12 +59,24 @@ class NormalizationConfig:
 
     @classmethod
     def default(cls) -> NormalizationConfig:
-        """Return the canonical Stage 2 normalization configuration."""
+        """Return the canonical Stage 2.5 (schema v1) normalization configuration."""
         return cls(channel_methods=dict(CHANNEL_NORMALIZATION))
+
+    @classmethod
+    def default_v2(cls) -> NormalizationConfig:
+        """Return schema-v2 normalization (v1 channels + three extras)."""
+        methods = dict(CHANNEL_NORMALIZATION)
+        methods.update(CHANNEL_NORMALIZATION_V2_EXTRA)
+        return cls(channel_methods=methods)
 
     def method_for(self, channel: str) -> NormalizationMethod:
         """Return the normalization method for a channel."""
         if channel not in self.channel_methods:
+            # Fall back to known defaults so v2 stacks normalize without a full rewrite.
+            if channel in CHANNEL_NORMALIZATION:
+                return CHANNEL_NORMALIZATION[channel]
+            if channel in CHANNEL_NORMALIZATION_V2_EXTRA:
+                return CHANNEL_NORMALIZATION_V2_EXTRA[channel]
             raise KeyError(f"No normalization method configured for channel: {channel}")
         return self.channel_methods[channel]
 
@@ -79,14 +98,19 @@ class NormalizationConfig:
 
 
 def validate_normalization_config(config: NormalizationConfig) -> None:
-    """Ensure every canonical channel has a normalization method."""
+    """Ensure every canonical channel has a normalization method.
+
+    Schema v1 requires the 13 Stage 2.5 channels. Schema v2 may also declare
+    overburden_thickness / lineament_density / lineament_distance.
+    """
+    known = set(CHANNEL_NORMALIZATION) | set(CHANNEL_NORMALIZATION_V2_EXTRA)
     missing = [name for name in CHANNEL_NAMES if name not in config.channel_methods]
     if missing:
         raise ValueError(
             "Normalization config missing channels: " + ", ".join(missing)
         )
 
-    extra = [name for name in config.channel_methods if name not in CHANNEL_NAMES]
+    extra = [name for name in config.channel_methods if name not in known]
     if extra:
         raise ValueError(
             "Normalization config contains unknown channels: " + ", ".join(extra)
@@ -149,16 +173,17 @@ def normalize_feature_stack(
     """Normalize a ``(C, H, W)`` feature stack using precomputed statistics."""
     import numpy as np
 
-    from ssri_model.ml.constants import CHANNEL_COUNT
     from ssri_model.ml.exceptions import NormalizationError
 
-    if tensor.shape[0] != CHANNEL_COUNT:
+    channel_names = tuple(statistics.channel_names)
+    if tensor.shape[0] != len(channel_names):
         raise NormalizationError(
-            f"Expected {CHANNEL_COUNT} channels for normalization, received {tensor.shape[0]}"
+            f"Expected {len(channel_names)} channels for normalization, "
+            f"received {tensor.shape[0]}"
         )
 
     output = np.empty_like(tensor, dtype=np.float32)
-    for index, channel_name in enumerate(CHANNEL_NAMES):
+    for index, channel_name in enumerate(channel_names):
         method = config.method_for(channel_name)
         output[index] = normalize_channel_array(
             tensor[index],

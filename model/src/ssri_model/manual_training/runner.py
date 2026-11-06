@@ -81,7 +81,24 @@ def run_manual_training(
         val_dataset, batch_size=batch_size, shuffle=False, num_workers=0
     )
 
-    model = create_ssri_model(SSRIModelConfig())
+    # Honour dataset channel schema (v1=13 default; v2=16 when declared).
+    import json as _json
+
+    from ssri_model.release_shell.channel_schema import schema_from_manifest
+
+    _manifest: dict = {}
+    _mp = dataset_root / "manifest.json"
+    if _mp.exists():
+        try:
+            _manifest = _json.loads(_mp.read_text(encoding="utf-8"))
+        except _json.JSONDecodeError:
+            _manifest = {}
+    _schema = schema_from_manifest(_manifest)
+    model = create_ssri_model(
+        SSRIModelConfig(
+            in_channels=_schema.channel_count,
+        )
+    )
     config = TrainingConfig(
         output_dir=str(output_dir),
         dataset_manifest=str(dataset_root / "manifest.json"),
@@ -156,7 +173,7 @@ def run_manual_training(
         "checkpoint_path": model_record.checkpoint_path,
         "experiment_dir": result.experiment_dir,
         "architecture": "SSRIModel",
-        "channels": 13,
+        "channels": int(preview.channel_count or _schema.channel_count),
         "label_classes": ["subsidence", "landslide", "sinkhole"],
         "metrics": metrics,
         "checkpoint_paths": result.checkpoint_paths,

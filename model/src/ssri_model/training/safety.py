@@ -73,15 +73,18 @@ def validate_training_setup(
 
     check_split_leakage(path)
 
-    if len(manifest.channels) != CHANNEL_COUNT:
+    channel_count = len(manifest.channels)
+    # Stage 2.5 v1 = 13; schema v2 = 16. Reject other lengths.
+    allowed_counts = {CHANNEL_COUNT, 16}
+    if channel_count not in allowed_counts:
         raise DatasetValidationError(
-            f"Expected {CHANNEL_COUNT} channels in manifest, "
-            f"received {len(manifest.channels)}"
+            f"Expected {CHANNEL_COUNT} (v1) or 16 (v2) channels in manifest, "
+            f"received {channel_count}"
         )
 
-    if model.in_channels != CHANNEL_COUNT:
+    if model.in_channels != channel_count:
         raise InvalidTrainingConfigError(
-            f"Model in_channels must be {CHANNEL_COUNT}, "
+            f"Model in_channels must match manifest ({channel_count}), "
             f"received {model.in_channels}"
         )
 

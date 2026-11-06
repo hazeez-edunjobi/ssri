@@ -13,7 +13,6 @@ import torch
 from torch.utils.data import Dataset
 
 from ssri_model.ml.constants import (
-    CHANNEL_COUNT,
     FEATURE_NODATA,
     LABEL_NODATA,
 )
@@ -185,9 +184,10 @@ class SSRIDataset(Dataset):
             raise InvalidFeatureTensorError(
                 f"Feature tensor must be 3D (C, H, W), received shape {array.shape}"
             )
-        if array.shape[0] != CHANNEL_COUNT:
+        expected = len(self.manifest.channels)
+        if array.shape[0] != expected:
             raise InvalidFeatureTensorError(
-                f"Expected {CHANNEL_COUNT} channels, received {array.shape[0]}"
+                f"Expected {expected} channels, received {array.shape[0]}"
             )
         return array
 

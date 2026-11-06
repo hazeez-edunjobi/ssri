@@ -172,9 +172,13 @@ def load_evaluation_model(
         raise EvaluationCheckpointError("Checkpoint is missing model_config")
 
     model_config = SSRIModelConfig(**model_config_payload)
-    if model_config.in_channels != CHANNEL_COUNT or model_config.num_classes != 3:
+    allowed_in = {CHANNEL_COUNT, 16}
+    if model_config.in_channels not in allowed_in or model_config.num_classes != 3:
         raise EvaluationCheckpointError(
-            "Checkpoint model configuration is incompatible with SSRI contract"
+            "Checkpoint model configuration is incompatible with SSRI contract "
+            f"(in_channels={model_config.in_channels}, "
+            f"num_classes={model_config.num_classes}; "
+            f"allowed in_channels={sorted(allowed_in)})"
         )
 
     model = SSRIModel(config=model_config)
