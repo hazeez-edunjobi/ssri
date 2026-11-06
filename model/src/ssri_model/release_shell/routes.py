@@ -9,7 +9,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -29,8 +29,30 @@ from ssri_model.manual_training.exceptions import ManualTrainingError
 from ssri_model.manual_training.ingest import ingest_zip_bytes
 from ssri_model.manual_training.registry import ModelRegistry
 from ssri_model.manual_training.storage import TrainingStorage
-from ssri_model.release_shell.flags import default_limitations, release_shell_enabled
-from ssri_model.release_shell.validator import validate_release_shell_dataset
+from ssri_model.release_shell.channel_schema import (
+    CHANNEL_NAMES_V1,
+    CHANNEL_NAMES_V2,
+    SCHEMA_V1,
+    SCHEMA_V2,
+)
+from ssri_model.release_shell.flags import (
+    default_limitations,
+    preview_unevaluated_scores,
+    release_shell_block_size_deg,
+    release_shell_block_size_km,
+    release_shell_buffer_km,
+    release_shell_enabled,
+    release_shell_min_blocks,
+    release_shell_min_held_out_blocks,
+    release_shell_min_tiles,
+)
+from ssri_model.release_shell.labels_inventory import parse_label_csv, parse_label_geojson
+from ssri_model.release_shell.lineaments import LineamentMethod, load_lineament_segments
+from ssri_model.release_shell.spatial_split import DEFAULT_BLOCK_SIZE_DEG, resolve_block_size_deg
+from ssri_model.release_shell.validator import (
+    validate_point_grid_layer,
+    validate_release_shell_dataset,
+)
 from ssri_model.service.config import ServiceConfig
 
 router = APIRouter(prefix="/release-shell", tags=["release-shell"])
@@ -68,6 +90,17 @@ class StartShellTrainBody(BaseModel):
     model_name: str | None = None
 
 
+def _resolved_block_size_deg() -> float | None:
+    """Resolved block size in degrees, or None if the env pair is invalid."""
+    try:
+        return resolve_block_size_deg(
+            block_size_deg=release_shell_block_size_deg(),
+            block_size_km=release_shell_block_size_km(),
+        )
+    except ValueError:
+        return None
+
+
 @router.get("/status")
 def shell_status() -> dict[str, Any]:
     return {
@@ -75,6 +108,31 @@ def shell_status() -> dict[str, Any]:
         "limitations": default_limitations(),
         "score_framing": "relative susceptibility rankings",
         "scientific_validation_status": "NOT_VALIDATED",
+        "settings": {
+            "block_size_deg": _resolved_block_size_deg(),
+            "default_block_size_deg": DEFAULT_BLOCK_SIZE_DEG,
+            "block_size_km_override": release_shell_block_size_km(),
+            "block_size_deg_override": release_shell_block_size_deg(),
+            "buffer_km": release_shell_buffer_km(),
+            "minimums": {
+                "tiles_per_hazard": release_shell_min_tiles(),
+                "blocks": release_shell_min_blocks(),
+                "held_out_blocks": release_shell_min_held_out_blocks(),
+            },
+            "preview_unevaluated_scores": preview_unevaluated_scores(),
+            "supported_channel_schemas": [SCHEMA_V1, SCHEMA_V2],
+            "default_channel_schema": SCHEMA_V1,
+            "channel_schemas": {
+                SCHEMA_V1: {
+                    "channel_count": len(CHANNEL_NAMES_V1),
+                    "channel_names": list(CHANNEL_NAMES_V1),
+                },
+                SCHEMA_V2: {
+                    "channel_count": len(CHANNEL_NAMES_V2),
+                    "channel_names": list(CHANNEL_NAMES_V2),
+                },
+            },
+        },
     }
 
 
@@ -326,3 +384,102 @@ def shell_get_evaluation(
         status_code=404,
         content={"error": {"message": "No evaluation report found for this model yet."}},
     )
+
+
+@router.post("/layers/validate")
+async def shell_validate_layer(
+    file: UploadFile = File(...),
+    layer_name: str = Form(...),
+    crs: str = Form(""),
+    working_crs: str | None = Form(None),
+    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+) -> Any:
+    """Validate one declared feature layer (point-grid CSV). CRS is required.
+
+    A single layer is FEATURE_LAYER_ONLY — this never trains. Surfaces
+    unit-sanity warnings (for example negative overburden_thickness) explicitly.
+    """
+    blocked = _require_shell()
+    if blocked:
+        return blocked
+    raw = await file.read()
+    report = validate_point_grid_layer(
+        raw,
+        filename=file.filename or "layer.csv",
+        layer_name=layer_name,
+        crs=crs,
+        working_crs=(working_crs or None),
+    )
+    status = 200 if report.get("overall") != "FAIL" else 400
+    return JSONResponse(status_code=status, content={"layer": report})
+
+
+@router.post("/labels/inventory")
+async def shell_label_inventory(
+    file: UploadFile = File(...),
+    crs: str = Form(""),
+    date_column: str | None = Form(None),
+    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+) -> Any:
+    """Summarise a label inventory (CSV or GeoJSON). CRS is required."""
+    blocked = _require_shell()
+    if blocked:
+        return blocked
+    raw = await file.read()
+    filename = file.filename or "labels.csv"
+    try:
+        if filename.lower().endswith((".geojson", ".json")):
+            inventory = parse_label_geojson(raw, crs=crs, filename=filename)
+        else:
+            inventory = parse_label_csv(
+                raw, crs=crs, filename=filename, date_column=date_column or "date"
+            )
+    except (ManualTrainingError, ValueError, KeyError) as exc:
+        code = getattr(exc, "code", "LABEL_PARSE")
+        message = getattr(exc, "message", str(exc))
+        return JSONResponse(
+            status_code=400, content={"error": {"code": code, "message": message}}
+        )
+    return {"labels": inventory.to_dict()}
+
+
+@router.post("/lineaments/inspect")
+async def shell_lineaments_inspect(
+    file: UploadFile = File(...),
+    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+) -> Any:
+    """Inspect a lineament vector file (GeoJSON). Reports segment count and bbox."""
+    blocked = _require_shell()
+    if blocked:
+        return blocked
+    raw = await file.read()
+    try:
+        segments = load_lineament_segments(raw)
+    except (ValueError, KeyError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": {
+                    "code": "LINEAMENT_PARSE",
+                    "message": f"Could not read lineament GeoJSON: {exc}",
+                }
+            },
+        )
+    xs = [v for seg in segments for v in (seg[0], seg[2])]
+    ys = [v for seg in segments for v in (seg[1], seg[3])]
+    bbox = (
+        {"x_min": min(xs), "x_max": max(xs), "y_min": min(ys), "y_max": max(ys)}
+        if segments
+        else None
+    )
+    return {
+        "lineaments": {
+            "n_segments": len(segments),
+            "bbox": bbox,
+            "method": LineamentMethod().to_dict(),
+            "note": (
+                "Coordinates are in the layer's declared projected CRS (metres assumed). "
+                "Derive lineament_density / lineament_distance per grid cell before training."
+            ),
+        }
+    }

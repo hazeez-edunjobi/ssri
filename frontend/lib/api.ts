@@ -507,3 +507,107 @@ export async function getShellEvaluation(
   if (!response.ok) throw new Error(await parseError(response));
   return response.json();
 }
+
+export type ShellChannelSchema = {
+  channel_count: number;
+  channel_names: string[];
+};
+
+export type ShellSettings = {
+  block_size_deg: number | null;
+  default_block_size_deg: number;
+  buffer_km: number;
+  minimums: {
+    tiles_per_hazard: number;
+    blocks: number;
+    held_out_blocks: number;
+  };
+  preview_unevaluated_scores: boolean;
+  supported_channel_schemas: string[];
+  default_channel_schema: string;
+  channel_schemas: Record<string, ShellChannelSchema>;
+};
+
+export type ShellStatus = {
+  release_shell_enabled: boolean;
+  limitations: string[];
+  scientific_validation_status: string;
+  settings?: ShellSettings;
+};
+
+export async function getShellStatusFull(apiKey?: string): Promise<ShellStatus> {
+  const response = await fetch(`${apiUrl}/api/v1/release-shell/status`, {
+    headers: authHeaders(apiKey),
+  });
+  if (!response.ok) throw new Error(await parseError(response));
+  return response.json();
+}
+
+export type ShellLayerCheck = { name: string; status: string; message: string };
+
+export type ShellLayerReport = {
+  overall: string;
+  can_train: boolean;
+  layer_name: string;
+  status: string;
+  trainable: boolean;
+  row_count?: number;
+  missing_cells?: number;
+  value_min?: number | null;
+  value_max?: number | null;
+  checks: ShellLayerCheck[];
+  messages?: string[];
+};
+
+export async function validateShellLayer(
+  file: File,
+  layerName: string,
+  crs: string,
+  apiKey?: string,
+  workingCrs?: string,
+): Promise<{ layer: ShellLayerReport }> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("layer_name", layerName);
+  form.append("crs", crs);
+  if (workingCrs) form.append("working_crs", workingCrs);
+  const response = await fetch(`${apiUrl}/api/v1/release-shell/layers/validate`, {
+    method: "POST",
+    headers: formAuthHeaders(apiKey),
+    body: form,
+  });
+  if (!response.ok) throw new Error(await parseError(response));
+  return response.json();
+}
+
+export async function uploadShellLabelInventory(
+  file: File,
+  crs: string,
+  apiKey?: string,
+): Promise<{ labels: Record<string, unknown> }> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("crs", crs);
+  const response = await fetch(`${apiUrl}/api/v1/release-shell/labels/inventory`, {
+    method: "POST",
+    headers: formAuthHeaders(apiKey),
+    body: form,
+  });
+  if (!response.ok) throw new Error(await parseError(response));
+  return response.json();
+}
+
+export async function inspectShellLineaments(
+  file: File,
+  apiKey?: string,
+): Promise<{ lineaments: Record<string, unknown> }> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetch(`${apiUrl}/api/v1/release-shell/lineaments/inspect`, {
+    method: "POST",
+    headers: formAuthHeaders(apiKey),
+    body: form,
+  });
+  if (!response.ok) throw new Error(await parseError(response));
+  return response.json();
+}

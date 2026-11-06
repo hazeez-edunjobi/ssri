@@ -9,12 +9,17 @@ import {
   getActiveTrainedModel,
   getShellEvaluation,
   getShellJob,
-  getShellStatus,
+  getShellStatusFull,
+  inspectShellLineaments,
   listTrainedModels,
   startShellTrainingJob,
   uploadShellDatasetZip,
+  uploadShellLabelInventory,
   validateShellDataset,
+  validateShellLayer,
   type ShellJobStatus,
+  type ShellLayerReport,
+  type ShellSettings,
   type ShellValidation,
   type TrainedModel,
 } from "@/lib/api";
@@ -53,6 +58,22 @@ export default function ReleaseShellPage() {
   const [epochs, setEpochs] = useState(3);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<ShellSettings | null>(null);
+
+  // Owner input panels (currently API-only surfaces exposed in plain language).
+  const [layerFile, setLayerFile] = useState<File | null>(null);
+  const [layerName, setLayerName] = useState("overburden_thickness");
+  const [layerCrs, setLayerCrs] = useState("EPSG:32631");
+  const [layerReport, setLayerReport] = useState<ShellLayerReport | null>(null);
+  const [labelFile, setLabelFile] = useState<File | null>(null);
+  const [labelCrs, setLabelCrs] = useState("");
+  const [labelInventory, setLabelInventory] = useState<Record<string, unknown> | null>(
+    null,
+  );
+  const [lineamentFile, setLineamentFile] = useState<File | null>(null);
+  const [lineamentInfo, setLineamentInfo] = useState<Record<string, unknown> | null>(
+    null,
+  );
 
   const refreshModels = useCallback(async () => {
     const [ms, active] = await Promise.all([
@@ -64,10 +85,11 @@ export default function ReleaseShellPage() {
   }, []);
 
   useEffect(() => {
-    getShellStatus()
+    getShellStatusFull()
       .then((s) => {
         setShellOn(s.release_shell_enabled);
         if (s.limitations?.length) setLimitations(s.limitations);
+        if (s.settings) setSettings(s.settings);
       })
       .catch((err: Error) => setError(err.message));
     refreshModels().catch(() => undefined);
@@ -192,6 +214,61 @@ export default function ReleaseShellPage() {
     }
   };
 
+  const onValidateLayer = async () => {
+    setBusy(true);
+    setError(null);
+    setLayerReport(null);
+    try {
+      if (!layerFile) throw new Error("Choose a point-grid layer CSV (X, Y, value).");
+      if (!layerCrs.trim()) {
+        throw new Error(
+          "Declare the CRS. We cannot guess it and negative X often means the file is not in longitude/latitude.",
+        );
+      }
+      const result = await validateShellLayer(
+        layerFile,
+        layerName.trim(),
+        layerCrs.trim(),
+      );
+      setLayerReport(result.layer);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onUploadLabels = async () => {
+    setBusy(true);
+    setError(null);
+    setLabelInventory(null);
+    try {
+      if (!labelFile) throw new Error("Choose a label inventory CSV.");
+      if (!labelCrs.trim()) throw new Error("Declare the CRS for the label file.");
+      const result = await uploadShellLabelInventory(labelFile, labelCrs.trim());
+      setLabelInventory(result.labels);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onInspectLineaments = async () => {
+    setBusy(true);
+    setError(null);
+    setLineamentInfo(null);
+    try {
+      if (!lineamentFile) throw new Error("Choose a lineament vector file (GeoJSON).");
+      const result = await inspectShellLineaments(lineamentFile);
+      setLineamentInfo(result.lineaments);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const aggregate =
     (evaluation?.aggregate_gates as Record<string, string> | undefined) ||
     (evaluation?.gates as Record<string, string> | undefined) ||
@@ -282,6 +359,222 @@ export default function ReleaseShellPage() {
               </button>
             </div>
           )}
+
+          <div className="space-y-4 rounded-2xl border border-meadow bg-chalk p-5">
+            <div>
+              <h2 className="font-display text-base">Prepare owner inputs</h2>
+              <p className="text-xs text-stone">
+                Optional checks you can run before training. Every file must carry an
+                explicit CRS — we never guess coordinates. We only report here; nothing
+                trains until you start training below.
+              </p>
+            </div>
+
+            {settings && (
+              <div className="rounded-xl border border-meadow/60 bg-mist px-3 py-3 text-xs">
+                <p className="font-medium text-bark">Current settings</p>
+                <ul className="mt-1 space-y-1 text-stone">
+                  <li>
+                    Block size:{" "}
+                    {settings.block_size_deg != null
+                      ? `${settings.block_size_deg}° (override)`
+                      : `${settings.default_block_size_deg}° (default)`}{" "}
+                    · buffer {settings.buffer_km} km
+                  </li>
+                  <li>
+                    Minimums: {settings.minimums.tiles_per_hazard} tiles/hazard,{" "}
+                    {settings.minimums.blocks} blocks,{" "}
+                    {settings.minimums.held_out_blocks} held out
+                  </li>
+                  <li>
+                    Channel schema: default {settings.default_channel_schema} ·
+                    supported {settings.supported_channel_schemas.join(", ")}
+                  </li>
+                  <li>
+                    Preview unevaluated scores:{" "}
+                    <span
+                      className={
+                        settings.preview_unevaluated_scores ? "text-leaf" : "text-amber-800"
+                      }
+                    >
+                      {settings.preview_unevaluated_scores ? "on" : "off"}
+                    </span>
+                  </li>
+                </ul>
+                <p className="mt-1 text-[11px] text-stone">
+                  Block size, schema version and the preview toggle are set by the API
+                  operator via environment variables (see OWNER_API_GUIDE.md). They are
+                  shown here so you know what training will use.
+                </p>
+                {settings.channel_schemas && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-bark">
+                      Channel names per schema (layer → channel mapping)
+                    </summary>
+                    <ul className="mt-1 space-y-1 text-stone">
+                      {Object.entries(settings.channel_schemas).map(([key, schema]) => (
+                        <li key={key}>
+                          <span className="font-medium text-bark">
+                            {key} ({schema.channel_count} channels):
+                          </span>{" "}
+                          {schema.channel_names.join(", ")}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </div>
+            )}
+
+            <div className="rounded-xl border border-meadow/60 bg-mist px-3 py-3 text-xs">
+              <p className="font-medium text-bark">Check a layer (CRS + units)</p>
+              <p className="mt-1 text-stone">
+                Upload a point-grid CSV (X, Y, value) and declare what the layer means and
+                its CRS. We flag negative thickness and irregular gaps before you rely on
+                it.
+              </p>
+              <div className="mt-2 grid gap-2 md:grid-cols-3">
+                <label className="block">
+                  Layer name
+                  <input
+                    className="mt-1 w-full rounded-lg border border-meadow bg-chalk px-3 py-2"
+                    value={layerName}
+                    onChange={(e) => setLayerName(e.target.value)}
+                    list="shell-channel-names"
+                  />
+                  <datalist id="shell-channel-names">
+                    {settings?.channel_schemas?.v2?.channel_names?.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </label>
+                <label className="block">
+                  CRS (required)
+                  <input
+                    className="mt-1 w-full rounded-lg border border-meadow bg-chalk px-3 py-2"
+                    value={layerCrs}
+                    onChange={(e) => setLayerCrs(e.target.value)}
+                    placeholder="e.g. EPSG:32631"
+                  />
+                </label>
+                <label className="block">
+                  File
+                  <input
+                    type="file"
+                    accept=".csv,.txt"
+                    className="mt-1 w-full text-[11px]"
+                    onChange={(e) => setLayerFile(e.target.files?.[0] || null)}
+                  />
+                </label>
+              </div>
+              <button
+                type="button"
+                disabled={busy || !layerFile}
+                onClick={onValidateLayer}
+                className="mt-2 inline-flex items-center gap-2 rounded-lg border border-bark px-3 py-2 disabled:opacity-50"
+              >
+                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Check layer
+              </button>
+              {layerReport && (
+                <div className="mt-2 rounded-lg border border-meadow/60 bg-chalk px-3 py-2">
+                  <div className="flex justify-between gap-2">
+                    <span className="font-medium">
+                      {layerReport.layer_name || layerName}
+                    </span>
+                    <span className={statusTone(layerReport.overall)}>
+                      {layerReport.overall}
+                    </span>
+                  </div>
+                  <ul className="mt-1 space-y-1">
+                    {(layerReport.checks || []).map((check) => (
+                      <li key={check.name} className="flex justify-between gap-2">
+                        <span>{check.name}</span>
+                        <span className={statusTone(check.status)}>{check.status}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-stone">
+                    {(layerReport.checks || [])
+                      .filter((c) => c.status !== "PASS")
+                      .map((c) => (
+                        <li key={`m-${c.name}`}>{c.message}</li>
+                      ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-meadow/60 bg-mist px-3 py-3 text-xs">
+              <p className="font-medium text-bark">Label inventory (per hazard)</p>
+              <p className="mt-1 text-stone">
+                Upload the CSV listing known event locations. Declare its CRS. We report
+                what we found per hazard; we never invent labels.
+              </p>
+              <div className="mt-2 grid gap-2 md:grid-cols-2">
+                <label className="block">
+                  CRS (required)
+                  <input
+                    className="mt-1 w-full rounded-lg border border-meadow bg-chalk px-3 py-2"
+                    value={labelCrs}
+                    onChange={(e) => setLabelCrs(e.target.value)}
+                    placeholder="e.g. EPSG:4326"
+                  />
+                </label>
+                <label className="block">
+                  File
+                  <input
+                    type="file"
+                    accept=".csv,.txt"
+                    className="mt-1 w-full text-[11px]"
+                    onChange={(e) => setLabelFile(e.target.files?.[0] || null)}
+                  />
+                </label>
+              </div>
+              <button
+                type="button"
+                disabled={busy || !labelFile}
+                onClick={onUploadLabels}
+                className="mt-2 inline-flex items-center gap-2 rounded-lg border border-bark px-3 py-2 disabled:opacity-50"
+              >
+                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Upload label inventory
+              </button>
+              {labelInventory && (
+                <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-chalk p-3 text-[11px] text-stone">
+                  {JSON.stringify(labelInventory, null, 2)}
+                </pre>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-meadow/60 bg-mist px-3 py-3 text-xs">
+              <p className="font-medium text-bark">Lineament vectors (optional)</p>
+              <p className="mt-1 text-stone">
+                Upload a GeoJSON of lineaments. We report how many segments we read and
+                their extent — no geometry is derived without your data.
+              </p>
+              <input
+                type="file"
+                accept=".geojson,.json"
+                className="mt-2 w-full text-[11px]"
+                onChange={(e) => setLineamentFile(e.target.files?.[0] || null)}
+              />
+              <button
+                type="button"
+                disabled={busy || !lineamentFile}
+                onClick={onInspectLineaments}
+                className="mt-2 inline-flex items-center gap-2 rounded-lg border border-bark px-3 py-2 disabled:opacity-50"
+              >
+                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Inspect lineaments
+              </button>
+              {lineamentInfo && (
+                <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-chalk p-3 text-[11px] text-stone">
+                  {JSON.stringify(lineamentInfo, null, 2)}
+                </pre>
+              )}
+            </div>
+          </div>
 
           {validation && (
             <div className="space-y-3 rounded-2xl border border-meadow bg-chalk p-5">
