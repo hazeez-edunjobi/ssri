@@ -77,3 +77,7 @@ model/outputs/
 model/poc/
 
 poc/release_shell/outputs/hazard_factors_v2_rehearsal/SYNTHETIC_*.csv
+
+# Measure-profile run artifacts (models/checkpoints); keep only profile.json
+poc/release_shell/outputs/measure_upload_profile/service-outputs/
+poc/release_shell/outputs/measure_upload_profile/*/

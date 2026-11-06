@@ -84,6 +84,58 @@ Output: `poc/release_shell/outputs/upload_cap_rehearsal/rehearsal.json`
 
 ---
 
+## Upload size and memory guidance (SYNTHETIC measure, 2026-11-06)
+
+**VERIFIED, LOCAL CPU, SYNTHETIC data — NOT geological truth.**
+Script: `poc/release_shell/scripts/measure_upload_profile.py`
+Output: `poc/release_shell/outputs/measure_upload_profile/profile.json`
+
+The profile builds a Stage 2.5 dataset of **9 distinct 5° blocks × 3 tiles ×
+128 × 128 = 442,368 cells** (≥ the 300,000-cell / ≥8-block requirement), uploads
+it as a ZIP, validates, then runs the release-shell training job. **Each
+release-shell training job trains all three evaluation seeds (42/43/44)**, so the
+`train wall` column is per job; the first job of a schema includes process warm-up.
+
+| Schema | Channels | Cells | Blocks | Tiles | ZIP MiB | Upload s | Validate s | Train wall s (per job, 3 seeds) | Peak RSS MB |
+|--------|---------:|------:|-------:|------:|--------:|---------:|-----------:|--------------------------------:|------------:|
+| v1 | 13 | 442,368 | 9 | 27 | 0.47 | 0.81 | 1.19 | 52.7 / 35.6 / 33.3 | **451.9** |
+| v2 | 16 | 442,368 | 9 | 27 | 0.56 | 0.93 | 1.38 | 37.3 / 36.2 / 37.1 | **424.2** |
+
+- **Validation** is ~1.2–1.4 s at this size (and `can_train: true`, `overall: WARN`
+  for the synthetic tiles).
+- **Training** is ~33–53 s per job (three seeds) at `epochs=1, batch_size=2` on
+  CPU; per seed that is roughly **11–18 s**.
+- **Peak RSS** was ~**425–455 MB** for the whole single process (FastAPI
+  TestClient + torch + 3-seed train + evaluate). This is a **lower bound** for a
+  real host: it excludes container overhead and real-data variance.
+
+### Why bytes are a weak proxy for memory
+
+The synthetic tiles compress extremely well (near-linear gradients), so a
+442k-cell dataset is only ~0.5 MiB zipped. **Real 13/16-channel rasters will be
+several times larger for the same cell count.** Memory scales with **cell count
+and channel count**, not primarily with ZIP bytes:
+
+- 442,368 cells × 16 ch × 4 bytes ≈ 28 MB of raw feature data, but torch + the
+  process baseline dominates the measured ~450 MB.
+- Treat ~450 MB as the **floor for one training process** at this size; a worker
+  container should be sized with headroom above it.
+
+### Recommended `SSRI_UPLOAD_MAX_BYTES`
+
+| Context | Recommendation | Rationale |
+|---------|----------------|-----------|
+| Local / dev | `1073741824` (1 GiB) — current default | Fine on a laptop; the byte cap is a backstop, memory is the real limit |
+| Small CPU host (e.g. 1 GB–2 GB RAM) | **`536870912` (512 MiB)** and cap concurrency at 1 training job | Keeps a too-large ZIP out early; a 512 MiB ZIP of real rasters is far more than the 442k cells that already used ~450 MB |
+| Large ZIP uploads expected | Raise `SSRI_UPLOAD_MAX_BYTES`, but first raise worker RAM and check the reverse proxy body limit | Proxy/413 appears **before** our handler if the proxy limit is lower |
+
+The exact number is a **judgement call, not a measured threshold**: what was
+measured is ~450 MB peak for ~0.44M cells in one process. Size RAM from cells and
+channels, keep concurrency at 1 training job per worker, and use
+`SSRI_UPLOAD_MAX_BYTES` only as an early rejection guard.
+
+---
+
 ## Branch tip (VERIFIED)
 
 `9bb643024b318087c4cb528a1cf56fd11a581020` (`origin/fix/upload-line-cap`)

@@ -1,0 +1,71 @@
+{
+  "synthetic": true,
+  "runs": [
+    {
+      "schema": "v1",
+      "channels": 13,
+      "distinct_5deg_blocks": 9,
+      "tiles": 27,
+      "total_cells": 442368,
+      "zip_bytes": 488558,
+      "zip_mib": 0.47,
+      "generate_s": 0.68,
+      "upload_s": 0.81,
+      "validate_s": 1.19,
+      "validate_overall": "WARN",
+      "can_train": true,
+      "channel_schema_version": null,
+      "per_seed": {
+        "42": {
+          "started": true,
+          "completed": true,
+          "wall_s": 52.68
+        },
+        "43": {
+          "started": true,
+          "completed": true,
+          "wall_s": 35.57
+        },
+        "44": {
+          "started": true,
+          "completed": true,
+          "wall_s": 33.26
+        }
+      },
+      "peak_rss_mb": 451.9
+    },
+    {
+      "schema": "v2",
+      "channels": 16,
+      "distinct_5deg_blocks": 9,
+      "tiles": 27,
+      "total_cells": 442368,
+      "zip_bytes": 590124,
+      "zip_mib": 0.56,
+      "generate_s": 0.71,
+      "upload_s": 0.93,
+      "validate_s": 1.38,
+      "validate_overall": "WARN",
+      "can_train": true,
+      "channel_schema_version": null,
+      "per_seed": {
+        "42": {
+          "started": true,
+          "completed": true,
+          "wall_s": 37.31
+        },
+        "43": {
+          "started": true,
+          "completed": true,
+          "wall_s": 36.18
+        },
+        "44": {
+          "started": true,
+          "completed": true,
+          "wall_s": 37.14
+        }
+      },
+      "peak_rss_mb": 424.2
+    }
+  ]
+}
