@@ -1,19 +1,52 @@
 "use client";
 
-import { Gauge, X } from "lucide-react";
-import type { AssessResponse, HazardProfile } from "@/lib/api";
+import { Download, Gauge, X } from "lucide-react";
+import type { AssessResponse, HazardProfile, ShellSettings } from "@/lib/api";
+import { buildAssessmentReportHtml } from "@/lib/report";
 
-const HAZARD_COLORS: Record<string, string> = {
-  subsidence: "#2D6A4F",
-  landslide: "#9C6644",
-  sinkhole: "#40916C",
-};
+/**
+ * Deterministic palette (one accent per surface). Indexed by position so it
+ * never depends on a hard-coded hazard-name list from the frontend.
+ */
+const HAZARD_PALETTE = ["#2D6A4F", "#9C6644", "#40916C", "#3EA6FF", "#6B7A71"];
 
-function tierClass(tier: string): string {
+function colorFor(index: number): string {
+  return HAZARD_PALETTE[index % HAZARD_PALETTE.length];
+}
+
+function tierClass(tier: string | undefined): string {
+  if (!tier) return "text-stone";
   if (tier.includes("Extrapolation")) return "text-amber-800";
   if (tier === "High") return "text-emerald";
   if (tier === "Moderate") return "text-leaf";
   return "text-stone";
+}
+
+function gateTone(gate: string | null | undefined): string {
+  if (gate === "evaluated") return "text-leaf";
+  if (!gate) return "text-stone";
+  if (gate === "outside_training_region") return "text-amber-800";
+  return "text-stone";
+}
+
+function scoreOf(profile: HazardProfile): number | null {
+  if (typeof profile.score === "number" && Number.isFinite(profile.score)) {
+    return profile.score;
+  }
+  if (
+    typeof profile.susceptibility_score === "number" &&
+    Number.isFinite(profile.susceptibility_score)
+  ) {
+    return profile.susceptibility_score;
+  }
+  return null;
+}
+
+function scoreAllowed(profile: HazardProfile): boolean {
+  const gate = profile.gate_status;
+  if (gate == null) return true; // classic (flag OFF) response
+  if (gate === "evaluated") return true;
+  return Boolean(profile.preview_unevaluated_scores);
 }
 
 type AssessResultModalProps = {
@@ -22,6 +55,8 @@ type AssessResultModalProps = {
   error: string | null;
   result: AssessResponse | null;
   locationLabel: string | null;
+  point?: { latitude: number; longitude: number } | null;
+  settings?: ShellSettings | null;
   onClose: () => void;
   onViewMap: () => void;
 };
@@ -32,10 +67,31 @@ export function AssessResultModal({
   error,
   result,
   locationLabel,
+  point,
+  settings,
   onClose,
   onViewMap,
 }: AssessResultModalProps) {
   if (!open) return null;
+
+  const downloadReport = () => {
+    if (!result) return;
+    const html = buildAssessmentReportHtml({
+      result,
+      locationLabel,
+      point: point ?? null,
+      settings: settings ?? null,
+    });
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ssri-assessment-${result.assessment_id}.html`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div
@@ -63,6 +119,14 @@ export function AssessResultModal({
                     ? `Assessment ${result.assessment_id}`
                     : "Assessment"}
             </h2>
+            {!loading && result && (
+              <span
+                className="mt-1 inline-block rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-900"
+                data-testid="assess-not-validated"
+              >
+                NOT_VALIDATED · relative susceptibility ranking
+              </span>
+            )}
           </div>
           <button
             type="button"
@@ -128,43 +192,76 @@ export function AssessResultModal({
                   }`
                 : ""}
             </p>
+            {result.channel_schema_version && (
+              <p className="font-mono text-[10px] text-stone" data-testid="assess-schema">
+                schema {result.channel_schema_version}
+                {result.channel_names?.length
+                  ? ` · ${result.channel_names.length} channels`
+                  : ""}
+              </p>
+            )}
 
-            {result.hazard_profiles.map((profile: HazardProfile) => (
-              <div
-                key={profile.hazard_type}
-                className="rounded-xl border border-meadow bg-mist px-4 py-3"
-                data-testid={`assess-hazard-${profile.hazard_type}`}
-              >
-                <div className="flex items-center justify-between text-sm text-bark">
-                  <span className="flex items-center gap-2">
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{
-                        background: HAZARD_COLORS[profile.hazard_type] ?? "#3EA6FF",
-                      }}
-                    />
-                    {profile.hazard_type}
-                  </span>
-                  <span className="font-mono text-xs">
-                    {(profile.susceptibility_score * 100).toFixed(1)}%
-                  </span>
+            {result.hazard_profiles.map((profile, index) => {
+              const score = scoreOf(profile);
+              const allowed = scoreAllowed(profile);
+              const showScore = allowed && score != null;
+              return (
+                <div
+                  key={profile.hazard_type}
+                  className="rounded-xl border border-meadow bg-mist px-4 py-3"
+                  data-testid={`assess-hazard-${profile.hazard_type}`}
+                >
+                  <div className="flex items-center justify-between text-sm text-bark">
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ background: colorFor(index) }}
+                      />
+                      {profile.hazard_type}
+                    </span>
+                    <span className="font-mono text-xs" data-testid="assess-hazard-score">
+                      {showScore ? `${(score * 100).toFixed(1)}%` : "score withheld"}
+                    </span>
+                  </div>
+                  {(profile.gate_status || profile.status) && (
+                    <p className={`mt-2 text-xs ${gateTone(profile.gate_status)}`}>
+                      Gate: {profile.gate_status ?? "—"}
+                      {profile.status ? ` · ${profile.status}` : ""}
+                    </p>
+                  )}
+                  {!showScore && profile.reason && (
+                    <p className="mt-1 text-xs text-stone" data-testid="assess-hazard-reason">
+                      {profile.reason}
+                    </p>
+                  )}
+                  {profile.confidence_tier && (
+                    <p className={`mt-2 text-xs ${tierClass(profile.confidence_tier)}`}>
+                      Model confidence: {profile.confidence_tier}
+                      <span className="text-stone"> (not hazard severity)</span>
+                      {result.domain_similarity_calibrated &&
+                      profile.domain_similarity_score != null
+                        ? ` · domain ${profile.domain_similarity_score.toFixed(3)}`
+                        : " · domain uncalibrated"}
+                    </p>
+                  )}
+                  {profile.credible_interval_80 && profile.credible_interval_95 && (
+                    <p className="mt-1 font-mono text-[11px] text-stone">
+                      80% CI [{profile.credible_interval_80[0].toFixed(3)},{" "}
+                      {profile.credible_interval_80[1].toFixed(3)}] · 95% CI [
+                      {profile.credible_interval_95[0].toFixed(3)},{" "}
+                      {profile.credible_interval_95[1].toFixed(3)}]
+                    </p>
+                  )}
+                  {profile.limitations && profile.limitations.length > 0 && (
+                    <ul className="mt-1 list-disc pl-4 text-[11px] text-stone">
+                      {profile.limitations.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                <p className={`mt-2 text-xs ${tierClass(profile.confidence_tier)}`}>
-                  Model confidence: {profile.confidence_tier}
-                  <span className="text-stone"> (not hazard severity)</span>
-                  {result.domain_similarity_calibrated &&
-                  profile.domain_similarity_score != null
-                    ? ` · domain ${profile.domain_similarity_score.toFixed(3)}`
-                    : " · domain uncalibrated"}
-                </p>
-                <p className="mt-1 font-mono text-[11px] text-stone">
-                  80% CI [{profile.credible_interval_80[0].toFixed(3)},{" "}
-                  {profile.credible_interval_80[1].toFixed(3)}] · 95% CI [
-                  {profile.credible_interval_95[0].toFixed(3)},{" "}
-                  {profile.credible_interval_95[1].toFixed(3)}]
-                </p>
-              </div>
-            ))}
+              );
+            })}
 
             <p className="text-xs text-stone">{result.explanation}</p>
             {result.notes.length > 0 && (
@@ -181,6 +278,16 @@ export function AssessResultModal({
         )}
 
         <div className="mt-5 flex flex-wrap gap-2">
+          {!loading && result && (
+            <button
+              type="button"
+              onClick={downloadReport}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-meadow px-3 py-2 text-xs text-bark"
+              data-testid="assess-download-report"
+            >
+              <Download className="h-3.5 w-3.5" /> Download report
+            </button>
+          )}
           <button
             type="button"
             onClick={onViewMap}

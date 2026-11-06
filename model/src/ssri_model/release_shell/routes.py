@@ -46,6 +46,7 @@ from ssri_model.release_shell.flags import (
     release_shell_min_held_out_blocks,
     release_shell_min_tiles,
 )
+from ssri_model.release_shell.hazards import default_hazard_registry
 from ssri_model.release_shell.labels_inventory import parse_label_csv, parse_label_geojson
 from ssri_model.release_shell.lineaments import LineamentMethod, load_lineament_segments
 from ssri_model.release_shell.spatial_split import DEFAULT_BLOCK_SIZE_DEG, resolve_block_size_deg
@@ -120,6 +121,14 @@ def shell_status() -> dict[str, Any]:
                 "held_out_blocks": release_shell_min_held_out_blocks(),
             },
             "preview_unevaluated_scores": preview_unevaluated_scores(),
+            "hazards": [
+                {
+                    "name": h.name,
+                    "class_id": h.class_id,
+                    "enabled_by_default": h.enabled_by_default,
+                }
+                for h in default_hazard_registry()
+            ],
             "supported_channel_schemas": [SCHEMA_V1, SCHEMA_V2],
             "default_channel_schema": SCHEMA_V1,
             "channel_schemas": {

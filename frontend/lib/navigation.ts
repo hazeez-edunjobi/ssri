@@ -31,7 +31,7 @@ export const FOOTER_COLUMNS = [
     links: [
       { label: "Subsidence", href: "/hazards#subsidence" },
       { label: "Landslides", href: "/hazards#landslide" },
-      { label: "Liquefaction", href: "/hazards#liquefaction" },
+      { label: "Sinkholes", href: "/hazards#sinkhole" },
     ],
   },
   {

@@ -10,10 +10,13 @@ import {
   type GeoJsonPolygon,
   type GeophysicsLayerMetadata,
   type GravityLayerResponse,
+  type ShellHazard,
+  type ShellSettings,
   getActiveTrainedModel,
   getGravityLayer,
   getHealth,
   getReady,
+  getShellStatusFull,
   submitAssess,
 } from "@/lib/api";
 import { apiUrl } from "@/lib/env";
@@ -31,7 +34,13 @@ const LAGOS_GEO_HINT = {
   maxLat: 7.5,
 };
 
-const HAZARDS = ["subsidence", "landslide", "sinkhole"] as const;
+/**
+ * Placeholder used only until `/release-shell/status` resolves (or if it is
+ * unreachable). The authoritative hazard list always comes from the backend
+ * registry; this mirrors the current registry so the form is never empty.
+ */
+const FALLBACK_HAZARDS = ["subsidence", "landslide", "sinkhole"] as const;
+
 const GRAVITY_SOURCE = "ssri-gravity";
 const GRAVITY_LAYER = "ssri-gravity-fill";
 const GRAVITY_OUTLINE = "ssri-gravity-outline";
@@ -52,7 +61,11 @@ function AssessmentWorkspace() {
     null,
   );
   const [polygon, setPolygon] = useState<GeoJsonPolygon | null>(null);
-  const [selectedHazards, setSelectedHazards] = useState<string[]>([...HAZARDS]);
+  const [hazards, setHazards] = useState<string[]>([...FALLBACK_HAZARDS]);
+  const [shellSettings, setShellSettings] = useState<ShellSettings | null>(null);
+  const [selectedHazards, setSelectedHazards] = useState<string[]>([
+    ...FALLBACK_HAZARDS,
+  ]);
   const [checkpoint, setCheckpoint] = useState("");
   const [featuresPath, setFeaturesPath] = useState("");
   const [produceGeotiff, setProduceGeotiff] = useState(false);
@@ -136,7 +149,9 @@ function AssessmentWorkspace() {
   }, []);
 
   const modeRef = useRef(mode);
-  modeRef.current = mode;
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,6 +167,20 @@ function AssessmentWorkspace() {
           }
         } catch {
           // Active model is optional; leave checkpoint empty.
+        }
+        try {
+          const status = await getShellStatusFull();
+          const registry: ShellHazard[] = status.settings?.hazards ?? [];
+          const names = registry
+            .filter((h) => h.enabled_by_default)
+            .map((h) => h.name);
+          if (!cancelled && names.length > 0) {
+            setHazards(names);
+            setSelectedHazards(names);
+          }
+          if (!cancelled && status.settings) setShellSettings(status.settings);
+        } catch {
+          // Backend registry unavailable; keep the mirrored fallback list.
         }
       } catch {
         if (!cancelled) setApiStatus("down");
@@ -700,21 +729,36 @@ function AssessmentWorkspace() {
             />
           </label>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            {HAZARDS.map((hazard) => (
-              <button
-                key={hazard}
-                type="button"
-                onClick={() => toggleHazard(hazard)}
-                className={`rounded border px-2 py-1 text-[11px] ${
-                  selectedHazards.includes(hazard)
-                    ? "border-leaf text-moss"
-                    : "border-meadow text-stone"
-                }`}
-              >
-                {hazard}
-              </button>
-            ))}
+          <div className="mt-3" data-testid="hazard-selector">
+            <p className="text-[11px] uppercase tracking-widest text-stone">
+              Hazards
+            </p>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {hazards.map((hazard) => (
+                <button
+                  key={hazard}
+                  type="button"
+                  onClick={() => toggleHazard(hazard)}
+                  className={`rounded border px-2 py-1 text-[11px] ${
+                    selectedHazards.includes(hazard)
+                      ? "border-leaf text-moss"
+                      : "border-meadow text-stone"
+                  }`}
+                >
+                  {hazard}
+                </button>
+              ))}
+            </div>
+            {shellSettings && (
+              <p className="mt-1 text-[10px] text-stone" data-testid="channel-schema-hint">
+                Channel schema: {shellSettings.default_channel_schema}
+                {shellSettings.channel_schemas?.[shellSettings.default_channel_schema]
+                  ? ` (${shellSettings.channel_schemas[shellSettings.default_channel_schema].channel_count} channels)`
+                  : ""}
+                {" · "}
+                {hazards.length} hazards from the backend registry
+              </p>
+            )}
           </div>
 
           <label className="mt-3 flex items-center gap-2 text-[11px] text-stone">
@@ -799,6 +843,8 @@ function AssessmentWorkspace() {
                 ? `Offline features: ${featuresPath}`
                 : null
         }
+        point={mode === "point" ? point : null}
+        settings={shellSettings}
         onClose={() => setModalOpen(false)}
         onViewMap={() => setModalOpen(false)}
       />

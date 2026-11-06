@@ -43,18 +43,18 @@ const hazards = [
     output: "A map of landslide chance across the area.",
   },
   {
-    id: "liquefaction",
-    icon: "droplets" as const,
+    id: "sinkhole",
+    icon: "layers" as const,
     unsplash: "landscape" as const,
-    title: "Soft, wet ground",
+    title: "Sinkholes",
     summary:
-      "Some soils can lose strength when shaken or saturated — especially low, wet places near rivers and coasts.",
+      "Ground can open up or drop suddenly when underground cavities in rock or soil give way — often where water drains into the subsurface.",
     indicators: [
-      "Low elevation and drainage patterns",
-      "Surface moisture signatures",
-      "Sediment thickness clues",
+      "Surface texture and drainage clues",
+      "Near-surface moisture signatures",
+      "Subsurface layer thickness",
     ],
-    output: "A soft-ground potential index for planning talks.",
+    output: "A sinking-ground susceptibility ranking for planning talks.",
   },
 ];
 

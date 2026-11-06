@@ -28,14 +28,29 @@ export type GeoJsonPolygon = {
   coordinates: number[][][];
 };
 
+/**
+ * One hazard entry. Under the release shell (flag ON) the backend returns a
+ * gate `status` and a `score` that is withheld unless the gate allows it.
+ * Classic (flag OFF) responses carry `susceptibility_score` + credible intervals.
+ */
 export type HazardProfile = {
   hazard_type: string;
-  susceptibility_score: number;
-  credible_interval_80: [number, number];
-  credible_interval_95: [number, number];
-  domain_similarity_score: number | null;
-  confidence_tier: string;
-  primary_drivers: string[];
+  /** Classic (flag OFF) ranking; absent when the shell withholds the score. */
+  susceptibility_score?: number;
+  /** Shell score; null/absent unless the gate allows a ranking. */
+  score?: number | null;
+  status?: string;
+  reason?: string | null;
+  gate_status?: string | null;
+  score_framing?: string;
+  preview_unevaluated_scores?: boolean;
+  scientific_validation_status?: string;
+  limitations?: string[] | null;
+  credible_interval_80?: [number, number];
+  credible_interval_95?: [number, number];
+  domain_similarity_score?: number | null;
+  confidence_tier?: string;
+  primary_drivers?: string[];
 };
 
 export type AssessResponse = {
@@ -51,6 +66,9 @@ export type AssessResponse = {
   checkpoint_dataset_version: string | null;
   is_fixture_checkpoint: boolean;
   domain_similarity_calibrated: boolean;
+  /** Ordered channels the checkpoint was trained on (backend echo). */
+  channel_schema_version?: string | null;
+  channel_names?: string[] | null;
 };
 
 export type JobStatusResponse = {
@@ -61,13 +79,58 @@ export type JobStatusResponse = {
   error?: string | null;
 };
 
-async function parseError(response: Response): Promise<string> {
+/**
+ * Turn an error response into a plain-language sentence with a next step.
+ * Never surfaces a raw stack trace or `[object Object]`.
+ */
+async function parseError(response: Response, context?: string): Promise<string> {
+  const fallback = `${response.status} ${response.statusText}`.trim();
+  let body: unknown = null;
   try {
-    const body = await response.json();
-    return JSON.stringify(body);
+    body = await response.json();
   } catch {
-    return response.statusText;
+    return context
+      ? `${context}: the server returned an unreadable error (${fallback}). Please retry.`
+      : `Request failed (${fallback}). Please retry.`;
   }
+  const message = extractErrorMessage(body);
+  if (message) {
+    return context ? `${context}: ${message}` : message;
+  }
+  return context
+    ? `${context}: unexpected error (${fallback}). Please try again or contact support.`
+    : `Unexpected error (${fallback}). Please try again.`;
+}
+
+function extractErrorMessage(body: unknown): string | null {
+  if (typeof body === "string") return body.trim() || null;
+  if (!body || typeof body !== "object") return null;
+  const record = body as Record<string, unknown>;
+  const detail = record.detail;
+  if (typeof detail === "string" && detail.trim()) return detail;
+  if (Array.isArray(detail)) {
+    // FastAPI validation errors: [{loc, msg, type}, ...]
+    const parts = detail
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const msg = (item as Record<string, unknown>).msg;
+        const loc = (item as Record<string, unknown>).loc;
+        if (typeof msg !== "string") return null;
+        const where = Array.isArray(loc) ? loc.filter((p) => p !== "body").join(".") : "";
+        return where ? `${where}: ${msg}` : msg;
+      })
+      .filter((p): p is string => Boolean(p));
+    if (parts.length) return parts.join("; ");
+  }
+  const error = record.error;
+  if (typeof error === "string" && error.trim()) return error;
+  if (error && typeof error === "object") {
+    const message = (error as Record<string, unknown>).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  const message = record.message;
+  if (typeof message === "string" && message.trim()) return message;
+  return null;
 }
 
 function authHeaders(apiKey?: string): Record<string, string> {
@@ -104,8 +167,19 @@ export async function submitAssess(
     headers: authHeaders(apiKey),
     body: JSON.stringify(payload),
   });
-  if (!response.ok) throw new Error(await parseError(response));
-  return response.json();
+  if (!response.ok) throw new Error(await parseError(response, "Assessment failed"));
+  const body = (await response.json()) as AssessResponse & {
+    status?: string;
+    message?: string;
+  };
+  // The shell returns HTTP 200 with a status envelope when no checkpoint exists.
+  if (body && body.status === "no_trained_model") {
+    throw new Error(
+      body.message ||
+        "No trained model checkpoint was provided. Upload a labelled dataset, train, then select a checkpoint before running an assessment.",
+    );
+  }
+  return body;
 }
 
 export type GeophysicsLayerMetadata = {
@@ -513,6 +587,13 @@ export type ShellChannelSchema = {
   channel_names: string[];
 };
 
+/** Hazard registry entry as returned by the backend status endpoint. */
+export type ShellHazard = {
+  name: string;
+  class_id: number;
+  enabled_by_default: boolean;
+};
+
 export type ShellSettings = {
   block_size_deg: number | null;
   default_block_size_deg: number;
@@ -526,6 +607,8 @@ export type ShellSettings = {
   supported_channel_schemas: string[];
   default_channel_schema: string;
   channel_schemas: Record<string, ShellChannelSchema>;
+  /** Backend hazard registry. The UI derives its hazard list from here. */
+  hazards?: ShellHazard[];
 };
 
 export type ShellStatus = {
