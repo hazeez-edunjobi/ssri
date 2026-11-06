@@ -49,6 +49,11 @@
   - `poc/release_shell/RUNBOOK_FIRST_REAL_RUN.md`; `poc/release_shell/scripts/check_site_readiness.py` (tested OK).
   - Abeokuta ESTIMATE (56 km site): 5 km ≈132 blocks, 10 km ≈42, 20 km ≈12; default 50 km buffer infeasible here.
 - Task 5 HUMAN-DEPENDENT DOCS — DONE (`poc/release_shell/handoff/`: CLIENT_QUESTIONS.md, OWNER_STATUS.md, REVIEW_REQUEST.md, REMAINING_WORK_REGISTER.md)
-- Task 6 FINAL VERIFICATION — IN PROGRESS
-- FINISH_REPORT.md — IN PROGRESS
+- Task 6 FINAL VERIFICATION — DONE (tip 8819c81)
+  - Full suite OFF: 703 passed, 2 skipped (331.34s); ON: 703 passed, 2 skipped (241.07s)
+  - Curated 151 passed (was 143; +8 tests this branch)
+  - verify.py `{"pass": true}`; frozen hashes all MATCH; diff vs main frozen/checkpoints EMPTY
+  - Skips named: test_readiness_with_real_services, test_postgres_job_lifecycle
+  - Identity: authors all hazeez-edunjobi; 0 Co-authored-by; committer mismatch on 4 newest commits (REPORTED)
+- FINISH_REPORT.md — DONE
 - Bug fix (Task 4 finding): `block_id` truncation collapsed km blocks into integer degrees — fixed + regression test (commit e4875ca).
