@@ -195,31 +195,34 @@ function AssessmentWorkspace() {
         await getHealth();
         await getReady();
         if (!cancelled) setApiStatus("ok");
-        try {
-          const active = await getActiveTrainedModel();
-          if (!cancelled && active.checkpoint_path) {
-            setCheckpoint(active.checkpoint_path);
-          }
-        } catch {
-          // Active model is optional; leave checkpoint empty.
-        }
-        try {
-          const status = await getShellStatusFull();
-          const registry: ShellHazard[] = status.settings?.hazards ?? [];
-          const names = registry
-            .filter((h) => h.enabled_by_default)
-            .map((h) => h.name);
-          if (!cancelled && names.length > 0) {
-            setHazards(names);
-            setSelectedHazards(names);
-          }
-          if (!cancelled && status.settings) setShellSettings(status.settings);
-          if (!cancelled) setShellEnabled(Boolean(status.release_shell_enabled));
-        } catch {
-          // Backend registry unavailable; keep the mirrored fallback list.
-        }
       } catch {
         if (!cancelled) setApiStatus("down");
+      }
+      // Prefilling the active checkpoint must not depend on readiness: a
+      // transient /ready outage would otherwise leave the field empty even
+      // when a promoted model exists.
+      try {
+        const active = await getActiveTrainedModel();
+        if (!cancelled && active.checkpoint_path) {
+          setCheckpoint(active.checkpoint_path);
+        }
+      } catch {
+        // Active model is optional; leave checkpoint empty.
+      }
+      try {
+        const status = await getShellStatusFull();
+        const registry: ShellHazard[] = status.settings?.hazards ?? [];
+        const names = registry
+          .filter((h) => h.enabled_by_default)
+          .map((h) => h.name);
+        if (!cancelled && names.length > 0) {
+          setHazards(names);
+          setSelectedHazards(names);
+        }
+        if (!cancelled && status.settings) setShellSettings(status.settings);
+        if (!cancelled) setShellEnabled(Boolean(status.release_shell_enabled));
+      } catch {
+        // Backend registry unavailable; keep the mirrored fallback list.
       }
     })();
     return () => {
@@ -607,9 +610,11 @@ function AssessmentWorkspace() {
     setModalOpen(true);
     try {
       const response = await submitAssess({
-        point: mode === "point" && !featuresPath ? point ?? undefined : undefined,
-        polygon_geojson:
-          mode === "polygon" && !featuresPath ? polygon ?? undefined : undefined,
+        // Always send the picked AOI: the backend accepts a point/polygon
+        // alongside offline `features`, and the release-shell gate needs it to
+        // decide in-region vs outside_training_region.
+        point: mode === "point" ? point ?? undefined : undefined,
+        polygon_geojson: mode === "polygon" ? polygon ?? undefined : undefined,
         features: featuresPath || undefined,
         checkpoint: checkpoint || undefined,
         hazards: selectedHazards,
@@ -907,6 +912,7 @@ function AssessmentWorkspace() {
               onChange={(e) => setFeaturesPath(e.target.value)}
               className="mt-1 w-full rounded border border-meadow bg-mist px-2 py-1.5 font-mono text-xs text-bark"
               placeholder="/data/features/sample.npy"
+              data-testid="offline-features"
             />
           </label>
 
