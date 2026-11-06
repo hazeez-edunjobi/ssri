@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -250,3 +251,48 @@ def test_v1_upload_path_still_imports() -> None:
 
     assert callable(convert_csv_dataset)
     assert looks_like_csv_bundle("x.zip", b"PK\x03\x04") is False
+
+
+def _abeokuta_csv() -> Path:
+    # model/tests/test_hazard_factors_v2.py → repo root is parents[2]
+    return Path(__file__).resolve().parents[2] / "sheet 260_Abeokuta.csv"
+
+
+def test_layer_validator_surfaces_unit_sanity_warn() -> None:
+    from ssri_model.release_shell.validator import validate_point_grid_layer
+
+    content = b"X,Y,Z\n0,0,10\n100,0,-3\n0,100,12\n100,100,-1.5\n"
+    report = validate_point_grid_layer(
+        content,
+        filename="SYNTHETIC_neg_overburden.csv",
+        layer_name="overburden_thickness",
+        crs="EPSG:32631",
+    )
+    unit = next(c for c in report["checks"] if c["name"] == "unit_sanity")
+    assert unit["status"] == "WARN"
+    assert "negative" in unit["message"].lower()
+    assert report["overall"] == "WARN"
+    assert report["can_train"] is False
+    assert report["status"] == "FEATURE_LAYER_ONLY"
+
+
+@pytest.mark.skipif(
+    not _abeokuta_csv().exists(),
+    reason="real Abeokuta CSV not present on this checkout (not committed)",
+)
+def test_real_abeokuta_overburden_negative_z_warns() -> None:
+    """ASSUMED-FOR-TEST CRS. The real file's 11,250 negative Z values must warn."""
+    from ssri_model.release_shell.validator import validate_point_grid_layer
+
+    report = validate_point_grid_layer(
+        _abeokuta_csv().read_bytes(),
+        filename="sheet 260_Abeokuta.csv",
+        layer_name="overburden_thickness",
+        crs="EPSG:32631",  # ASSUMED-FOR-TEST — not client-confirmed
+    )
+    unit = next(c for c in report["checks"] if c["name"] == "unit_sanity")
+    assert unit["status"] in {"WARN", "FAIL"}
+    assert "negative" in unit["message"].lower()
+    assert "11,250" in unit["message"] or "11250" in unit["message"]
+    assert report["value_min"] is not None and report["value_min"] < -200
+    assert report["status"] == "FEATURE_LAYER_ONLY"

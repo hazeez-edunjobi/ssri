@@ -1,0 +1,54 @@
+{
+  "overall": "WARN",
+  "can_train": false,
+  "layer_name": "overburden_thickness",
+  "checks": [
+    {
+      "name": "crs_declared",
+      "status": "PASS",
+      "message": "Declared CRS 'EPSG:32631' parsed; working CRS 'EPSG:32631'.",
+      "detail": {
+        "crs": "EPSG:32631",
+        "working_crs": "EPSG:32631"
+      }
+    },
+    {
+      "name": "grid_regular",
+      "status": "PASS",
+      "message": "Regular grid 561 x 562; spacing X=100 Y=100.",
+      "detail": {
+        "x_spacing": 100.0,
+        "y_spacing": 100.0
+      }
+    },
+    {
+      "name": "gaps",
+      "status": "WARN",
+      "message": "7129 missing grid cell(s). SSRI does not fill gaps; provide complete cells or a mask before training.",
+      "detail": {
+        "missing_cells": 7129
+      }
+    },
+    {
+      "name": "unit_sanity",
+      "status": "WARN",
+      "message": "UNIT_SANITY WARN: 11250 negative value(s) in layer 'overburden_thickness'. Thickness should be \u2265 0 metres; confirm units and whether negatives are sentinels. If this is depth-to-bedrock, declare that name instead \u2014 SSRI will not silently relabel it as overburden_thickness.",
+      "detail": {
+        "value_min": -212.760467529297,
+        "value_max": 221.468399047852
+      }
+    }
+  ],
+  "messages": [
+    "This upload is a single feature layer only. It cannot be used alone as a supervised training dataset. Add the remaining SSRI channels (or schema v2 extras) and labelled hazards to train.",
+    "Grid has 7129 missing cell(s). SSRI does not fill gaps; provide complete cells or a mask before training.",
+    "UNIT_SANITY WARN: 11250 negative value(s) in layer 'overburden_thickness'. Thickness should be \u2265 0 metres; confirm units and whether negatives are sentinels. If this is depth-to-bedrock, declare that name instead \u2014 SSRI will not silently relabel it as overburden_thickness."
+  ],
+  "row_count": 308153,
+  "missing_cells": 7129,
+  "value_min": -212.760467529297,
+  "value_max": 221.468399047852,
+  "status": "FEATURE_LAYER_ONLY",
+  "trainable": false,
+  "scientific_validation_status": "NOT_VALIDATED"
+}
