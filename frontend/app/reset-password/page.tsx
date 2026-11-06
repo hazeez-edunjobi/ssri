@@ -28,7 +28,8 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     const supabase = getSupabase();
     if (!supabase) {
-      setChecked(true);
+      // Unconfigured: the recovery warning is also gated on `configured`, so
+      // `checked` does not need to flip in this branch.
       return;
     }
     const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {

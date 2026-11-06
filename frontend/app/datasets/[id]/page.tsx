@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { PlatformShell } from "@/components/platform/PlatformShell";
 import { platformGet, uploadDatasetVersion } from "@/lib/platformApi";
@@ -23,18 +23,18 @@ export default function DatasetDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  function reload() {
+  const reload = useCallback(() => {
     platformGet<{ dataset: { name: string }; versions: Version[] }>(`/datasets/${params.id}`)
       .then((body) => {
         setName(body.dataset.name);
         setVersions(body.versions);
       })
       .catch((err: Error) => setError(err.message));
-  }
+  }, [params.id]);
 
   useEffect(() => {
     if (params.id) reload();
-  }, [params.id]);
+  }, [params.id, reload]);
 
   return (
     <PlatformShell>

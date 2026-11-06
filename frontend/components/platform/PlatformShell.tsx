@@ -83,7 +83,8 @@ export function PlatformShell({
   useEffect(() => {
     const supabase = getSupabase();
     if (!supabase) {
-      setReady(true);
+      // Unconfigured environments render the "Sign-in is not configured"
+      // panel below before `ready` is ever consulted, so nothing to sync.
       return;
     }
     supabase.auth.getSession().then(({ data }) => {

@@ -96,9 +96,9 @@ export default function ReleaseShellPage() {
         setShellOn(s.release_shell_enabled);
         if (s.limitations?.length) setLimitations(s.limitations);
         if (s.settings) setSettings(s.settings);
+        return refreshModels().catch(() => undefined);
       })
       .catch((err: Error) => setError(err.message));
-    refreshModels().catch(() => undefined);
   }, [refreshModels]);
 
   useEffect(() => {

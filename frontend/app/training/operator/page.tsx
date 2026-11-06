@@ -74,9 +74,11 @@ export default function TrainingPage() {
 
   useEffect(() => {
     getTrainingRequirements()
-      .then(setRequirements)
+      .then((req) => {
+        setRequirements(req);
+        return refreshLists();
+      })
       .catch((err: Error) => setError(err.message));
-    refreshLists().catch((err: Error) => setError(err.message));
   }, [refreshLists]);
 
   useEffect(() => {
