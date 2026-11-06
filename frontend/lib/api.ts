@@ -636,6 +636,58 @@ export async function getShellStatusFull(apiKey?: string): Promise<ShellStatus> 
   return response.json();
 }
 
+export type TrainingRegionExtent = {
+  lat_min: number;
+  lat_max: number;
+  lon_min: number;
+  lon_max: number;
+};
+
+export type CheckpointGeography = {
+  checkpoint: string;
+  has_release_shell_meta: boolean;
+  crs: string | null;
+  crs_declared: boolean;
+  training_region: {
+    blocks?: string[];
+    extent?: TrainingRegionExtent | null;
+    n_tiles?: number;
+  } | null;
+  region_extent: TrainingRegionExtent | null;
+  point_geographic?: { latitude: number; longitude: number };
+  point_converted?: {
+    x: number;
+    y: number;
+    crs: string;
+    axis_order: string;
+  } | null;
+  conversion_error?: string;
+  inside_training_region?: boolean | null;
+  outside_training_region?: boolean;
+};
+
+/**
+ * Read a checkpoint's declared CRS and training region (release shell only).
+ *
+ * Map clicks are WGS84 lat/lon; when the checkpoint declares a projected CRS the
+ * backend converts the point with pyproj and returns both forms. The UI never
+ * guesses a projection in the browser.
+ */
+export async function fetchCheckpointGeography(
+  checkpoint: string,
+  point?: { latitude: number; longitude: number },
+  apiKey?: string,
+): Promise<{ geography: CheckpointGeography }> {
+  const response = await fetch(`${apiUrl}/api/v1/release-shell/geography`, {
+    method: "POST",
+    headers: authHeaders(apiKey),
+    body: JSON.stringify(point ? { checkpoint, point } : { checkpoint }),
+  });
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the checkpoint geography"));
+  return response.json();
+}
+
 export type ShellLayerCheck = { name: string; status: string; message: string };
 
 export type ShellLayerReport = {

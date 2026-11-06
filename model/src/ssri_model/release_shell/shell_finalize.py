@@ -112,9 +112,12 @@ def build_shell_meta(
     channel_names = None
     local_evidence_only = False
     block_size_deg = 5.0
+    declared_crs: str | None = None
     if manifest_path.exists():
         try:
             man = json.loads(manifest_path.read_text(encoding="utf-8"))
+            raw_crs = man.get("crs")
+            declared_crs = str(raw_crs) if raw_crs else None
             channel_schema_version = str(
                 man.get("channel_schema_version")
                 or (man.get("channel_schema") or {}).get("version")
@@ -157,6 +160,7 @@ def build_shell_meta(
         "seeds": seeds,
         "primary_seed": primary_seed,
         "training_region": region,
+        "crs": declared_crs,
         "hazards": hazards_out,
         "scientific_validation_status": "NOT_VALIDATED",
         "score_framing": "relative susceptibility rankings",

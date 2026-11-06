@@ -7,11 +7,13 @@ import { ArrowLeft, Gauge, MapPin, Hexagon, Radio } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   type AssessResponse,
+  type CheckpointGeography,
   type GeoJsonPolygon,
   type GeophysicsLayerMetadata,
   type GravityLayerResponse,
   type ShellHazard,
   type ShellSettings,
+  fetchCheckpointGeography,
   getActiveTrainedModel,
   getGravityLayer,
   getHealth,
@@ -20,19 +22,19 @@ import {
   submitAssess,
 } from "@/lib/api";
 import { apiUrl } from "@/lib/env";
+import {
+  COORD_DECIMALS,
+  coverageMessage,
+  formatLatLon,
+  isWithinCoverage,
+  parseLatLon,
+  pointInRegion,
+} from "@/lib/coordinates";
 import { AssessResultModal } from "@/components/AssessResultModal";
 import { LandPhoto } from "@/components/theme/LandPhoto";
 import { RequireSession, useRequiredSession } from "@/components/auth/RequireSession";
 import { TRAINING_HREF } from "@/lib/navigation";
 import { getSupabase } from "@/lib/supabase";
-
-/** Soft guidance for Lagos geophysics clip (~2.5–4.5°E, ~5.5–7.5°N). */
-const LAGOS_GEO_HINT = {
-  minLon: 2.5,
-  maxLon: 4.5,
-  minLat: 5.5,
-  maxLat: 7.5,
-};
 
 /**
  * Placeholder used only until `/release-shell/status` resolves (or if it is
@@ -44,6 +46,10 @@ const FALLBACK_HAZARDS = ["subsidence", "landslide", "sinkhole"] as const;
 const GRAVITY_SOURCE = "ssri-gravity";
 const GRAVITY_LAYER = "ssri-gravity-fill";
 const GRAVITY_OUTLINE = "ssri-gravity-outline";
+
+const REGION_SOURCE = "ssri-training-region";
+const REGION_FILL = "ssri-training-region-fill";
+const REGION_LINE = "ssri-training-region-outline";
 
 type Mode = "point" | "polygon";
 
@@ -82,6 +88,35 @@ function AssessmentWorkspace() {
   );
   const [gravityError, setGravityError] = useState<string | null>(null);
   const [gravityLoaded, setGravityLoaded] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [shellEnabled, setShellEnabled] = useState(false);
+  // Release-shell geography is keyed by checkpoint so a stale value is never
+  // shown while a new checkpoint's geography is still loading.
+  const [geographyState, setGeographyState] = useState<{
+    checkpoint: string;
+    data: CheckpointGeography | null;
+    error: string | null;
+  } | null>(null);
+  const [projectedState, setProjectedState] = useState<{
+    key: string;
+    value: CheckpointGeography["point_converted"];
+  } | null>(null);
+  const geography =
+    shellEnabled && geographyState && geographyState.checkpoint === checkpoint
+      ? geographyState.data
+      : null;
+  const geographyError =
+    shellEnabled && geographyState && geographyState.checkpoint === checkpoint
+      ? geographyState.error
+      : null;
+  const projectedKey =
+    shellEnabled && checkpoint && point && geography?.crs_declared
+      ? `${checkpoint}|${point.latitude}|${point.longitude}`
+      : null;
+  const projectedPoint =
+    projectedKey && projectedState?.key === projectedKey
+      ? projectedState.value
+      : null;
 
   const redrawPolygon = useCallback(() => {
     const map = mapRef.current;
@@ -179,6 +214,7 @@ function AssessmentWorkspace() {
             setSelectedHazards(names);
           }
           if (!cancelled && status.settings) setShellSettings(status.settings);
+          if (!cancelled) setShellEnabled(Boolean(status.release_shell_enabled));
         } catch {
           // Backend registry unavailable; keep the mirrored fallback list.
         }
@@ -285,7 +321,10 @@ function AssessmentWorkspace() {
         });
         mapRef.current = map;
         const markReady = () => {
-          if (!cancelled) setMapReady(true);
+          if (!cancelled) {
+            setMapReady(true);
+            setMapLoaded(true);
+          }
         };
         map.on("load", markReady);
         map.on("error", (event) => {
@@ -310,8 +349,8 @@ function AssessmentWorkspace() {
           if (!active) return;
           if (modeRef.current === "point") {
             setPoint({ latitude: lat, longitude: lng });
-            setLatInput(lat.toFixed(5));
-            setLonInput(lng.toFixed(5));
+            setLatInput(lat.toFixed(COORD_DECIMALS));
+            setLonInput(lng.toFixed(COORD_DECIMALS));
             setCoordError(null);
             if (markerRef.current) markerRef.current.remove();
             markerRef.current = new maplibregl.Marker({ color: "#3EA6FF" })
@@ -387,6 +426,106 @@ function AssessmentWorkspace() {
     }
   }, [gravityVisible, gravityLoaded]);
 
+  // Release shell only: read the checkpoint's declared CRS + training region.
+  useEffect(() => {
+    if (!shellEnabled || !checkpoint) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { geography: geo } = await fetchCheckpointGeography(checkpoint);
+        if (!cancelled) {
+          setGeographyState({ checkpoint, data: geo, error: null });
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setGeographyState({
+            checkpoint,
+            data: null,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [shellEnabled, checkpoint]);
+
+  // Release shell only: convert the selected map click on the backend (pyproj).
+  useEffect(() => {
+    if (!projectedKey || !point) return;
+    const key = projectedKey;
+    const geoPoint = point;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { geography: geo } = await fetchCheckpointGeography(checkpoint, geoPoint);
+        if (!cancelled) {
+          setProjectedState({ key, value: geo.point_converted ?? null });
+        }
+      } catch {
+        if (!cancelled) setProjectedState({ key, value: null });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectedKey, checkpoint, point]);
+
+  // Draw the training region as a dashed outline (release shell only).
+  useEffect(() => {
+    const map = mapRef.current;
+    const extent = geography?.region_extent;
+    if (!map || !extent) return;
+    const ring: [number, number][] = [
+      [extent.lon_min, extent.lat_min],
+      [extent.lon_max, extent.lat_min],
+      [extent.lon_max, extent.lat_max],
+      [extent.lon_min, extent.lat_max],
+      [extent.lon_min, extent.lat_min],
+    ];
+    const data = {
+      type: "FeatureCollection" as const,
+      features: [
+        {
+          type: "Feature" as const,
+          properties: {},
+          geometry: { type: "Polygon" as const, coordinates: [ring] },
+        },
+      ],
+    };
+    const draw = () => {
+      const active = mapRef.current;
+      if (!active) return;
+      const existing = active.getSource(REGION_SOURCE) as
+        | import("maplibre-gl").GeoJSONSource
+        | undefined;
+      if (existing) {
+        existing.setData(data);
+        return;
+      }
+      active.addSource(REGION_SOURCE, { type: "geojson", data });
+      active.addLayer({
+        id: REGION_FILL,
+        type: "fill",
+        source: REGION_SOURCE,
+        paint: { "fill-color": "#F4D35E", "fill-opacity": 0.08 },
+      });
+      active.addLayer({
+        id: REGION_LINE,
+        type: "line",
+        source: REGION_SOURCE,
+        paint: {
+          "line-color": "#F4D35E",
+          "line-width": 1.5,
+          "line-dasharray": [2, 2],
+        },
+      });
+    };
+    if (map.isStyleLoaded()) draw();
+    else map.once("load", draw);
+  }, [geography, mapLoaded]);
+
   const clearPolygon = useCallback(() => {
     drawPointsRef.current = [];
     setPolygon(null);
@@ -405,8 +544,8 @@ function AssessmentWorkspace() {
     const active = mapRef.current;
     if (!active) return;
     setPoint({ latitude, longitude });
-    setLatInput(latitude.toFixed(5));
-    setLonInput(longitude.toFixed(5));
+    setLatInput(latitude.toFixed(COORD_DECIMALS));
+    setLonInput(longitude.toFixed(COORD_DECIMALS));
     if (markerRef.current) markerRef.current.remove();
     void import("maplibre-gl").then((maplibregl) => {
       const map = mapRef.current;
@@ -419,34 +558,14 @@ function AssessmentWorkspace() {
 
   const locateFromCoordinates = useCallback(() => {
     setCoordError(null);
-    const lat = Number(latInput.trim());
-    const lon = Number(lonInput.trim());
-    if (
-      !Number.isFinite(lat) ||
-      !Number.isFinite(lon) ||
-      latInput.trim() === "" ||
-      lonInput.trim() === ""
-    ) {
-      setCoordError("Enter numeric latitude and longitude.");
+    const parsed = parseLatLon(latInput, lonInput);
+    if (!parsed.ok) {
+      setCoordError(parsed.error);
       return;
     }
-    if (lat < -90 || lat > 90) {
-      setCoordError("Latitude must be between -90 and 90.");
-      return;
-    }
-    if (lon < -180 || lon > 180) {
-      setCoordError("Longitude must be between -180 and 180.");
-      return;
-    }
-    if (
-      lon < LAGOS_GEO_HINT.minLon ||
-      lon > LAGOS_GEO_HINT.maxLon ||
-      lat < LAGOS_GEO_HINT.minLat ||
-      lat > LAGOS_GEO_HINT.maxLat
-    ) {
-      setCoordError(
-        `Coordinates are outside the Lagos geophysics coverage (~${LAGOS_GEO_HINT.minLon}–${LAGOS_GEO_HINT.maxLon}°E, ${LAGOS_GEO_HINT.minLat}–${LAGOS_GEO_HINT.maxLat}°N). Live gravity/magnetics may be empty outside this clip.`,
-      );
+    const { latitude: lat, longitude: lon } = parsed;
+    if (!isWithinCoverage(lat, lon)) {
+      setCoordError(coverageMessage());
     } else {
       setCoordError(null);
     }
@@ -471,6 +590,14 @@ function AssessmentWorkspace() {
     if (!featuresPath && !point && !polygon) {
       setError(
         "Provide offline features, or select a point/polygon on the map.",
+      );
+      return;
+    }
+    if (shellEnabled && checkpoint && geography && !geography.crs_declared) {
+      setError(
+        "This checkpoint does not declare a CRS, so the point cannot be placed " +
+          "on the map. Add a declared CRS to the dataset manifest and re-train, " +
+          "then run the assessment again.",
       );
       return;
     }
@@ -503,6 +630,8 @@ function AssessmentWorkspace() {
     featuresPath,
     selectedHazards,
     produceGeotiff,
+    shellEnabled,
+    geography,
   ]);
 
   const toggleHazard = (hazard: string) => {
@@ -642,7 +771,7 @@ function AssessmentWorkspace() {
           <p className="mt-2 font-mono text-sm text-bark">
             {mode === "point"
               ? point
-                ? `${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}`
+                ? formatLatLon(point.latitude, point.longitude)
                 : "Click the map or enter coordinates below"
               : polygon
                 ? `${polygon.coordinates[0].length - 1} vertices`
@@ -707,6 +836,58 @@ function AssessmentWorkspace() {
                   {coordError}
                 </p>
               )}
+              {shellEnabled && geography && (
+                <div
+                  className="space-y-1 border-t border-meadow pt-2 text-[10px] leading-snug text-stone"
+                  data-testid="checkpoint-geography"
+                >
+                  <p data-testid="checkpoint-crs">
+                    Declared CRS: {geography.crs ?? "none — assessment is blocked"}
+                  </p>
+                  {geography.region_extent && (
+                    <p data-testid="training-region">
+                      Training region:{" "}
+                      {geography.region_extent.lat_min.toFixed(3)}–
+                      {geography.region_extent.lat_max.toFixed(3)}°N,{" "}
+                      {geography.region_extent.lon_min.toFixed(3)}–
+                      {geography.region_extent.lon_max.toFixed(3)}°E (dashed
+                      outline on the map)
+                    </p>
+                  )}
+                  {point && projectedPoint && (
+                    <p data-testid="projected-point">
+                      {projectedPoint.crs}: x {projectedPoint.x.toFixed(3)}, y{" "}
+                      {projectedPoint.y.toFixed(3)} ({projectedPoint.axis_order})
+                    </p>
+                  )}
+                </div>
+              )}
+              {shellEnabled && geographyError && (
+                <p
+                  className="text-[11px] text-amber-900"
+                  data-testid="geography-error"
+                  role="alert"
+                >
+                  {geographyError}
+                </p>
+              )}
+              {shellEnabled &&
+                point &&
+                geography?.region_extent &&
+                !pointInRegion(
+                  point.latitude,
+                  point.longitude,
+                  geography.region_extent,
+                ) && (
+                  <p
+                    className="text-[11px] text-amber-900"
+                    data-testid="region-warning"
+                    role="alert"
+                  >
+                    This point is outside the training region. The backend reports
+                    outside_training_region and withholds scores for it.
+                  </p>
+                )}
             </div>
           )}
 
@@ -836,7 +1017,7 @@ function AssessmentWorkspace() {
         result={result}
         locationLabel={
           mode === "point" && point
-            ? `${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}`
+            ? formatLatLon(point.latitude, point.longitude)
             : mode === "polygon" && polygon
               ? `Polygon (${polygon.coordinates[0].length - 1} vertices)`
               : featuresPath

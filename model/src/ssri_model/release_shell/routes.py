@@ -11,7 +11,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ssri_model.api.dependencies import (
     get_job_executor,
@@ -46,6 +46,7 @@ from ssri_model.release_shell.flags import (
     release_shell_min_held_out_blocks,
     release_shell_min_tiles,
 )
+from ssri_model.release_shell.geography import describe_checkpoint_geography
 from ssri_model.release_shell.hazards import default_hazard_registry
 from ssri_model.release_shell.labels_inventory import parse_label_csv, parse_label_geojson
 from ssri_model.release_shell.lineaments import LineamentMethod, load_lineament_segments
@@ -55,6 +56,7 @@ from ssri_model.release_shell.validator import (
     validate_release_shell_dataset,
 )
 from ssri_model.service.config import ServiceConfig
+from ssri_model.service.validation import reject_path_traversal
 
 router = APIRouter(prefix="/release-shell", tags=["release-shell"])
 
@@ -87,8 +89,22 @@ class StartShellTrainBody(BaseModel):
     batch_size: int = Field(default=2, ge=1, le=64)
     learning_rate: float = Field(default=1e-3, gt=0, le=1.0)
     seeds: list[int] = Field(default_factory=lambda: [42, 43, 44])
-    device: str = Field(default="cpu", pattern="^(auto|cpu|cuda)$")
+    device: str = Field(default="auto", pattern="^(auto|cpu|cuda)$")
     model_name: str | None = None
+
+
+class ShellGeographyPoint(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+
+
+class ShellGeographyBody(BaseModel):
+    """Read-only lookup of a checkpoint's declared CRS and training region."""
+
+    model_config = ConfigDict(extra="forbid")
+    checkpoint: str
+    point: ShellGeographyPoint | None = None
 
 
 def _resolved_block_size_deg() -> float | None:
@@ -142,6 +158,45 @@ def shell_status() -> dict[str, Any]:
                 },
             },
         },
+    }
+
+
+@router.post("/geography")
+def shell_geography(
+    body: ShellGeographyBody,
+    _principal: AuthenticatedPrincipal = Depends(require_read_status),
+) -> Any:
+    """Report a checkpoint's declared CRS + training region (read-only).
+
+    Map clicks are WGS84 lat/lon; if the checkpoint declares a projected CRS the
+    point is converted here with pyproj so the browser never guesses. This never
+    trains and never changes an assessment decision — it only describes geography.
+    """
+    blocked = _require_shell()
+    if blocked:
+        return blocked
+    try:
+        reject_path_traversal(body.checkpoint, field_name="checkpoint")
+    except Exception as exc:  # noqa: BLE001 — surface as a readable 400
+        return JSONResponse(
+            status_code=400,
+            content={"error": {"code": "INVALID_CHECKPOINT_PATH", "message": str(exc)}},
+        )
+    path = Path(body.checkpoint)
+    if not path.is_file():
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": {
+                    "code": "CHECKPOINT_NOT_FOUND",
+                    "message": f"Checkpoint not found: {body.checkpoint}",
+                }
+            },
+        )
+    lat = body.point.latitude if body.point else None
+    lon = body.point.longitude if body.point else None
+    return {
+        "geography": describe_checkpoint_geography(path, latitude=lat, longitude=lon)
     }
 
 

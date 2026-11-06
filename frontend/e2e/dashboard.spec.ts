@@ -94,7 +94,135 @@ test.describe("SSRI dashboard smoke", () => {
     await page.getByTestId("coord-latitude").fill("6.5244");
     await page.getByTestId("coord-longitude").fill("3.3792");
     await page.getByTestId("coord-locate").click();
-    await expect(page.getByText("6.52440, 3.37920")).toBeVisible({
+    await expect(page.getByText("6.524400, 3.379200")).toBeVisible({
+      timeout: 10_000,
+    });
+  });
+
+  test("coordinate round trip matches to 6 decimals (all quadrants)", async ({
+    page,
+  }) => {
+    await openAssessmentOrSkip(page);
+    await page.goto(dashboard, { waitUntil: "networkidle" });
+    await expect(page.getByTestId("coordinate-entry")).toBeVisible({
+      timeout: 30_000,
+    });
+
+    // Abeokuta (~7.16N, 3.35E) plus points in other quadrants.
+    const points: Array<[string, string, string]> = [
+      ["7.16", "3.35", "7.160000, 3.350000"],
+      ["-33.92", "18.42", "-33.920000, 18.420000"],
+      ["40.71", "-74.01", "40.710000, -74.010000"],
+      ["-23.7", "133.88", "-23.700000, 133.880000"],
+    ];
+    for (const [lat, lon, expected] of points) {
+      await page.getByTestId("coord-latitude").fill(lat);
+      await page.getByTestId("coord-longitude").fill(lon);
+      await page.getByTestId("coord-locate").click();
+      await expect(page.getByText(expected)).toBeVisible({ timeout: 10_000 });
+    }
+  });
+
+  test("clicking the map fills both coordinates to 6 decimals", async ({
+    page,
+  }) => {
+    await openAssessmentOrSkip(page);
+    await page.goto(dashboard, { waitUntil: "networkidle" });
+    const map = page.getByTestId("ssri-map");
+    await expect(map).toBeVisible({ timeout: 30_000 });
+    const box = await map.boundingBox();
+    expect(box).toBeTruthy();
+    if (box) {
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    }
+    const sixDp = /^-?\d+\.\d{6}$/;
+    await expect(page.getByTestId("coord-latitude")).toHaveValue(sixDp);
+    await expect(page.getByTestId("coord-longitude")).toHaveValue(sixDp);
+  });
+
+  test("release-shell geography panel shows CRS and warns outside region", async ({
+    page,
+  }) => {
+    await openAssessmentOrSkip(page);
+    await page.route("**/api/v1/release-shell/status", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          release_shell_enabled: true,
+          limitations: [],
+          scientific_validation_status: "NOT_VALIDATED",
+          settings: {
+            block_size_deg: 5,
+            default_block_size_deg: 5,
+            buffer_km: 50,
+            minimums: { tiles_per_hazard: 12, blocks: 3, held_out_blocks: 1 },
+            preview_unevaluated_scores: false,
+            supported_channel_schemas: ["v1", "v2"],
+            default_channel_schema: "v1",
+            channel_schemas: {
+              v1: { channel_count: 13, channel_names: ["a"] },
+              v2: { channel_count: 16, channel_names: ["a"] },
+            },
+            hazards: [
+              { name: "subsidence", class_id: 0, enabled_by_default: true },
+              { name: "landslide", class_id: 1, enabled_by_default: true },
+              { name: "sinkhole", class_id: 2, enabled_by_default: true },
+            ],
+          },
+        }),
+      });
+    });
+    await page.route("**/api/v1/release-shell/geography", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          geography: {
+            checkpoint: "/data/models/best.pt",
+            has_release_shell_meta: true,
+            crs: "EPSG:32631",
+            crs_declared: true,
+            training_region: {
+              blocks: ["7.0,3.0"],
+              extent: { lat_min: 7.0, lat_max: 7.3, lon_min: 3.2, lon_max: 3.5 },
+              n_tiles: 3,
+            },
+            region_extent: {
+              lat_min: 7.0,
+              lat_max: 7.3,
+              lon_min: 3.2,
+              lon_max: 3.5,
+            },
+            point_geographic: { latitude: 51.5, longitude: -0.12 },
+            point_converted: {
+              x: 525000.0,
+              y: 5710000.0,
+              crs: "EPSG:32631",
+              axis_order: "x=easting, y=northing",
+            },
+            inside_training_region: false,
+            outside_training_region: true,
+          },
+        }),
+      });
+    });
+
+    await page.goto(dashboard, { waitUntil: "networkidle" });
+    await page
+      .locator('input[placeholder="/data/models/best.pt"]')
+      .fill("/data/models/best.pt");
+    await expect(page.getByTestId("checkpoint-crs")).toContainText(
+      "EPSG:32631",
+      { timeout: 15_000 },
+    );
+    await expect(page.getByTestId("training-region")).toContainText("7.000");
+
+    // A point far outside the region triggers the matching warning.
+    await page.getByTestId("coord-latitude").fill("51.5");
+    await page.getByTestId("coord-longitude").fill("-0.12");
+    await page.getByTestId("coord-locate").click();
+    await expect(page.getByTestId("region-warning")).toBeVisible({
       timeout: 10_000,
     });
   });
