@@ -1,7 +1,7 @@
 # FINISH_REPORT — SSRI platform "ready for first real upload" (RC2, LOCAL ONLY)
 
 **Branch:** `feature/hazard-factors-v2`
-**Local tip:** `8819c814d07e562f4221c6c298d8905895d0c5d2`
+**Verification ran on committed tip:** `8819c814d07e562f4221c6c298d8905895d0c5d2` (all tests/hashes in §5). This report was committed afterwards; for the current tip run `git rev-parse HEAD` (do not pin — it goes stale).
 **Identity (intended):** `hazeez-edunjobi <ifeoluwasuccess520@gmail.com>` · no Co-authored-by trailers
 **Remote:** **NOT pushed.** No PR opened. No deploy. No money spent.
 **Flag:** `SSRI_RELEASE_SHELL` stays default **OFF**; flag-off behaviour unchanged.
