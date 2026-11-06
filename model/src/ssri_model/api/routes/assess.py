@@ -90,6 +90,11 @@ class AssessResponseBody(BaseModel):
     checkpoint_dataset_version: str | None = None
     is_fixture_checkpoint: bool = False
     domain_similarity_calibrated: bool = False
+    channel_schema_version: str | None = None
+    channel_names: list[str] | None = None
+
+
+_ALLOWED_FEATURE_CHANNEL_COUNTS = frozenset({CHANNEL_COUNT, 16})
 
 
 def _load_feature_tensor(path: str) -> torch.Tensor:
@@ -97,9 +102,10 @@ def _load_feature_tensor(path: str) -> torch.Tensor:
     array = torch.as_tensor(np.load(path))
     if array.ndim == 3:
         array = array.unsqueeze(0)
-    if array.ndim != 4 or array.shape[1] != CHANNEL_COUNT:
+    if array.ndim != 4 or array.shape[1] not in _ALLOWED_FEATURE_CHANNEL_COUNTS:
         raise InvalidServiceRequestError(
-            f"features must be shaped (C,H,W) or (B,C,H,W) with C={CHANNEL_COUNT}"
+            "features must be shaped (C,H,W) or (B,C,H,W) with "
+            f"C={CHANNEL_COUNT} (v1) or C=16 (v2)"
         )
     return array.float()
 
@@ -108,9 +114,9 @@ def _array_to_tensor(array: np.ndarray) -> torch.Tensor:
     tensor = torch.as_tensor(array).float()
     if tensor.ndim == 3:
         tensor = tensor.unsqueeze(0)
-    if tensor.ndim != 4 or tensor.shape[1] != CHANNEL_COUNT:
+    if tensor.ndim != 4 or tensor.shape[1] not in _ALLOWED_FEATURE_CHANNEL_COUNTS:
         raise InvalidServiceRequestError(
-            f"acquired features must have {CHANNEL_COUNT} channels"
+            f"acquired features must have {CHANNEL_COUNT} (v1) or 16 (v2) channels"
         )
     return tensor
 
@@ -264,6 +270,38 @@ def assess_endpoint(
     query_lat = body.point.latitude if body.point is not None else None
     query_lon = body.point.longitude if body.point is not None else None
 
+    if release_shell_enabled() and shell_meta:
+        from ssri_model.release_shell.channel_schema import (
+            assert_channels_match,
+            schema_from_checkpoint_payload,
+        )
+
+        try:
+            expected = schema_from_checkpoint_payload(
+                {"release_shell": shell_meta, "model_config": payload.get("model_config") or {}}
+            )
+            # Feature tensor channel count must match checkpoint schema.
+            n_feat = int(features.shape[1]) if features.ndim == 4 else int(features.shape[0])
+            if n_feat != expected.channel_count:
+                missing = list(expected.channel_names[n_feat:]) if n_feat < expected.channel_count else []
+                raise InvalidServiceRequestError(
+                    "Input features do not match the checkpoint channel schema "
+                    f"(version {expected.version}, {expected.channel_count} channels). "
+                    + (
+                        "Missing channels: " + ", ".join(missing) + "."
+                        if missing
+                        else f"Received {n_feat} channels."
+                    )
+                )
+            # If payload advertises names, enforce order too.
+            advertised = payload.get("channel_names") or (payload.get("model_config") or {}).get(
+                "channel_names"
+            )
+            if advertised:
+                assert_channels_match(expected.channel_names, advertised, context="assess features")
+        except ValueError as exc:
+            raise InvalidServiceRequestError(str(exc)) from exc
+
     cfg = UncertaintyConfig(mc_samples=body.mc_samples, seed=42)
     samples = run_mc_dropout(model, features, config=cfg)
     embedding = embedding_from_features(features)
@@ -380,6 +418,15 @@ def assess_endpoint(
             notes.append(
                 "split_policy=whole_5deg_blocks_with_buffer"
             )
+    schema_version: str | None = None
+    schema_names: list[str] | None = None
+    if release_shell_enabled() and shell_meta:
+        schema_version = str(shell_meta.get("channel_schema_version") or "") or None
+        names = shell_meta.get("channel_names")
+        if isinstance(names, list):
+            schema_names = [str(n) for n in names]
+        notes.append(f"channel_schema_version={schema_version or 'unknown'}")
+
     response = AssessResponseBody(
         assessment_id=result.assessment_id,
         hazard_profiles=result_profiles,
@@ -393,6 +440,8 @@ def assess_endpoint(
         checkpoint_dataset_version=dataset_version,
         is_fixture_checkpoint=is_fixture,
         domain_similarity_calibrated=domain.calibrated,
+        channel_schema_version=schema_version,
+        channel_names=schema_names,
     )
     _persist_assessment_response(
         output_root=output_root,

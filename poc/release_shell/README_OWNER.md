@@ -4,13 +4,17 @@ For a **non-developer** operator. This lives on **`integration/ssri-shell-rc1`**
 
 ## What you prepare (data checklist)
 
-Before upload, your ZIP must contain:
+Before upload, your ZIP / layers must contain:
 
-- [ ] Georeferenced tiles (label GeoTIFF with CRS + transform)
-- [ ] **13 channels** in the documented order (see `DATASET_SPEC.md`)
+- [ ] Every layer has a **declared CRS** (EPSG code or full definition)
+- [ ] Feature channels for schema **v1 (13)** or **v2 (16)** — see `DATASET_SPEC.md`
+- [ ] **Labels** (points/polygons with hazard class) — training refuses without them
 - [ ] Labels per hazard: subsidence=0, landslide=1, sinkhole=2 (−1 = ignore)
 - [ ] **No empty channels** (do not ship a channel that is −9999 on every pixel)
-- [ ] Prefer **≥300 tiles**, **≥8 separate 5° regions**, **≥3 held-out blocks** (production defaults)
+- [ ] Prefer **≥300 tiles**, **≥8 separate blocks**, **≥3 held-out blocks** (at your chosen block size)
+- [ ] For a **local** site (tens of km), set a smaller block size (e.g. 5–20 km). Results then carry **local evidence only; not validated beyond this site**
+- [ ] Optional: lineament vectors (GeoJSON) → density + distance channels (v2)
+- [ ] Optional: overburden thickness raster/CSV (v2). Depth-to-bedrock must be named separately — we never relabel it as thickness
 - [ ] Demo / dry-run only: `templates/SYNTHETIC_stage25_template.zip` — labelled **SYNTHETIC** everywhere
 
 ## What you can do

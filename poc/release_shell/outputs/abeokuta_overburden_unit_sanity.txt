@@ -1,0 +1,18 @@
+=== ABEOKUTA OVERBURDEN LAYER VALIDATION (ASSUMED-FOR-TEST) ===
+assumed_crs=EPSG:32631 (ASSUMED-FOR-TEST — not geological truth)
+layer_name=overburden_thickness
+overall=WARN
+status=FEATURE_LAYER_ONLY
+trainable=False
+row_count=308153
+missing_cells=7129
+value_min=-212.760467529297
+value_max=221.468399047852
+
+--- checks ---
+[PASS] crs_declared: Declared CRS 'EPSG:32631' parsed; working CRS 'EPSG:32631'.
+[PASS] grid_regular: Regular grid 561 x 562; spacing X=100 Y=100.
+[WARN] gaps: 7129 missing grid cell(s). SSRI does not fill gaps; provide complete cells or a mask before training.
+[WARN] unit_sanity: UNIT_SANITY WARN: 11250 negative value(s) in layer 'overburden_thickness'. Thickness should be ≥ 0 metres; confirm units and whether negatives are sentinels. If this is depth-to-bedrock, declare that name instead — SSRI will not silently relabel it as overburden_thickness.
+
+unit_sanity_visible_warn_or_fail=True

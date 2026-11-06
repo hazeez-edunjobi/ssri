@@ -11,18 +11,31 @@ from typing import Any
 import numpy as np
 import rasterio
 
-from ssri_model.ml.constants import CHANNEL_COUNT, CHANNEL_NAMES, FEATURE_NODATA, LABEL_NODATA
+from ssri_model.manual_training.exceptions import ManualTrainingError
+from ssri_model.ml.constants import FEATURE_NODATA, LABEL_NODATA
 from ssri_model.ml.labels import label_class_names
+from ssri_model.release_shell.channel_schema import (
+    OVERBURDEN_THICKNESS,
+    normalize_layer_name,
+    schema_from_manifest,
+)
+from ssri_model.release_shell.point_grid_csv import ingest_point_grid_csv
 from ssri_model.release_shell.flags import (
+    release_shell_block_size_deg,
+    release_shell_block_size_km,
     release_shell_buffer_km,
     release_shell_min_blocks,
     release_shell_min_held_out_blocks,
     release_shell_min_tiles,
 )
 from ssri_model.release_shell.spatial_split import (
+    LOCAL_EVIDENCE_LIMITATION,
     TileGeo,
     block5,
+    block_id,
     haversine_km,
+    is_local_block_size,
+    resolve_block_size_deg,
     split_by_blocks,
 )
 
@@ -81,6 +94,20 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
     min_blocks = release_shell_min_blocks()
     min_held = release_shell_min_held_out_blocks()
     buffer_km = release_shell_buffer_km()
+    size_deg = resolve_block_size_deg(
+        block_size_deg=release_shell_block_size_deg(),
+        block_size_km=release_shell_block_size_km(),
+    )
+    manifest: dict[str, Any] = {}
+    man_path = root / "manifest.json"
+    if man_path.exists():
+        try:
+            manifest = json.loads(man_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            manifest = {}
+    schema = schema_from_manifest(manifest)
+    channel_names = list(schema.channel_names)
+    channel_count = schema.channel_count
 
     if not root.is_dir():
         return {
@@ -120,8 +147,9 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
     coords_missing = 0
     tiles: list[TileGeo] = []
     channel_stats: dict[str, dict[str, float]] = {
-        name: {"nodata_frac": 0.0, "constant_frac": 0.0, "n": 0} for name in CHANNEL_NAMES
+        name: {"nodata_frac": 0.0, "constant_frac": 0.0, "n": 0} for name in channel_names
     }
+    overburden_negative = 0
     label_counts: dict[str, Counter] = {h: Counter() for h in hazards}
     hazard_blocks: dict[str, set[str]] = {h: set() for h in hazards}
     synthetic_flags: list[bool] = []
@@ -141,10 +169,10 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
             channel_fail += 1
             continue
         arr = np.load(feat_path)
-        if arr.ndim != 3 or arr.shape[0] != CHANNEL_COUNT:
+        if arr.ndim != 3 or arr.shape[0] != channel_count:
             shape_fail += 1
             continue
-        for i, name in enumerate(CHANNEL_NAMES):
+        for i, name in enumerate(channel_names):
             ch = arr[i].astype(np.float64)
             nodata_m = ~np.isfinite(ch) | (ch == FEATURE_NODATA)
             frac_nd = float(nodata_m.mean()) if ch.size else 1.0
@@ -154,6 +182,8 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
             st["nodata_frac"] = (st["nodata_frac"] * st["n"] + frac_nd) / (st["n"] + 1)
             st["constant_frac"] = (st["constant_frac"] * st["n"] + const) / (st["n"] + 1)
             st["n"] += 1
+            if name == OVERBURDEN_THICKNESS and finite.size and float(np.nanmin(finite)) < 0:
+                overburden_negative += 1
 
         crs = None
         lat = meta.get("centroid_lat", meta.get("lat"))
@@ -173,7 +203,9 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
                     if np.any(lab == cls_i):
                         label_counts[hname]["tiles"] += 1
                         if lat is not None and lon is not None:
-                            hazard_blocks[hname].add(block5(float(lat), float(lon)))
+                            hazard_blocks[hname].add(
+                                block_id(float(lat), float(lon), size_deg=size_deg)
+                            )
                         label_counts[hname]["pixels"] += int((lab == cls_i).sum())
                 if np.any(lab == LABEL_NODATA):
                     label_counts.setdefault("_nodata", Counter())["_nodata"] += 1
@@ -202,8 +234,9 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
                 "schema_shapes",
                 "FAIL",
                 f"Invalid feature/label samples: channel/layout issues={channel_fail}, "
-                f"shape issues={shape_fail}. Expected feature_stack.npy shape (13,H,W) "
-                f"with channels {list(CHANNEL_NAMES)}.",
+                f"shape issues={shape_fail}. Expected feature_stack.npy shape "
+                f"({channel_count},H,W) for schema {schema.version} "
+                f"with channels {channel_names}.",
             )
         )
     else:
@@ -272,6 +305,36 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
             )
         )
 
+    if overburden_negative:
+        checks.append(
+            CheckResult(
+                "overburden_units",
+                "WARN",
+                f"{overburden_negative} sample(s) have negative overburden_thickness "
+                "values. Thickness should be ≥ 0 metres; confirm units and whether "
+                "negatives are sentinels.",
+            )
+        )
+
+    total_labelled_tiles = sum(int(label_counts[h]["tiles"]) for h in hazards)
+    if samples and total_labelled_tiles == 0:
+        checks.append(
+            CheckResult(
+                "labels_present",
+                "FAIL",
+                "No labelled pixels found for any hazard. Training refuses without labels. "
+                "Upload a label inventory or labelled tiles (classes 0/1/2).",
+            )
+        )
+    else:
+        checks.append(
+            CheckResult(
+                "labels_present",
+                "PASS" if total_labelled_tiles > 0 else "WARN",
+                f"Labelled tiles across hazards: {total_labelled_tiles}.",
+            )
+        )
+
     # Duplicates / overlaps
     id_counts = Counter(sample_ids)
     dups = [k for k, v in id_counts.items() if v > 1]
@@ -306,19 +369,28 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
     split_info: dict[str, Any] | None = None
     if tiles and coords_missing == 0 and crs_missing < len(samples):
         try:
+            distinct = {
+                block_id(t.lat, t.lon, size_deg=size_deg) for t in tiles
+            }
             split = split_by_blocks(
                 tiles,
                 buffer_km=buffer_km,
-                min_held_out_blocks=min(min_held, max(1, len({block5(t.lat, t.lon) for t in tiles}) // 3)),
+                min_held_out_blocks=min(min_held, max(1, len(distinct) // 3)),
+                block_size_deg=size_deg,
             )
             split_info = split.to_dict()
+            msg = (
+                f"Valid block split: train={len(split.train_blocks)} "
+                f"val={len(split.validation_blocks)} test={len(split.test_blocks)} "
+                f"blocks at {size_deg:g}°; buffer={buffer_km} km."
+            )
+            if split.local_evidence_only:
+                msg += f" {LOCAL_EVIDENCE_LIMITATION}."
             checks.append(
                 CheckResult(
                     "spatial_split",
                     "PASS",
-                    f"Valid block split: train={len(split.train_blocks)} "
-                    f"val={len(split.validation_blocks)} test={len(split.test_blocks)} "
-                    f"blocks; buffer={buffer_km} km.",
+                    msg,
                     split_info,
                 )
             )
@@ -442,4 +514,112 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
         "n_samples": len(samples),
         "median_nn_km": nn_km,
         "score_framing": "relative susceptibility rankings (not probabilities or risk)",
+    }
+
+
+def validate_point_grid_layer(
+    content: bytes,
+    *,
+    filename: str,
+    layer_name: str,
+    crs: str,
+    working_crs: str | None = None,
+) -> dict[str, Any]:
+    """Validate a single declared feature-layer upload (point-grid CSV).
+
+    Always FEATURE_LAYER_ONLY — a single layer cannot supervise training.
+    Surfaces a visible ``unit_sanity`` WARN/FAIL (for example negative
+    ``overburden_thickness``) instead of hiding it inside a free-text message.
+    """
+    checks: list[CheckResult] = []
+    try:
+        layer = ingest_point_grid_csv(
+            content,
+            filename=filename,
+            layer_name=layer_name,
+            crs=crs,
+            working_crs=working_crs,
+        )
+    except ManualTrainingError as exc:
+        code = exc.code
+        status = "FAIL"
+        checks.append(CheckResult("crs_declared", status, exc.message, {"code": code}))
+        return {
+            "overall": "FAIL",
+            "can_train": False,
+            "layer_name": normalize_layer_name(layer_name) or layer_name,
+            "checks": [c.to_dict() for c in checks],
+            "messages": [],
+            "status": "FEATURE_LAYER_ONLY",
+            "trainable": False,
+            "scientific_validation_status": "NOT_VALIDATED",
+        }
+
+    checks.append(
+        CheckResult(
+            "crs_declared",
+            "PASS",
+            f"Declared CRS '{layer.crs}' parsed; working CRS '{layer.working_crs}'.",
+            {"crs": layer.crs, "working_crs": layer.working_crs},
+        )
+    )
+    checks.append(
+        CheckResult(
+            "grid_regular",
+            "PASS",
+            f"Regular grid {len(layer.xs)} x {len(layer.ys)}; "
+            f"spacing X={layer.x_spacing:g} Y={layer.y_spacing:g}.",
+            {"x_spacing": layer.x_spacing, "y_spacing": layer.y_spacing},
+        )
+    )
+    if layer.missing_cells:
+        checks.append(
+            CheckResult(
+                "gaps",
+                "WARN",
+                f"{layer.missing_cells} missing grid cell(s). SSRI does not fill gaps; "
+                "provide complete cells or a mask before training.",
+                {"missing_cells": layer.missing_cells},
+            )
+        )
+    else:
+        checks.append(CheckResult("gaps", "PASS", "No missing grid cells."))
+
+    # Unit sanity: a declared thickness cannot be negative.
+    unit_messages = [m for m in layer.messages if "UNIT_SANITY" in m]
+    if unit_messages:
+        checks.append(
+            CheckResult(
+                "unit_sanity",
+                "WARN",
+                unit_messages[0],
+                {"value_min": layer.value_min, "value_max": layer.value_max},
+            )
+        )
+    else:
+        checks.append(
+            CheckResult(
+                "unit_sanity",
+                "PASS",
+                f"No negative {layer.name} values; "
+                f"range {layer.value_min} … {layer.value_max}.",
+                {"value_min": layer.value_min, "value_max": layer.value_max},
+            )
+        )
+
+    fails = [c for c in checks if c.status == "FAIL"]
+    overall = "FAIL" if fails else ("WARN" if any(c.status == "WARN" for c in checks) else "PASS")
+    return {
+        "overall": overall,
+        "can_train": False,
+        "layer_name": layer.name,
+        "checks": [c.to_dict() for c in checks],
+        "messages": list(layer.messages),
+        "row_count": layer.row_count,
+        "missing_cells": layer.missing_cells,
+        "value_min": layer.value_min,
+        "value_max": layer.value_max,
+        "status": layer.status,
+        "trainable": layer.trainable,
+        "scientific_validation_status": "NOT_VALIDATED",
     }

@@ -1,0 +1,56 @@
+{
+  "synthetic_rehearsal": {
+    "synthetic": true,
+    "layer": {
+      "name": "overburden_thickness",
+      "crs": "EPSG:32631",
+      "working_crs": "EPSG:32631",
+      "x_spacing": 100.0,
+      "y_spacing": 100.0,
+      "grid": {
+        "width": 20,
+        "height": 20
+      },
+      "row_count": 400,
+      "missing_cells": 0,
+      "duplicates": 0,
+      "nodata_count": 0,
+      "value_min": 50.0,
+      "value_max": 52.85,
+      "status": "FEATURE_LAYER_ONLY",
+      "trainable": false,
+      "messages": [
+        "This upload is a single feature layer only. It cannot be used alone as a supervised training dataset. Add the remaining SSRI channels (or schema v2 extras) and labelled hazards to train."
+      ],
+      "source_format": "point_grid_csv"
+    },
+    "seconds": 0.018,
+    "peak_rss_mb": 258.8,
+    "note": "Single layer \u2192 FEATURE_LAYER_ONLY; cannot train without full schema + labels joined.",
+    "labels": {
+      "crs": "EPSG:32631",
+      "n_labels": 25,
+      "counts_by_hazard": {
+        "subsidence": 0,
+        "landslide": 25,
+        "sinkhole": 0
+      },
+      "messages": []
+    }
+  },
+  "real_abeokuta_assumed_crs": {
+    "assumed_crs": "EPSG:32631 (ASSUMED-FOR-TEST)",
+    "status": "FEATURE_LAYER_ONLY",
+    "trainable": false,
+    "row_count": 308153,
+    "missing_cells": 7129,
+    "seconds": 3.198,
+    "peak_rss_mb": 317.2,
+    "messages": [
+      "This upload is a single feature layer only. It cannot be used alone as a supervised training dataset. Add the remaining SSRI channels (or schema v2 extras) and labelled hazards to train.",
+      "Grid has 7129 missing cell(s). SSRI does not fill gaps; provide complete cells or a mask before training."
+    ],
+    "evidence": "NOT real evidence \u2014 CRS assumed for test only"
+  },
+  "train_note": "Full 3-seed train/evaluate/assess on a complete v2 Stage 2.5 ZIP is covered by existing shell rehearsals; this script proves the new point-grid path + FEATURE_LAYER_ONLY behaviour for Abeokuta-format CSV."
+}

@@ -1,4 +1,8 @@
-"""Whole 5° block spatial splits with optional buffer (release shell)."""
+"""Whole-block spatial splits with optional buffer (release shell).
+
+Default block size remains 5 degrees. Local sites may use smaller blocks
+(e.g. 5–20 km) via ``block_size_deg`` / ``block_size_km``.
+"""
 
 from __future__ import annotations
 
@@ -7,9 +11,70 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Sequence
 
+# Approximate metres per degree latitude (used only for km→deg conversion).
+_M_PER_DEG_LAT = 111_320.0
+DEFAULT_BLOCK_SIZE_DEG = 5.0
+
+
+def block_size_deg_from_km(size_km: float) -> float:
+    if size_km <= 0:
+        raise ValueError("block_size_km must be positive.")
+    return float(size_km) * 1000.0 / _M_PER_DEG_LAT
+
+
+def resolve_block_size_deg(
+    *,
+    block_size_deg: float | None = None,
+    block_size_km: float | None = None,
+) -> float:
+    if block_size_km is not None and block_size_deg is not None:
+        raise ValueError("Pass only one of block_size_deg or block_size_km.")
+    if block_size_km is not None:
+        return block_size_deg_from_km(block_size_km)
+    if block_size_deg is not None:
+        if block_size_deg <= 0:
+            raise ValueError("block_size_deg must be positive.")
+        return float(block_size_deg)
+    return DEFAULT_BLOCK_SIZE_DEG
+
+
+def _block_coord(value: float) -> str:
+    """Format a floored block coordinate so fine block sizes stay distinct.
+
+    Integral coordinates (the historic 5 deg default) render exactly as before
+    (``30`` / ``-120``). Non-integral coordinates, which arise from km-based
+    local block sizes, keep enough precision to remain separate blocks; the old
+    ``int()`` truncation collapsed them into ~1 degree buckets.
+    """
+    nearest = round(value)
+    if abs(value - nearest) < 1e-9:
+        return str(int(nearest))
+    return f"{value:.6f}".rstrip("0").rstrip(".")
+
+
+def block_id(lat: float, lon: float, *, size_deg: float = DEFAULT_BLOCK_SIZE_DEG) -> str:
+    """Stable block id for a lat/lon at the given block size in degrees."""
+    s = float(size_deg)
+    if s <= 0:
+        raise ValueError("size_deg must be positive.")
+    lat_block = math.floor(lat / s) * s
+    lon_block = math.floor(lon / s) * s
+    return f"{_block_coord(lat_block)}_{_block_coord(lon_block)}"
+
 
 def block5(lat: float, lon: float) -> str:
-    return f"{int(math.floor(lat / 5.0) * 5)}_{int(math.floor(lon / 5.0) * 5)}"
+    """Backward-compatible 5° block id."""
+    return block_id(lat, lon, size_deg=DEFAULT_BLOCK_SIZE_DEG)
+
+
+def is_local_block_size(size_deg: float) -> bool:
+    """True when block size is below the historic 5° default."""
+    return float(size_deg) < DEFAULT_BLOCK_SIZE_DEG - 1e-12
+
+
+LOCAL_EVIDENCE_LIMITATION = (
+    "local evidence only; not validated beyond this site"
+)
 
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -40,6 +105,8 @@ class SpatialSplitResult:
     buffer_km: float
     policy: str
     dropped_by_buffer: tuple[str, ...]
+    block_size_deg: float = DEFAULT_BLOCK_SIZE_DEG
+    local_evidence_only: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -52,6 +119,9 @@ class SpatialSplitResult:
             "buffer_km": self.buffer_km,
             "policy": self.policy,
             "dropped_by_buffer": list(self.dropped_by_buffer),
+            "block_size_deg": self.block_size_deg,
+            "local_evidence_only": self.local_evidence_only,
+            "limitations": [LOCAL_EVIDENCE_LIMITATION] if self.local_evidence_only else [],
         }
 
 
@@ -77,23 +147,31 @@ def split_by_blocks(
     buffer_km: float = 50.0,
     min_held_out_blocks: int = 3,
     seed: int = 42,
+    block_size_deg: float | None = None,
+    block_size_km: float | None = None,
 ) -> SpatialSplitResult:
-    """Assign whole 5° blocks to train/val/test; drop train tiles within buffer of holdouts."""
+    """Assign whole blocks to train/val/test; drop train tiles within buffer of holdouts.
+
+    Default block size is 5°. For local AOIs pass ``block_size_km`` (e.g. 10).
+    """
     if not tiles:
         raise ValueError(
             "Cannot build a spatial split: no tiles with coordinates were provided."
         )
-    missing_crs = [t.sample_id for t in tiles if not t.crs]
+    size_deg = resolve_block_size_deg(
+        block_size_deg=block_size_deg, block_size_km=block_size_km
+    )
+    local = is_local_block_size(size_deg)
     # CRS required at dataset level — caller should refuse before calling if all missing
     by_block: dict[str, list[TileGeo]] = defaultdict(list)
     for t in tiles:
-        by_block[block5(t.lat, t.lon)].append(t)
+        by_block[block_id(t.lat, t.lon, size_deg=size_deg)].append(t)
 
     blocks = sorted(by_block.keys())
     if len(blocks) < max(2, min_held_out_blocks + 1):
         raise ValueError(
-            f"Need at least {max(2, min_held_out_blocks + 1)} distinct 5° blocks "
-            f"for a spatial split; found {len(blocks)}."
+            f"Need at least {max(2, min_held_out_blocks + 1)} distinct "
+            f"{size_deg:g}° blocks for a spatial split; found {len(blocks)}."
         )
 
     rng_blocks = list(blocks)
@@ -142,6 +220,11 @@ def split_by_blocks(
             f"applying the {buffer_km} km buffer. Add more geographically spread tiles."
         )
 
+    policy = (
+        f"whole_{size_deg:g}deg_blocks_with_buffer"
+        if not local
+        else f"local_{size_deg:g}deg_blocks_with_buffer"
+    )
     return SpatialSplitResult(
         train_ids=tuple(train_ids),
         validation_ids=tuple(val_ids),
@@ -150,6 +233,8 @@ def split_by_blocks(
         validation_blocks=validation_blocks,
         test_blocks=test_blocks,
         buffer_km=buffer_km,
-        policy="whole_5deg_blocks_with_buffer",
+        policy=policy,
         dropped_by_buffer=tuple(dropped),
+        block_size_deg=size_deg,
+        local_evidence_only=local,
     )
