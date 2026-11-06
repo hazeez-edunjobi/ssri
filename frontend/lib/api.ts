@@ -148,13 +148,15 @@ function authHeaders(apiKey?: string): Record<string, string> {
 
 export async function getHealth(): Promise<HealthResponse> {
   const response = await fetch(`${apiUrl}/api/v1/health`);
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not reach the service"));
   return response.json();
 }
 
 export async function getReady(): Promise<ReadyResponse> {
   const response = await fetch(`${apiUrl}/api/v1/ready`);
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "The service is not ready yet"));
   return response.json();
 }
 
@@ -219,7 +221,8 @@ export async function getGravityLayer(
     `${apiUrl}/api/v1/layers/gravity?max_cells=${maxCells}`,
     { headers: authHeaders(apiKey) },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not load the gravity layer"));
   return response.json();
 }
 
@@ -507,7 +510,8 @@ export async function getShellStatus(
   const response = await fetch(`${apiUrl}/api/v1/release-shell/status`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the release-shell status"));
   return response.json();
 }
 
@@ -522,7 +526,8 @@ export async function uploadShellDatasetZip(
     `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/upload`,
     { method: "POST", headers: formAuthHeaders(apiKey), body: form },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Upload failed"));
   return response.json();
 }
 
@@ -534,7 +539,8 @@ export async function validateShellDataset(
     `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/validate`,
     { method: "POST", headers: authHeaders(apiKey) },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Validation failed"));
   return response.json();
 }
 
@@ -555,7 +561,8 @@ export async function startShellTrainingJob(
     headers: authHeaders(apiKey),
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not start training"));
   return response.json();
 }
 
@@ -566,7 +573,8 @@ export async function getShellJob(
   const response = await fetch(`${apiUrl}/api/v1/jobs/${jobId}`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the training job"));
   return response.json();
 }
 
@@ -578,7 +586,8 @@ export async function getShellEvaluation(
     `${apiUrl}/api/v1/release-shell/models/${modelId}/evaluation`,
     { headers: authHeaders(apiKey) },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the evaluation"));
   return response.json();
 }
 
@@ -622,7 +631,8 @@ export async function getShellStatusFull(apiKey?: string): Promise<ShellStatus> 
   const response = await fetch(`${apiUrl}/api/v1/release-shell/status`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the release-shell status"));
   return response.json();
 }
 
@@ -659,7 +669,8 @@ export async function validateShellLayer(
     headers: formAuthHeaders(apiKey),
     body: form,
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not check the layer"));
   return response.json();
 }
 
@@ -676,7 +687,8 @@ export async function uploadShellLabelInventory(
     headers: formAuthHeaders(apiKey),
     body: form,
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the label inventory"));
   return response.json();
 }
 
@@ -691,6 +703,7 @@ export async function inspectShellLineaments(
     headers: formAuthHeaders(apiKey),
     body: form,
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not inspect the lineaments"));
   return response.json();
 }

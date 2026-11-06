@@ -17,7 +17,11 @@
   - `AssessResultModal` colour map no longer keyed by hazard name (M8); `parseError` plain-language (M9); `lib/report.ts` HTML export added (M10).
 - Lint / typecheck / build — DONE (commit `085791f` "Make frontend lint pass under ESLint 9 flat config").
 - `frontend/lib/report.ts` report builder + reworked `AssessResultModal` — DONE (Task 1).
-- Task 2 UPLOAD FLOW CHECK — IN PROGRESS. Stopped mid-way while adding plain-language context to API error calls in batches (training endpoints done; the remaining release-shell + health calls still lack context). Resumes below.
+- Task 2 UPLOAD FLOW CHECK — DONE.
+  - Plain-language context threaded through **every** API call in `frontend/lib/api.ts` (0 bare `parseError(response)` left); `parseError`/`extractErrorMessage` unwrap FastAPI `detail[]`, shell `{error:{code,message}}` and `no_trained_model`; never surfaces a stack trace or `[object Object]`.
+  - UI field names/types confirmed against the backend request models (dataset JSON, multipart `file`/`layer_name`/`crs`/`working_crs`, `/jobs` body `dataset_id/epochs/seeds/device`).
+  - New API contract tests `model/tests/test_release_shell_upload_contract.py` (**23 tests**) covering every upload type success + failure: ZIP (ok, non-zip, wrong suffix, oversize→413, malformed manifest), point-grid CSV headed/headerless/tab/comma/space, CRS required/invalid, working-CRS reprojection, label inventory CSV+GeoJSON (ok, no CRS, unknown hazard), lineament GeoJSON (ok, bad JSON), schema-mismatch validation FAIL, `/jobs` type contract, and flag-OFF refusal.
+  - Backend hardening found by the tests: a malformed manifest with a non-list `channels` (or non-dict `channel_schema`) raised an unhandled `TypeError` → **500**; now degrades to a reportable validation result (`channel_schema.schema_from_manifest`, `manual_training/validation.py`).
 
 ---
 
