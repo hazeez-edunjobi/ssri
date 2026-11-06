@@ -18,7 +18,7 @@
         "HEAD"
       ],
       "returncode": 0,
-      "stdout_tail": "e352f8feef3f6c84adcbbcae735486bb6c70e5ac\n",
+      "stdout_tail": "8819c814d07e562f4221c6c298d8905895d0c5d2\n",
       "stderr_tail": ""
     },
     "new_tests": {
@@ -39,7 +39,7 @@
         "--tb=line"
       ],
       "returncode": 0,
-      "stdout_tail": ".....................                                                    [100%]\n21 passed in 15.17s\n",
+      "stdout_tail": "..........................                                               [100%]\n26 passed in 17.52s\n",
       "stderr_tail": ""
     },
     "assess_93": {
@@ -61,7 +61,7 @@
         "--tb=no"
       ],
       "returncode": 0,
-      "stdout_tail": "........................................................................ [ 77%]\n.....................                                                    [100%]\n93 passed in 23.70s\n",
+      "stdout_tail": "........................................................................ [ 77%]\n.....................                                                    [100%]\n93 passed in 22.00s\n",
       "stderr_tail": ""
     },
     "deepslide_9": {
@@ -76,7 +76,7 @@
         "--tb=no"
       ],
       "returncode": 0,
-      "stdout_tail": ".........                                                                [100%]\n9 passed in 11.51s\n",
+      "stdout_tail": ".........                                                                [100%]\n9 passed in 68.74s (0:01:08)\n",
       "stderr_tail": ""
     },
     "no_trained_model": {
