@@ -60,6 +60,11 @@
   - **Timings (VERIFIED):** open 2928 ms · upload+validate 11225 ms · start job 2510 ms · wait evaluation 63604 ms · promote 1661 ms · dashboard map 2855 ms · map click 318 ms · **assess 13965 ms** · download 670 ms · close 102 ms · out-of-region 1665 ms. **Assess 14.0 s exceeds the 10 s target — recorded as an open item** (synthetic 3-seed CPU run; `mc_samples:20` + feature build).
   - Fix confirmed on disk: all three seed model dirs carry `release_shell_meta.json`.
   - Evidence committed under `poc/release_shell/outputs/frontend_rehearsal/` (7 screenshots + `assess-response.json` + `assess-error-contracts.json` + `playwright-report.json` + `rehearsal-timings.json` + `ssri-assessment-report.html`); raw `playwright-artifacts/` and `work/` ignored.
+- Task 6 LIVE-SITE READINESS — DONE (this session). Deliverable `STAGING_DEPLOY_CHECKLIST.md` (repo root).
+  - Read-only. **VERIFIED:** the smoke test refuses a production-looking host (`onrender.com`/`prod`) with exit `2` unless `--allow-production` (`smoke_staging.py:316-322`).
+  - Env surface documented from source: backend `SSRI_RELEASE_SHELL` (default OFF), `SSRI_ASSESS_SOFTMAX`, `SSRI_RELEASE_SHELL_MIN_TILES/BLOCKS/HELD_OUT/BUFFER_KM`, `SSRI_RELEASE_SHELL_BLOCK_SIZE_DEG/KM`, `SSRI_PREVIEW_UNEVALUATED_SCORES`; frontend `NEXT_PUBLIC_API_URL/SSRI_API_KEY/SUPABASE_URL/SUPABASE_ANON_KEY/MAP_STYLE_URL` (build-time inlined).
+  - **UNKNOWN (needs human input):** the real staging base URL, staging API key, Supabase project, Earth Engine credentials — none configured in this workspace.
+  - Documented gates, deploy sequence, post-deploy smoke, off-switch/rollback.
 
 ---
 
