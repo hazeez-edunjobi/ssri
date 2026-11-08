@@ -5,8 +5,22 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { buildAssessmentReportHtml } from "./report.ts";
-import type { AssessResponse } from "./api";
+import {
+  buildAssessmentReportHtml,
+  findAffirmativeRiskClaims,
+} from "./report.ts";
+import type { AssessResponse, ShellSettings } from "./api";
+
+const SETTINGS: ShellSettings = {
+  block_size_deg: null,
+  default_block_size_deg: 5,
+  buffer_km: 25,
+  minimums: { tiles_per_hazard: 1, blocks: 1, held_out_blocks: 1 },
+  preview_unevaluated_scores: false,
+  supported_channel_schemas: ["v1", "v2"],
+  default_channel_schema: "v2",
+  channel_schemas: {},
+};
 
 const SYNTHETIC: AssessResponse = {
   assessment_id: "assess-test0001",
@@ -154,4 +168,57 @@ test("no evaluation summary degrades to a plain explanation, not a crash", () =>
   });
   assert.ok(html.includes("Not attached to this point assessment"));
   assert.ok(html.includes("NOT_VALIDATED"));
+});
+
+test("report renders the buffer, the limitations array and the local-evidence notice", () => {
+  const html = buildAssessmentReportHtml({
+    result: {
+      ...SYNTHETIC,
+      notes: [
+        ...SYNTHETIC.notes.filter((n) => !n.startsWith("limitation=")),
+        "limitation=local evidence only; trained on the uploaded geography",
+      ],
+    },
+    locationLabel: "7.160000, 3.350000",
+    point: { latitude: 7.16, longitude: 3.35 },
+    settings: SETTINGS,
+    generatedAt: new Date("2026-01-02T03:04:05Z"),
+  });
+  assert.ok(html.includes("25 km")); // buffer from settings
+  assert.ok(html.includes("local evidence only; trained on the uploaded geography")); // limitations array
+  assert.ok(html.includes("Local evidence only")); // explicit notice
+});
+
+test("wording guard PASSES when only the mandated negation disclaimer is present", () => {
+  const disclaimer =
+    "NOT_VALIDATED. Scores are relative susceptibility rankings, not probabilities or risk estimates";
+  const html = buildAssessmentReportHtml({
+    result: { ...SYNTHETIC, explanation: disclaimer },
+    locationLabel: null,
+    point: null,
+    generatedAt: new Date("2026-01-02T03:04:05Z"),
+  });
+  assert.ok(html.toLowerCase().includes("not probabilities or risk estimates"));
+  assert.deepEqual(findAffirmativeRiskClaims(html), []);
+});
+
+test("wording guard FAILS on real risk/probability/detection claims", () => {
+  assert.ok(findAffirmativeRiskClaims("this is a high risk zone").length > 0);
+  assert.ok(findAffirmativeRiskClaims("probability of landslide").length > 0);
+  assert.ok(findAffirmativeRiskClaims("landslide detection model").length > 0);
+  // The mandated disclaimer alone must never trip the guard.
+  assert.deepEqual(
+    findAffirmativeRiskClaims(
+      "not probabilities or risk estimates",
+    ),
+    [],
+  );
+  // And a report that actually claims risk is flagged by the same guard.
+  const bad = buildAssessmentReportHtml({
+    result: { ...SYNTHETIC, explanation: "This is a high risk area." },
+    locationLabel: null,
+    point: null,
+    generatedAt: new Date("2026-01-02T03:04:05Z"),
+  });
+  assert.ok(findAffirmativeRiskClaims(bad).length > 0);
 });

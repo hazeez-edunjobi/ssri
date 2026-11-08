@@ -35,6 +35,22 @@ function noteValue(notes: string[], key: string): string | null {
   return found ? found.slice(prefix.length) : null;
 }
 
+/**
+ * Find *affirmative* risk / probability / detection wording in a report or API
+ * string. The backend mandates a negation disclaimer ("scores are relative
+ * susceptibility rankings, not probabilities or risk estimates", see
+ * `release_shell/flags.py`) which the report echoes verbatim, so the negation
+ * phrases are stripped before matching. Any remaining hit is a real claim.
+ *
+ * Returns the offending substrings (empty array = the text is clean).
+ */
+export function findAffirmativeRiskClaims(text: string): string[] {
+  const withoutNegations = text
+    .toLowerCase()
+    .replace(/not\s+probabilit(?:y|ies)\s+or\s+risk(?:\s+estimates)?\.?/g, "");
+  return withoutNegations.match(/\b(risk|probabilit(?:y|ies)|detection)\b/g) ?? [];
+}
+
 function isScoreAllowed(profile: {
   score?: number | null;
   susceptibility_score?: number;
