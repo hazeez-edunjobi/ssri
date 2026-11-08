@@ -47,6 +47,14 @@
   - **Report** (`frontend/lib/report.ts`) now renders: lat/lon (6 dp) + training CRS + location in training CRS; checkpoint id + sha256; dataset version + hash; schema version + ordered channels; block size/buffer + local-evidence statement; per-hazard status with scores **only where the gate allows**; the evaluation summary (AUC/CI, Δ vs slope, per-block table, seeds); limitations; NOT_VALIDATED; timestamp. Wording is always "relative susceptibility ranking" — never risk, probability, detection or validation.
   - **Downloadable HTML export** reuses `buildAssessmentReportHtml`; the modal shows a progress state while running (longer assessments), then the export button.
   - Tests: backend route/report tests added (`test_release_shell_assess_route.py` +4: no-checkpoint, schema mismatch, evaluation summary + checkpoint id, summary-absent) → **15 passed** in that file, **63 passed** in the release-shell/assess subset, **20 passed** API-assess subset; frontend `lib/report.test.ts` (**8 tests**) asserts the HTML echoes API values exactly and never uses forbidden wording → **17 frontend tests** pass. `typecheck` / `lint` / `build` green.
+- Task 5 SYNTHETIC REHEARSAL — IN PROGRESS.
+  - First run **FAILED**: the dashboard blocked the assessment with "This checkpoint does not declare a CRS, so the point cannot be placed on the map." Diagnosed (VERIFIED) from the Playwright trace: **no** `POST /api/v1/assess` was ever sent; the last calls were `POST /release-shell/geography` and `GET /layers/gravity`, i.e. `onAssess` early-returned at the `crs_declared` guard.
+  - **Root cause (VERIFIED):** `_run_release_shell_multiseed_training` (`api/job_workers.py`) called `finalize_checkpoint` on **only the primary seed**, so the other seeds' `best.pt` carried no `release_shell` meta. The shell UI lets the owner promote **any** seed → promoting a non-primary seed produced `crs_declared=false` and the dashboard correctly refused. Confirmed on disk: only primary-seed `best.pt` had embedded meta.
+  - **Fix — commit `6ef6871`:** embed the run-level meta into **every** seed's checkpoint via `embed_release_shell`/`embed_in_checkpoint`.
+  - **Spec hardened — commit `01d48d0`:** shared wording guard, a v1-shaped 13-channel tile for the schema-mismatch 400, and a dialog-close step before the out-of-region step.
+  - **Report wording guard — commit `c7afa7a`** (`lib/report.ts` `findAffirmativeRiskClaims` + tests); **dialog Escape/focus return — commit `0e885ef`**.
+  - Backend subset after the fix: **92 passed**, 657 deselected (`release_shell` + `hazard_factors_v2` + `manual_training`).
+  - Re-run pending (this session).
 
 ---
 
