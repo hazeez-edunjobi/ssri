@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SSRI assessment assess-35d9227a8c9cf6df</title>
+<style>
+  body { font-family: Poppins, system-ui, sans-serif; color: #1f2a24; margin: 0; padding: 32px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 14px; margin: 24px 0 6px; text-transform: uppercase; letter-spacing: .08em; color: #4a5a50; }
+  .badge { display: inline-block; border: 1px solid #b45309; background: #fffbeb; color: #92400e;
+           border-radius: 999px; padding: 2px 10px; font-size: 11px; margin-bottom: 8px; }
+  dl { display: grid; grid-template-columns: 220px 1fr; gap: 4px 16px; margin: 0; font-size: 13px; }
+  dt { color: #4a5a50; }
+  dd { margin: 0; font-family: ui-monospace, monospace; word-break: break-all; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th, td { border: 1px solid #d7e0da; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #f3f7f4; }
+  ul { font-size: 12px; line-height: 1.5; }
+  .muted { color: #6b7a71; font-size: 11px; }
+</style>
+</head>
+<body>
+  <span class="badge">NOT_VALIDATED · relative susceptibility ranking</span>
+  <h1>SSRI assessment report</h1>
+  <p class="muted">Assessment assess-35d9227a8c9cf6df · generated 2026-11-08T15:53:54.186Z</p>
+
+  <h2>Location</h2>
+  <dl>
+    <dt>AOI / point</dt><dd>37.000000, -120.000000</dd>
+    <dt>Latitude (WGS84, °N)</dt><dd>37.000000</dd>
+    <dt>Longitude (WGS84, °E)</dt><dd>-120.000000</dd>
+    <dt>Training CRS</dt><dd>EPSG:4326</dd>
+    <dt>Location in training CRS</dt><dd>EPSG:4326: x -120.000, y 37.000 (x=longitude, y=latitude)</dd>
+  </dl>
+
+  <h2>Checkpoint</h2>
+  <dl>
+    <dt>Assessment id</dt><dd>assess-35d9227a8c9cf6df</dd>
+    <dt>Checkpoint id</dt><dd>best</dd>
+    <dt>Model version</dt><dd>ssri-model</dd>
+    <dt>Checkpoint sha256</dt><dd>3ddf71338657e4cd4dd4b78e2c5f0adb3d997188817d694fe1a2c313d13911f8</dd>
+    <dt>Dataset name</dt><dd>SYNTHETIC_stage25_v2_template</dd>
+    <dt>Dataset version</dt><dd>0.1.0-SYNTHETIC-v2</dd>
+    <dt>Dataset hash</dt><dd>B26D439BBD2084E1F98EB05C99A3C0AA6FC8C25CF414F4F98057ED456F54A9AE</dd>
+    <dt>Fixture checkpoint</dt><dd>no</dd>
+  </dl>
+
+  <h2>Channel schema</h2>
+  <dl>
+    <dt>Schema version</dt><dd>v2</dd>
+    <dt>Ordered channels</dt><dd>elevation, slope, plan_curvature, profile_curvature, twi, relative_relief, valley_depth, ndvi, ndwi, clay_mineral_ratio, iron_oxide_index, gravity, magnetics, overburden_thickness, lineament_density, lineament_distance</dd>
+    <dt>Block size</dt><dd>5.0° (checkpoint)</dd>
+    <dt>Buffer</dt><dd>0 km</dd>
+    <dt>Split policy</dt><dd>whole_5deg_blocks_with_buffer</dd>
+  </dl>
+  
+
+  <h2>Per-hazard status</h2>
+  <table>
+    <thead><tr><th>Hazard</th><th>Gate</th><th>Status</th><th>Ranking</th><th>Reason</th></tr></thead>
+    <tbody><tr>
+        <td>subsidence</td>
+        <td>trained, no demonstrated skill beyond slope</td>
+        <td>not_available</td>
+        <td>withheld</td>
+        <td>Hazard gate status is 'trained, no demonstrated skill beyond slope'; score withheld. Only 'evaluated' hazards return a ranking score.</td>
+      </tr><tr>
+        <td>landslide</td>
+        <td>trained, no demonstrated skill beyond slope</td>
+        <td>not_available</td>
+        <td>withheld</td>
+        <td>Hazard gate status is 'trained, no demonstrated skill beyond slope'; score withheld. Only 'evaluated' hazards return a ranking score.</td>
+      </tr><tr>
+        <td>sinkhole</td>
+        <td>trained, no demonstrated skill beyond slope</td>
+        <td>not_available</td>
+        <td>withheld</td>
+        <td>Hazard gate status is 'trained, no demonstrated skill beyond slope'; score withheld. Only 'evaluated' hazards return a ranking score.</td>
+      </tr></tbody>
+  </table>
+  <p class="muted">Rankings appear only where the gate status is evaluated (or an unevaluated preview is explicitly enabled).</p>
+
+  <h2>Evaluation summary</h2>
+  <p class="muted">Relative susceptibility rankings only. Status NOT_VALIDATED. Seeds: 42, 43, 44. Split policy: whole_5deg_blocks_with_buffer. Representative seed: 42.</p>
+  <table>
+    <thead><tr><th>Hazard</th><th>Gate</th><th>ROC AUC (95% CI)</th><th>ΔAUC vs slope (95% CI)</th><th>Blocks AUC&gt;0.5</th><th>Per-seed AUC</th></tr></thead>
+    <tbody><tr>
+        <td>subsidence</td>
+        <td>trained, no demonstrated skill beyond slope</td>
+        <td>0.504 [0.480, 0.528]</td>
+        <td>-0.054 [-0.100, -0.013]</td>
+        <td>0%</td>
+        <td>seed 42: 0.504; seed 43: 0.498; seed 44: 0.485</td>
+      </tr><tr>
+        <td>landslide</td>
+        <td>trained, no demonstrated skill beyond slope</td>
+        <td>0.512 [0.509, 0.515]</td>
+        <td>+0.070 [0.049, 0.094]</td>
+        <td>0%</td>
+        <td>seed 42: 0.512; seed 43: 0.447; seed 44: 0.494</td>
+      </tr><tr>
+        <td>sinkhole</td>
+        <td>trained, no demonstrated skill beyond slope</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+      </tr></tbody>
+  </table>
+  <h3>Per-block held-out AUC — subsidence</h3>
+      <table><thead><tr><th>Block</th><th>n</th><th>n positive</th><th>AUC</th></tr></thead><tbody><tr><td>30_-90</td><td>64</td><td>—</td><td>—</td></tr><tr><td>35_-125</td><td>64</td><td>—</td><td>—</td></tr><tr><td>40_-110</td><td>64</td><td>—</td><td>—</td></tr></tbody></table><h3>Per-block held-out AUC — landslide</h3>
+      <table><thead><tr><th>Block</th><th>n</th><th>n positive</th><th>AUC</th></tr></thead><tbody><tr><td>30_-90</td><td>64</td><td>—</td><td>—</td></tr><tr><td>35_-125</td><td>64</td><td>—</td><td>—</td></tr><tr><td>40_-110</td><td>64</td><td>—</td><td>—</td></tr></tbody></table>
+
+  <h2>Limitations</h2>
+  <ul><li>trained only on the uploaded data's geography; not validated elsewhere</li><li>slope alone often matches or beats trained models</li><li>scores are relative susceptibility rankings, not probabilities or risk estimates</li><li>scientific status remains NOT_VALIDATED; not independently reviewed</li><li>must never be used for insurance, engineering, safety, or emergency decisions</li></ul>
+
+  <h2>Notes</h2>
+  <ul><li>Ranking confidence bands are software heuristics only; status remains NOT_VALIDATED. Scores are relative susceptibility rankings, not probabilities or risk estimates.</li><li>domain_similarity_calibrated=false</li><li>domain_similarity_reason=no_SSRI_DOMAIN_CENTROID_PATH</li><li>requested_by=development</li><li>request_id=assess-6d45dc251db5</li><li>checkpoint_sha256=3ddf71338657e4cd4dd4b78e2c5f0adb3d997188817d694fe1a2c313d13911f8</li><li>is_fixture_checkpoint=false</li><li>score_framing=relative_susceptibility_rankings</li><li>scientific_validation_status=NOT_VALIDATED</li><li>limitation=trained only on the uploaded data's geography; not validated elsewhere</li><li>limitation=slope alone often matches or beats trained models</li><li>limitation=scores are relative susceptibility rankings, not probabilities or risk estimates</li><li>limitation=scientific status remains NOT_VALIDATED; not independently reviewed</li><li>limitation=must never be used for insurance, engineering, safety, or emergency decisions</li><li>data_hash=B26D439BBD2084E1F98EB05C99A3C0AA6FC8C25CF414F4F98057ED456F54A9AE</li><li>split_policy=whole_5deg_blocks_with_buffer</li><li>channel_schema_version=v2</li><li>assess_crs=EPSG:4326</li><li>block_size_deg=5.0</li></ul>
+
+  <p class="muted">Relative susceptibility rankings only where gate_status is evaluated. Status remains NOT_VALIDATED. Not for insurance, engineering, safety, or emergency decisions.</p>
+  <p class="muted">scientific_validation_status: NOT_VALIDATED · score_framing: relative susceptibility ranking · request assess-6d45dc251db5</p>
+</body>
+</html>

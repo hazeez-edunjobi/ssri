@@ -47,14 +47,19 @@
   - **Report** (`frontend/lib/report.ts`) now renders: lat/lon (6 dp) + training CRS + location in training CRS; checkpoint id + sha256; dataset version + hash; schema version + ordered channels; block size/buffer + local-evidence statement; per-hazard status with scores **only where the gate allows**; the evaluation summary (AUC/CI, Δ vs slope, per-block table, seeds); limitations; NOT_VALIDATED; timestamp. Wording is always "relative susceptibility ranking" — never risk, probability, detection or validation.
   - **Downloadable HTML export** reuses `buildAssessmentReportHtml`; the modal shows a progress state while running (longer assessments), then the export button.
   - Tests: backend route/report tests added (`test_release_shell_assess_route.py` +4: no-checkpoint, schema mismatch, evaluation summary + checkpoint id, summary-absent) → **15 passed** in that file, **63 passed** in the release-shell/assess subset, **20 passed** API-assess subset; frontend `lib/report.test.ts` (**8 tests**) asserts the HTML echoes API values exactly and never uses forbidden wording → **17 frontend tests** pass. `typecheck` / `lint` / `build` green.
-- Task 5 SYNTHETIC REHEARSAL — IN PROGRESS.
+- Task 5 SYNTHETIC REHEARSAL — DONE (this session).
   - First run **FAILED**: the dashboard blocked the assessment with "This checkpoint does not declare a CRS, so the point cannot be placed on the map." Diagnosed (VERIFIED) from the Playwright trace: **no** `POST /api/v1/assess` was ever sent; the last calls were `POST /release-shell/geography` and `GET /layers/gravity`, i.e. `onAssess` early-returned at the `crs_declared` guard.
   - **Root cause (VERIFIED):** `_run_release_shell_multiseed_training` (`api/job_workers.py`) called `finalize_checkpoint` on **only the primary seed**, so the other seeds' `best.pt` carried no `release_shell` meta. The shell UI lets the owner promote **any** seed → promoting a non-primary seed produced `crs_declared=false` and the dashboard correctly refused. Confirmed on disk: only primary-seed `best.pt` had embedded meta.
-  - **Fix — commit `6ef6871`:** embed the run-level meta into **every** seed's checkpoint via `embed_release_shell`/`embed_in_checkpoint`.
+  - **Fix — commit `6ef6871`:** embed the run-level meta into **every** seed's checkpoint via `embed_in_checkpoint`.
   - **Spec hardened — commit `01d48d0`:** shared wording guard, a v1-shaped 13-channel tile for the schema-mismatch 400, and a dialog-close step before the out-of-region step.
   - **Report wording guard — commit `c7afa7a`** (`lib/report.ts` `findAffirmativeRiskClaims` + tests); **dialog Escape/focus return — commit `0e885ef`**.
   - Backend subset after the fix: **92 passed**, 657 deselected (`release_shell` + `hazard_factors_v2` + `manual_training`).
-  - Re-run pending (this session).
+  - **Re-run after the fix (VERIFIED): `2 passed (3.5m)`**, both replay paths green:
+    - owner flow (1.8m): open shell → upload+validate SYNTHETIC v2 ZIP → 3-seed train → evaluate → promote → dashboard map click (6 dp round trip) → in-region assess → download HTML report → close dialog → out-of-region warn + withhold;
+    - assess error contracts (771 ms): no-checkpoint → 200 `no_trained_model` + NOT_VALIDATED; v2 checkpoint + 13-channel input → **400** `"Input features do not match the checkpoint channel schema (version v2, 16 channels). Missing channels: overburden_thickness, lineament_density, lineament_distance."` (no traceback).
+  - **Timings (VERIFIED):** open 2928 ms · upload+validate 11225 ms · start job 2510 ms · wait evaluation 63604 ms · promote 1661 ms · dashboard map 2855 ms · map click 318 ms · **assess 13965 ms** · download 670 ms · close 102 ms · out-of-region 1665 ms. **Assess 14.0 s exceeds the 10 s target — recorded as an open item** (synthetic 3-seed CPU run; `mc_samples:20` + feature build).
+  - Fix confirmed on disk: all three seed model dirs carry `release_shell_meta.json`.
+  - Evidence committed under `poc/release_shell/outputs/frontend_rehearsal/` (7 screenshots + `assess-response.json` + `assess-error-contracts.json` + `playwright-report.json` + `rehearsal-timings.json` + `ssri-assessment-report.html`); raw `playwright-artifacts/` and `work/` ignored.
 
 ---
 

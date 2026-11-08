@@ -1,0 +1,24 @@
+{
+  "no_checkpoint": {
+    "status": "no_trained_model",
+    "message": "No trained model checkpoint was provided. Upload a labelled dataset, train, then select a checkpoint before running assess.",
+    "scientific_validation_status": "NOT_VALIDATED",
+    "score_framing": "relative susceptibility rankings",
+    "limitations": [
+      "trained only on the uploaded data's geography; not validated elsewhere",
+      "slope alone often matches or beats trained models",
+      "scores are relative susceptibility rankings, not probabilities or risk estimates",
+      "scientific status remains NOT_VALIDATED; not independently reviewed",
+      "must never be used for insurance, engineering, safety, or emergency decisions"
+    ],
+    "request_id": "assess-86b8e81e67c8",
+    "assessment_id": "assess-72044bce392b8cc7"
+  },
+  "mismatch": {
+    "error": {
+      "code": "INVALID_REQUEST",
+      "message": "Input features do not match the checkpoint channel schema (version v2, 16 channels). Missing channels: overburden_thickness, lineament_density, lineament_distance.",
+      "details": {}
+    }
+  }
+}

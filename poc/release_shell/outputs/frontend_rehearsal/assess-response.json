@@ -1,0 +1,183 @@
+{
+  "assessment_id": "assess-35d9227a8c9cf6df",
+  "hazard_profiles": [
+    {
+      "hazard_type": "subsidence",
+      "status": "not_available",
+      "score": null,
+      "reason": "Hazard gate status is 'trained, no demonstrated skill beyond slope'; score withheld. Only 'evaluated' hazards return a ranking score.",
+      "gate_status": "trained, no demonstrated skill beyond slope",
+      "preview_unevaluated_scores": false,
+      "limitations": null
+    },
+    {
+      "hazard_type": "landslide",
+      "status": "not_available",
+      "score": null,
+      "reason": "Hazard gate status is 'trained, no demonstrated skill beyond slope'; score withheld. Only 'evaluated' hazards return a ranking score.",
+      "gate_status": "trained, no demonstrated skill beyond slope",
+      "preview_unevaluated_scores": false,
+      "limitations": null
+    },
+    {
+      "hazard_type": "sinkhole",
+      "status": "not_available",
+      "score": null,
+      "reason": "Hazard gate status is 'trained, no demonstrated skill beyond slope'; score withheld. Only 'evaluated' hazards return a ranking score.",
+      "gate_status": "trained, no demonstrated skill beyond slope",
+      "preview_unevaluated_scores": false,
+      "limitations": null
+    }
+  ],
+  "explanation": "Relative susceptibility rankings only where gate_status is evaluated. Status remains NOT_VALIDATED. Not for insurance, engineering, safety, or emergency decisions.",
+  "model_version": "ssri-model",
+  "spatial_output_url": null,
+  "notes": [
+    "Ranking confidence bands are software heuristics only; status remains NOT_VALIDATED. Scores are relative susceptibility rankings, not probabilities or risk estimates.",
+    "domain_similarity_calibrated=false",
+    "domain_similarity_reason=no_SSRI_DOMAIN_CENTROID_PATH",
+    "requested_by=development",
+    "request_id=assess-6d45dc251db5",
+    "checkpoint_sha256=3ddf71338657e4cd4dd4b78e2c5f0adb3d997188817d694fe1a2c313d13911f8",
+    "is_fixture_checkpoint=false",
+    "score_framing=relative_susceptibility_rankings",
+    "scientific_validation_status=NOT_VALIDATED",
+    "limitation=trained only on the uploaded data's geography; not validated elsewhere",
+    "limitation=slope alone often matches or beats trained models",
+    "limitation=scores are relative susceptibility rankings, not probabilities or risk estimates",
+    "limitation=scientific status remains NOT_VALIDATED; not independently reviewed",
+    "limitation=must never be used for insurance, engineering, safety, or emergency decisions",
+    "data_hash=B26D439BBD2084E1F98EB05C99A3C0AA6FC8C25CF414F4F98057ED456F54A9AE",
+    "split_policy=whole_5deg_blocks_with_buffer",
+    "channel_schema_version=v2",
+    "assess_crs=EPSG:4326",
+    "block_size_deg=5.0"
+  ],
+  "request_id": "assess-6d45dc251db5",
+  "checkpoint_sha256": "3ddf71338657e4cd4dd4b78e2c5f0adb3d997188817d694fe1a2c313d13911f8",
+  "checkpoint_dataset_name": "SYNTHETIC_stage25_v2_template",
+  "checkpoint_dataset_version": "0.1.0-SYNTHETIC-v2",
+  "is_fixture_checkpoint": false,
+  "domain_similarity_calibrated": false,
+  "channel_schema_version": "v2",
+  "channel_names": [
+    "elevation",
+    "slope",
+    "plan_curvature",
+    "profile_curvature",
+    "twi",
+    "relative_relief",
+    "valley_depth",
+    "ndvi",
+    "ndwi",
+    "clay_mineral_ratio",
+    "iron_oxide_index",
+    "gravity",
+    "magnetics",
+    "overburden_thickness",
+    "lineament_density",
+    "lineament_distance"
+  ],
+  "checkpoint_id": "best",
+  "evaluation_summary": {
+    "status": "completed",
+    "split_policy": "whole_5deg_blocks_with_buffer",
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "scientific_validation_status": "NOT_VALIDATED",
+    "score_framing": "relative susceptibility rankings",
+    "hazards": {
+      "subsidence": {
+        "gate_status": "trained, no demonstrated skill beyond slope",
+        "representative_seed": "42",
+        "roc_auc": 0.5040283203125,
+        "roc_auc_ci95": [
+          0.480224609375,
+          0.52783203125
+        ],
+        "delta_auc_vs_slope": -0.054443359375,
+        "delta_auc_ci95": [
+          -0.099609375,
+          -0.0126953125
+        ],
+        "slope_only_auc": 0.5584716796875,
+        "frac_held_out_blocks_auc_gt_0_5": 0,
+        "per_block": {
+          "30_-90": {
+            "n": 64,
+            "n_pos": null,
+            "roc_auc": null
+          },
+          "35_-125": {
+            "n": 64,
+            "n_pos": null,
+            "roc_auc": null
+          },
+          "40_-110": {
+            "n": 64,
+            "n_pos": null,
+            "roc_auc": null
+          }
+        },
+        "seed_aucs": {
+          "42": 0.5040283203125,
+          "43": 0.4979248046875,
+          "44": 0.4853515625
+        }
+      },
+      "landslide": {
+        "gate_status": "trained, no demonstrated skill beyond slope",
+        "representative_seed": "42",
+        "roc_auc": 0.5115966796875,
+        "roc_auc_ci95": [
+          0.508544921875,
+          0.5146484375
+        ],
+        "delta_auc_vs_slope": 0.070068359375,
+        "delta_auc_ci95": [
+          0.049072265625,
+          0.094482421875
+        ],
+        "slope_only_auc": 0.4415283203125,
+        "frac_held_out_blocks_auc_gt_0_5": 0,
+        "per_block": {
+          "30_-90": {
+            "n": 64,
+            "n_pos": null,
+            "roc_auc": null
+          },
+          "35_-125": {
+            "n": 64,
+            "n_pos": null,
+            "roc_auc": null
+          },
+          "40_-110": {
+            "n": 64,
+            "n_pos": null,
+            "roc_auc": null
+          }
+        },
+        "seed_aucs": {
+          "42": 0.5115966796875,
+          "43": 0.4471435546875,
+          "44": 0.49365234375
+        }
+      },
+      "sinkhole": {
+        "gate_status": "trained, no demonstrated skill beyond slope",
+        "representative_seed": "42",
+        "roc_auc": null,
+        "roc_auc_ci95": null,
+        "delta_auc_vs_slope": null,
+        "delta_auc_ci95": null,
+        "slope_only_auc": null,
+        "frac_held_out_blocks_auc_gt_0_5": null,
+        "per_block": null,
+        "seed_aucs": {}
+      }
+    }
+  }
+}
