@@ -173,6 +173,15 @@ def _run_release_shell_multiseed_training(
         primary_seed=int(seeds[0]),
         data_hash=data_hash,
     )
+    # The shell lets the owner promote any seed's checkpoint, so every seed must
+    # carry the run-level release-shell meta (declared CRS, training region,
+    # channel schema). Otherwise promoting a non-primary seed leaves the
+    # checkpoint with no declared CRS and the dashboard correctly blocks the
+    # assessment.
+    from ssri_model.release_shell.meta import embed_in_checkpoint
+
+    for seed_result in per_seed_results.values():
+        embed_in_checkpoint(seed_result["checkpoint_path"], meta)
     eval_path = (
         Path(primary["checkpoint_path"]).resolve().parent / "release_shell_evaluation.json"
     )
