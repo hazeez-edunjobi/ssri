@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Download, Gauge, X } from "lucide-react";
 import type { AssessResponse, HazardProfile, ShellSettings } from "@/lib/api";
 import { buildAssessmentReportHtml } from "@/lib/report";
@@ -79,6 +80,30 @@ export function AssessResultModal({
   onClose,
   onViewMap,
 }: AssessResultModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Escape dismisses the dialog and focus returns to whatever was focused
+  // before it opened (usually the assessment inputs), so a real user is never
+  // trapped behind the overlay even mid-assessment.
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCloseRef.current();
+    };
+    document.addEventListener("keydown", handleKey);
+    panelRef.current?.focus();
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      previouslyFocused?.focus?.();
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const downloadReport = () => {
@@ -109,7 +134,11 @@ export function AssessResultModal({
       aria-labelledby="assess-result-title"
       data-testid="assess-result-modal"
     >
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-meadow bg-chalk p-5 shadow-soft">
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-meadow bg-chalk p-5 shadow-soft outline-none"
+      >
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-widest text-leaf">
