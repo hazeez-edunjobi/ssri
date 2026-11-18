@@ -28,14 +28,62 @@ export type GeoJsonPolygon = {
   coordinates: number[][][];
 };
 
+/**
+ * One hazard entry. Under the release shell (flag ON) the backend returns a
+ * gate `status` and a `score` that is withheld unless the gate allows it.
+ * Classic (flag OFF) responses carry `susceptibility_score` + credible intervals.
+ */
 export type HazardProfile = {
   hazard_type: string;
-  susceptibility_score: number;
-  credible_interval_80: [number, number];
-  credible_interval_95: [number, number];
-  domain_similarity_score: number | null;
-  confidence_tier: string;
-  primary_drivers: string[];
+  /** Classic (flag OFF) ranking; absent when the shell withholds the score. */
+  susceptibility_score?: number;
+  /** Shell score; null/absent unless the gate allows a ranking. */
+  score?: number | null;
+  status?: string;
+  reason?: string | null;
+  gate_status?: string | null;
+  score_framing?: string;
+  preview_unevaluated_scores?: boolean;
+  scientific_validation_status?: string;
+  limitations?: string[] | null;
+  credible_interval_80?: [number, number];
+  credible_interval_95?: [number, number];
+  domain_similarity_score?: number | null;
+  confidence_tier?: string;
+  primary_drivers?: string[];
+};
+
+export type PerBlockEval = {
+  n: number | null;
+  n_pos: number | null;
+  roc_auc: number | null;
+};
+
+export type EvaluationHazardSummary = {
+  gate_status: string | null;
+  representative_seed: string | null;
+  roc_auc: number | null;
+  roc_auc_ci95: [number, number] | null;
+  delta_auc_vs_slope: number | null;
+  delta_auc_ci95: [number, number] | null;
+  slope_only_auc: number | null;
+  frac_held_out_blocks_auc_gt_0_5: number | null;
+  per_block: Record<string, PerBlockEval> | null;
+  seed_aucs: Record<string, number>;
+};
+
+/**
+ * Trimmed held-out evaluation attached to a release-shell assessment. Copied
+ * verbatim from the stored evaluation: relative susceptibility rankings only,
+ * status stays NOT_VALIDATED.
+ */
+export type AssessmentEvaluationSummary = {
+  status: string | null;
+  split_policy: string | null;
+  seeds: number[];
+  scientific_validation_status: string;
+  score_framing: string;
+  hazards: Record<string, EvaluationHazardSummary>;
 };
 
 export type AssessResponse = {
@@ -51,6 +99,13 @@ export type AssessResponse = {
   checkpoint_dataset_version: string | null;
   is_fixture_checkpoint: boolean;
   domain_similarity_calibrated: boolean;
+  /** Ordered channels the checkpoint was trained on (backend echo). */
+  channel_schema_version?: string | null;
+  channel_names?: string[] | null;
+  /** Checkpoint file id (stem) when the release shell is enabled. */
+  checkpoint_id?: string | null;
+  /** Held-out evaluation trimmed for the report; null when not available. */
+  evaluation_summary?: AssessmentEvaluationSummary | null;
 };
 
 export type JobStatusResponse = {
@@ -61,13 +116,58 @@ export type JobStatusResponse = {
   error?: string | null;
 };
 
-async function parseError(response: Response): Promise<string> {
+/**
+ * Turn an error response into a plain-language sentence with a next step.
+ * Never surfaces a raw stack trace or `[object Object]`.
+ */
+async function parseError(response: Response, context?: string): Promise<string> {
+  const fallback = `${response.status} ${response.statusText}`.trim();
+  let body: unknown = null;
   try {
-    const body = await response.json();
-    return JSON.stringify(body);
+    body = await response.json();
   } catch {
-    return response.statusText;
+    return context
+      ? `${context}: the server returned an unreadable error (${fallback}). Please retry.`
+      : `Request failed (${fallback}). Please retry.`;
   }
+  const message = extractErrorMessage(body);
+  if (message) {
+    return context ? `${context}: ${message}` : message;
+  }
+  return context
+    ? `${context}: unexpected error (${fallback}). Please try again or contact support.`
+    : `Unexpected error (${fallback}). Please try again.`;
+}
+
+function extractErrorMessage(body: unknown): string | null {
+  if (typeof body === "string") return body.trim() || null;
+  if (!body || typeof body !== "object") return null;
+  const record = body as Record<string, unknown>;
+  const detail = record.detail;
+  if (typeof detail === "string" && detail.trim()) return detail;
+  if (Array.isArray(detail)) {
+    // FastAPI validation errors: [{loc, msg, type}, ...]
+    const parts = detail
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const msg = (item as Record<string, unknown>).msg;
+        const loc = (item as Record<string, unknown>).loc;
+        if (typeof msg !== "string") return null;
+        const where = Array.isArray(loc) ? loc.filter((p) => p !== "body").join(".") : "";
+        return where ? `${where}: ${msg}` : msg;
+      })
+      .filter((p): p is string => Boolean(p));
+    if (parts.length) return parts.join("; ");
+  }
+  const error = record.error;
+  if (typeof error === "string" && error.trim()) return error;
+  if (error && typeof error === "object") {
+    const message = (error as Record<string, unknown>).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  const message = record.message;
+  if (typeof message === "string" && message.trim()) return message;
+  return null;
 }
 
 function authHeaders(apiKey?: string): Record<string, string> {
@@ -85,13 +185,15 @@ function authHeaders(apiKey?: string): Record<string, string> {
 
 export async function getHealth(): Promise<HealthResponse> {
   const response = await fetch(`${apiUrl}/api/v1/health`);
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not reach the service"));
   return response.json();
 }
 
 export async function getReady(): Promise<ReadyResponse> {
   const response = await fetch(`${apiUrl}/api/v1/ready`);
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "The service is not ready yet"));
   return response.json();
 }
 
@@ -104,8 +206,19 @@ export async function submitAssess(
     headers: authHeaders(apiKey),
     body: JSON.stringify(payload),
   });
-  if (!response.ok) throw new Error(await parseError(response));
-  return response.json();
+  if (!response.ok) throw new Error(await parseError(response, "Assessment failed"));
+  const body = (await response.json()) as AssessResponse & {
+    status?: string;
+    message?: string;
+  };
+  // The shell returns HTTP 200 with a status envelope when no checkpoint exists.
+  if (body && body.status === "no_trained_model") {
+    throw new Error(
+      body.message ||
+        "No trained model checkpoint was provided. Upload a labelled dataset, train, then select a checkpoint before running an assessment.",
+    );
+  }
+  return body;
 }
 
 export type GeophysicsLayerMetadata = {
@@ -145,7 +258,8 @@ export async function getGravityLayer(
     `${apiUrl}/api/v1/layers/gravity?max_cells=${maxCells}`,
     { headers: authHeaders(apiKey) },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not load the gravity layer"));
   return response.json();
 }
 
@@ -237,7 +351,7 @@ export async function getTrainingRequirements(
   const response = await fetch(`${apiUrl}/api/v1/training/requirements`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not load training requirements"));
   return response.json();
 }
 
@@ -257,7 +371,7 @@ export async function createTrainingDataset(
     headers: authHeaders(apiKey),
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not create the dataset"));
   return response.json();
 }
 
@@ -267,7 +381,7 @@ export async function listTrainingDatasets(
   const response = await fetch(`${apiUrl}/api/v1/training/datasets`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not list datasets"));
   return response.json();
 }
 
@@ -293,7 +407,7 @@ export async function uploadTrainingDatasetZip(
     `${apiUrl}/api/v1/training/datasets/${datasetId}/upload`,
     { method: "POST", headers, body: form },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Upload failed"));
   return response.json();
 }
 
@@ -309,7 +423,7 @@ export async function validateTrainingDataset(
     `${apiUrl}/api/v1/training/datasets/${datasetId}/validate`,
     { method: "POST", headers: authHeaders(apiKey) },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Validation failed"));
   return response.json();
 }
 
@@ -337,7 +451,7 @@ export async function startTrainingJob(
     headers: authHeaders(apiKey),
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not start training"));
   return response.json();
 }
 
@@ -348,7 +462,7 @@ export async function getTrainingJob(
   const response = await fetch(`${apiUrl}/api/v1/training/jobs/${jobId}`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not read the training job"));
   return response.json();
 }
 
@@ -358,7 +472,7 @@ export async function listTrainedModels(
   const response = await fetch(`${apiUrl}/api/v1/training/models`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not list trained models"));
   return response.json();
 }
 
@@ -368,7 +482,7 @@ export async function getActiveTrainedModel(
   const response = await fetch(`${apiUrl}/api/v1/training/models/active`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not read the active model"));
   return response.json();
 }
 
@@ -381,7 +495,7 @@ export async function activateTrainedModel(
     headers: authHeaders(apiKey),
     body: JSON.stringify({ model_id: modelId }),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok) throw new Error(await parseError(response, "Could not activate the model"));
   return response.json();
 }
 
@@ -433,7 +547,8 @@ export async function getShellStatus(
   const response = await fetch(`${apiUrl}/api/v1/release-shell/status`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the release-shell status"));
   return response.json();
 }
 
@@ -448,7 +563,8 @@ export async function uploadShellDatasetZip(
     `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/upload`,
     { method: "POST", headers: formAuthHeaders(apiKey), body: form },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Upload failed"));
   return response.json();
 }
 
@@ -460,7 +576,8 @@ export async function validateShellDataset(
     `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/validate`,
     { method: "POST", headers: authHeaders(apiKey) },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Validation failed"));
   return response.json();
 }
 
@@ -481,7 +598,8 @@ export async function startShellTrainingJob(
     headers: authHeaders(apiKey),
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not start training"));
   return response.json();
 }
 
@@ -492,7 +610,8 @@ export async function getShellJob(
   const response = await fetch(`${apiUrl}/api/v1/jobs/${jobId}`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the training job"));
   return response.json();
 }
 
@@ -504,13 +623,21 @@ export async function getShellEvaluation(
     `${apiUrl}/api/v1/release-shell/models/${modelId}/evaluation`,
     { headers: authHeaders(apiKey) },
   );
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the evaluation"));
   return response.json();
 }
 
 export type ShellChannelSchema = {
   channel_count: number;
   channel_names: string[];
+};
+
+/** Hazard registry entry as returned by the backend status endpoint. */
+export type ShellHazard = {
+  name: string;
+  class_id: number;
+  enabled_by_default: boolean;
 };
 
 export type ShellSettings = {
@@ -526,6 +653,8 @@ export type ShellSettings = {
   supported_channel_schemas: string[];
   default_channel_schema: string;
   channel_schemas: Record<string, ShellChannelSchema>;
+  /** Backend hazard registry. The UI derives its hazard list from here. */
+  hazards?: ShellHazard[];
 };
 
 export type ShellStatus = {
@@ -539,7 +668,60 @@ export async function getShellStatusFull(apiKey?: string): Promise<ShellStatus> 
   const response = await fetch(`${apiUrl}/api/v1/release-shell/status`, {
     headers: authHeaders(apiKey),
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the release-shell status"));
+  return response.json();
+}
+
+export type TrainingRegionExtent = {
+  lat_min: number;
+  lat_max: number;
+  lon_min: number;
+  lon_max: number;
+};
+
+export type CheckpointGeography = {
+  checkpoint: string;
+  has_release_shell_meta: boolean;
+  crs: string | null;
+  crs_declared: boolean;
+  training_region: {
+    blocks?: string[];
+    extent?: TrainingRegionExtent | null;
+    n_tiles?: number;
+  } | null;
+  region_extent: TrainingRegionExtent | null;
+  point_geographic?: { latitude: number; longitude: number };
+  point_converted?: {
+    x: number;
+    y: number;
+    crs: string;
+    axis_order: string;
+  } | null;
+  conversion_error?: string;
+  inside_training_region?: boolean | null;
+  outside_training_region?: boolean;
+};
+
+/**
+ * Read a checkpoint's declared CRS and training region (release shell only).
+ *
+ * Map clicks are WGS84 lat/lon; when the checkpoint declares a projected CRS the
+ * backend converts the point with pyproj and returns both forms. The UI never
+ * guesses a projection in the browser.
+ */
+export async function fetchCheckpointGeography(
+  checkpoint: string,
+  point?: { latitude: number; longitude: number },
+  apiKey?: string,
+): Promise<{ geography: CheckpointGeography }> {
+  const response = await fetch(`${apiUrl}/api/v1/release-shell/geography`, {
+    method: "POST",
+    headers: authHeaders(apiKey),
+    body: JSON.stringify(point ? { checkpoint, point } : { checkpoint }),
+  });
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the checkpoint geography"));
   return response.json();
 }
 
@@ -576,7 +758,8 @@ export async function validateShellLayer(
     headers: formAuthHeaders(apiKey),
     body: form,
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not check the layer"));
   return response.json();
 }
 
@@ -593,7 +776,8 @@ export async function uploadShellLabelInventory(
     headers: formAuthHeaders(apiKey),
     body: form,
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not read the label inventory"));
   return response.json();
 }
 
@@ -608,6 +792,7 @@ export async function inspectShellLineaments(
     headers: formAuthHeaders(apiKey),
     body: form,
   });
-  if (!response.ok) throw new Error(await parseError(response));
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not inspect the lineaments"));
   return response.json();
 }

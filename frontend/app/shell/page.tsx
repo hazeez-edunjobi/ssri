@@ -75,6 +75,12 @@ export default function ReleaseShellPage() {
     null,
   );
 
+  // Hazards come from the backend registry (settings.hazards), never a local list.
+  const hazardNames = (settings?.hazards ?? []).map((h) => h.name);
+  const hazardNotes = hazardNames.length
+    ? hazardNames.join(", ")
+    : "subsidence, landslide, sinkhole";
+
   const refreshModels = useCallback(async () => {
     const [ms, active] = await Promise.all([
       listTrainedModels(),
@@ -90,9 +96,9 @@ export default function ReleaseShellPage() {
         setShellOn(s.release_shell_enabled);
         if (s.limitations?.length) setLimitations(s.limitations);
         if (s.settings) setSettings(s.settings);
+        return refreshModels().catch(() => undefined);
       })
       .catch((err: Error) => setError(err.message));
-    refreshModels().catch(() => undefined);
   }, [refreshModels]);
 
   useEffect(() => {
@@ -146,7 +152,7 @@ export default function ReleaseShellPage() {
       const created = await createTrainingDataset({
         name: name.trim() || "owner-upload",
         notes: "Release-shell owner upload",
-        hazard_notes: "subsidence, landslide, sinkhole",
+        hazard_notes: hazardNotes,
       });
       const id = created.dataset.dataset_id;
       await uploadShellDatasetZip(id, file);
@@ -327,7 +333,10 @@ export default function ReleaseShellPage() {
             <div className="space-y-4 rounded-2xl border border-meadow bg-chalk p-5">
               <h2 className="font-display text-base">1. Upload Stage 2.5 ZIP</h2>
               <p className="text-xs text-stone">
-                Georeferenced tiles, 13 channels in documented order, labels per hazard,
+                Georeferenced tiles with the channels for the declared schema (v1:{" "}
+                {settings?.channel_schemas?.v1?.channel_count ?? 13} channels; v2:{" "}
+                {settings?.channel_schemas?.v2?.channel_count ?? 16} channels, adding
+                overburden and lineament layers) in documented order, labels per hazard,
                 8+ separate 5° regions preferred. SYNTHETIC template is for dry-run only.
               </p>
               <label className="block text-xs">
@@ -389,6 +398,10 @@ export default function ReleaseShellPage() {
                   <li>
                     Channel schema: default {settings.default_channel_schema} ·
                     supported {settings.supported_channel_schemas.join(", ")}
+                  </li>
+                  <li data-testid="shell-hazard-registry">
+                    Hazards (backend registry):{" "}
+                    {hazardNames.length ? hazardNames.join(", ") : "unavailable"}
                   </li>
                   <li>
                     Preview unevaluated scores:{" "}

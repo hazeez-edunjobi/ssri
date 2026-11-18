@@ -129,16 +129,21 @@ def schema_from_checkpoint_payload(payload: dict) -> ChannelSchema:
 
 
 def schema_from_manifest(manifest: dict | None) -> ChannelSchema:
-    """Resolve schema from a dataset manifest; default v1 when unset."""
+    """Resolve schema from a dataset manifest; default v1 when unset.
+
+    Defensive: a malformed manifest (non-dict ``channel_schema`` block, or a
+    non-list ``channels`` / ``channel_names`` value) must not crash the upload
+    path. Structural problems fall back to the version default so the validator
+    can report a plain-language error instead of raising.
+    """
     man = manifest or {}
+    block = man.get("channel_schema")
+    if not isinstance(block, dict):
+        block = {}
     version = str(
-        man.get("channel_schema_version")
-        or (man.get("channel_schema") or {}).get("version")
-        or SCHEMA_V1
+        man.get("channel_schema_version") or block.get("version") or SCHEMA_V1
     )
-    names = man.get("channel_names") or man.get("channels") or (
-        (man.get("channel_schema") or {}).get("channel_names")
-    )
-    if names:
+    names = man.get("channel_names") or man.get("channels") or block.get("channel_names")
+    if isinstance(names, (list, tuple)) and names:
         return ChannelSchema(version, tuple(str(n) for n in names))
     return schema_for_version(version)

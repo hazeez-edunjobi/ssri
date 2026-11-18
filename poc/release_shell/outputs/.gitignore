@@ -5,3 +5,7 @@ tmp_verify/
 **/best.pt
 **/latest.pt
 **/*.pt
+
+# Raw Playwright trace/artifact dumps from the frontend rehearsal (scratch);
+# keep only the screenshots and the small JSON/HTML evidence alongside them.
+frontend_rehearsal/playwright-artifacts/

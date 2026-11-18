@@ -76,7 +76,7 @@ export default function DevelopersPage() {
                 &quot;https://api.ssri.io/v1/hazard?lat=6.52&amp;lon=3.38&quot;
               </p>
               <p className="mt-3 text-stone">
-                {`{ "subsidence": 0.12, "landslide": 0.34, "liquefaction": 0.08 }`}
+                {`{ "subsidence": 0.12, "landslide": 0.34, "sinkhole": 0.08 }`}
               </p>
             </Card>
           </div>

@@ -118,6 +118,21 @@ def test_status_reports_owner_settings(tmp_path, monkeypatch):
     assert "preview_unevaluated_scores" in settings
 
 
+def test_status_exposes_hazard_registry(tmp_path, monkeypatch):
+    """The frontend derives its hazard list from this endpoint, not hard-coded."""
+    client = _client(tmp_path, monkeypatch)
+    resp = client.get("/api/v1/release-shell/status")
+    assert resp.status_code == 200, resp.text
+    hazards = resp.json()["settings"]["hazards"]
+    assert [h["name"] for h in hazards] == ["subsidence", "landslide", "sinkhole"]
+    assert [h["class_id"] for h in hazards] == [0, 1, 2]
+    assert all(h["enabled_by_default"] is True for h in hazards)
+    # lineament/overburden are v2 channels, not hazards.
+    names = {h["name"] for h in hazards}
+    assert "overburden_thickness" not in names
+    assert "lineament_density" not in names
+
+
 def test_layers_validate_route_flags_negative_overburden(tmp_path, monkeypatch):
     client = _client(tmp_path, monkeypatch)
     csv = b"X,Y,Z\n0,0,10\n100,0,-3\n0,100,12\n100,100,-1.5\n"

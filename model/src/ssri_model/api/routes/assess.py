@@ -92,6 +92,8 @@ class AssessResponseBody(BaseModel):
     domain_similarity_calibrated: bool = False
     channel_schema_version: str | None = None
     channel_names: list[str] | None = None
+    checkpoint_id: str | None = None
+    evaluation_summary: dict[str, Any] | None = None
 
 
 _ALLOWED_FEATURE_CHANNEL_COUNTS = frozenset({CHANNEL_COUNT, 16})
@@ -420,12 +422,24 @@ def assess_endpoint(
             )
     schema_version: str | None = None
     schema_names: list[str] | None = None
+    evaluation_summary: dict[str, Any] | None = None
     if release_shell_enabled() and shell_meta:
         schema_version = str(shell_meta.get("channel_schema_version") or "") or None
         names = shell_meta.get("channel_names")
         if isinstance(names, list):
             schema_names = [str(n) for n in names]
         notes.append(f"channel_schema_version={schema_version or 'unknown'}")
+        if shell_meta.get("crs"):
+            notes.append(f"assess_crs={shell_meta['crs']}")
+        if shell_meta.get("block_size_deg") is not None:
+            notes.append(f"block_size_deg={shell_meta['block_size_deg']}")
+        if shell_meta.get("local_evidence_only"):
+            notes.append("local_evidence_only=true")
+
+    if release_shell_enabled():
+        from ssri_model.release_shell.evaluate import load_evaluation_summary
+
+        evaluation_summary = load_evaluation_summary(checkpoint_path)
 
     response = AssessResponseBody(
         assessment_id=result.assessment_id,
@@ -442,6 +456,8 @@ def assess_endpoint(
         domain_similarity_calibrated=domain.calibrated,
         channel_schema_version=schema_version,
         channel_names=schema_names,
+        checkpoint_id=checkpoint_path.stem if release_shell_enabled() else None,
+        evaluation_summary=evaluation_summary,
     )
     _persist_assessment_response(
         output_root=output_root,

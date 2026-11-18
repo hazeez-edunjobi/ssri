@@ -1,0 +1,60 @@
+{
+  "generated_at": "2026-11-08T15:54:06.093Z",
+  "timings": [
+    {
+      "step": "shell: open owner page",
+      "ms": 2928,
+      "at": "2026-11-08T15:52:17.897Z"
+    },
+    {
+      "step": "shell: upload + validate SYNTHETIC v2 ZIP",
+      "ms": 11225,
+      "at": "2026-11-08T15:52:29.123Z"
+    },
+    {
+      "step": "shell: start 3-seed training job",
+      "ms": 2510,
+      "at": "2026-11-08T15:52:31.633Z"
+    },
+    {
+      "step": "shell: wait for evaluation report",
+      "ms": 63604,
+      "at": "2026-11-08T15:53:35.237Z"
+    },
+    {
+      "step": "shell: select (promote) the trained checkpoint",
+      "ms": 1661,
+      "at": "2026-11-08T15:53:36.898Z"
+    },
+    {
+      "step": "dashboard: open map with the active checkpoint prefilled",
+      "ms": 2855,
+      "at": "2026-11-08T15:53:39.842Z"
+    },
+    {
+      "step": "dashboard: click the map to pick a point (6 dp round trip)",
+      "ms": 318,
+      "at": "2026-11-08T15:53:40.160Z"
+    },
+    {
+      "step": "dashboard: type an in-region point and assess",
+      "ms": 13965,
+      "at": "2026-11-08T15:53:54.125Z"
+    },
+    {
+      "step": "dashboard: download the HTML report",
+      "ms": 670,
+      "at": "2026-11-08T15:53:54.795Z"
+    },
+    {
+      "step": "dashboard: close the result dialog",
+      "ms": 102,
+      "at": "2026-11-08T15:53:54.897Z"
+    },
+    {
+      "step": "dashboard: out-of-region point warns and withholds",
+      "ms": 1665,
+      "at": "2026-11-08T15:53:56.562Z"
+    }
+  ]
+}

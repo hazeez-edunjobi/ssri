@@ -6,17 +6,16 @@ import { getSupabase, supabaseConfig } from "@/lib/supabase";
 export type AuthStatus = "loading" | "in" | "out" | "unconfigured";
 
 export function useAuthSession() {
-  const [status, setStatus] = useState<AuthStatus>("loading");
+  const [status, setStatus] = useState<AuthStatus>(() =>
+    supabaseConfig().configured ? "loading" : "unconfigured",
+  );
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!supabaseConfig().configured) {
-      setStatus("unconfigured");
-      return;
-    }
     const supabase = getSupabase();
     if (!supabase) {
-      setStatus("unconfigured");
+      // Sign-in is not configured in this environment. The initial status
+      // above already reflects that, so there is nothing to synchronise.
       return;
     }
 

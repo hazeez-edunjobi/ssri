@@ -78,10 +78,12 @@ model/poc/
 
 poc/release_shell/outputs/hazard_factors_v2_rehearsal/SYNTHETIC_*.csv
 
+# Local recovery snapshots (safety copies of a damaged working tree; not source)
+poc/release_shell/outputs/recovery/
+
 # Measure-profile run artifacts (models/checkpoints); keep only profile.json
 poc/release_shell/outputs/measure_upload_profile/service-outputs/
 poc/release_shell/outputs/measure_upload_profile/*/
 
 # Local scratch from other finish branches / recovery
 poc/release_shell/outputs/frontend_rehearsal/
-poc/release_shell/outputs/recovery/

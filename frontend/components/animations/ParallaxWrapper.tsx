@@ -21,9 +21,9 @@ type ParallaxWrapperProps = {
  */
 export function ParallaxWrapper({ children, speed = -25, className }: ParallaxWrapperProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const gsap = useGsapConfig();
 
   useEffect(() => {
-    const gsap = useGsapConfig();
     if (!ref.current || !motionAllowed()) return;
 
     const ctx = gsap.context(() => {
@@ -40,7 +40,7 @@ export function ParallaxWrapper({ children, speed = -25, className }: ParallaxWr
     });
 
     return () => ctx.revert();
-  }, [speed]);
+  }, [speed, gsap]);
 
   return (
     <div ref={ref} className={className}>
@@ -57,8 +57,9 @@ export function useScrollStagger(
   containerRef: React.RefObject<HTMLElement>,
   selector: string
 ) {
+  const gsap = useGsapConfig();
+
   useEffect(() => {
-    const gsap = useGsapConfig();
     if (!containerRef.current || !motionAllowed()) return;
 
     const ctx = gsap.context(() => {
@@ -79,5 +80,5 @@ export function useScrollStagger(
     }, containerRef);
 
     return () => ctx.revert();
-  }, [containerRef, selector]);
+  }, [containerRef, selector, gsap]);
 }

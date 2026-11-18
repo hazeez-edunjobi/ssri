@@ -74,9 +74,11 @@ export default function TrainingPage() {
 
   useEffect(() => {
     getTrainingRequirements()
-      .then(setRequirements)
+      .then((req) => {
+        setRequirements(req);
+        return refreshLists();
+      })
       .catch((err: Error) => setError(err.message));
-    refreshLists().catch((err: Error) => setError(err.message));
   }, [refreshLists]);
 
   useEffect(() => {
@@ -118,7 +120,9 @@ export default function TrainingPage() {
         geographic_area: geographicArea,
         data_source: dataSource,
         notes,
-        hazard_notes: "Stage 2.5 labels: subsidence, landslide, sinkhole",
+        hazard_notes: `Stage 2.5 labels: ${(
+          requirements?.hazards ?? ["subsidence", "landslide", "sinkhole"]
+        ).join(", ")}`,
       });
       const uploaded = await uploadTrainingDatasetZip(
         created.dataset.dataset_id,

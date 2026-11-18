@@ -1,0 +1,237 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\frontend\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.rehearsal.config.ts"
+    ],
+    "configFile": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\frontend\\playwright.rehearsal.config.ts",
+    "rootDir": "C:/Users/LENOVO/Documents/MrBusoye/ssri/frontend/e2e-rehearsal",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/LENOVO/Documents/MrBusoye/ssri/poc/release_shell/outputs/frontend_rehearsal/playwright-artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/LENOVO/Documents/MrBusoye/ssri/frontend/e2e-rehearsal",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 1800000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\release_shell\\outputs\\frontend_rehearsal\\playwright-report.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "frontend-rehearsal.spec.ts",
+      "file": "frontend-rehearsal.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "SYNTHETIC v2 owner flow: upload → validate → train → pick point → assess → download report",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1800000,
+              "annotations": [
+                {
+                  "type": "serial",
+                  "location": {
+                    "file": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\frontend\\e2e-rehearsal\\frontend-rehearsal.spec.ts",
+                    "line": 0,
+                    "column": 0
+                  }
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 109869,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "[rehearsal] shell: open owner page: 2928 ms\n"
+                    },
+                    {
+                      "text": "[rehearsal] shell: upload + validate SYNTHETIC v2 ZIP: 11225 ms\n"
+                    },
+                    {
+                      "text": "[rehearsal] shell: start 3-seed training job: 2510 ms\n"
+                    },
+                    {
+                      "text": "[rehearsal] shell: wait for evaluation report: 63604 ms\n"
+                    },
+                    {
+                      "text": "[rehearsal] shell: select (promote) the trained checkpoint: 1661 ms\n"
+                    },
+                    {
+                      "text": "[rehearsal] dashboard: open map with the active checkpoint prefilled: 2855 ms\n"
+                    },
+                    {
+                      "text": "[rehearsal] dashboard: click the map to pick a point (6 dp round trip): 318 ms\n"
+                    },
+                    {
+                      "text": "[rehearsal] dashboard: type an in-region point and assess: 13965 ms\n"
+                    },
+                    {
+                      "text": "[rehearsal] dashboard: download the HTML report: 670 ms\n"
+                    },
+                    {
+                      "text": "[rehearsal] dashboard: close the result dialog: 102 ms\n"
+                    },
+                    {
+                      "text": "[rehearsal] dashboard: out-of-region point warns and withholds: 1665 ms\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-08T15:52:11.900Z",
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\frontend\\e2e-rehearsal\\frontend-rehearsal.spec.ts",
+                        "line": 0,
+                        "column": 0
+                      }
+                    }
+                  ],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\release_shell\\outputs\\frontend_rehearsal\\playwright-artifacts\\frontend-rehearsal-SYNTHET-797f3--→-assess-→-download-report\\trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4ed9e7ed16bf28118c65-046984048f2c6da4103c",
+          "file": "frontend-rehearsal.spec.ts",
+          "line": 171,
+          "column": 5
+        },
+        {
+          "title": "release-shell assess error contracts: no checkpoint, mismatched schema",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 1800000,
+              "annotations": [
+                {
+                  "type": "serial",
+                  "location": {
+                    "file": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\frontend\\e2e-rehearsal\\frontend-rehearsal.spec.ts",
+                    "line": 0,
+                    "column": 0
+                  }
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 771,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-08T15:54:05.282Z",
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\frontend\\e2e-rehearsal\\frontend-rehearsal.spec.ts",
+                        "line": 0,
+                        "column": 0
+                      }
+                    }
+                  ],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\LENOVO\\Documents\\MrBusoye\\ssri\\poc\\release_shell\\outputs\\frontend_rehearsal\\playwright-artifacts\\frontend-rehearsal-release-23f1c-heckpoint-mismatched-schema\\trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4ed9e7ed16bf28118c65-1db50c38fec4a3e7f121",
+          "file": "frontend-rehearsal.spec.ts",
+          "line": 378,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-08T15:50:41.966Z",
+    "duration": 207730.359,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

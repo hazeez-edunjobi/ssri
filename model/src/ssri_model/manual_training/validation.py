@@ -111,7 +111,12 @@ def validate_training_dataset(dataset_root: Path | str) -> DatasetPreview:
     schema = schema_from_manifest(manifest)
     expected_count = schema.channel_count
     expected_names = list(schema.channel_names)
-    channels = list(manifest.get("channels") or expected_names)
+    raw_channels = manifest.get("channels")
+    channels = (
+        list(raw_channels)
+        if isinstance(raw_channels, (list, tuple))
+        else list(expected_names)
+    )
     if channels and list(channels) != expected_names:
         if len(channels) != expected_count:
             errors.append(
