@@ -1,0 +1,13 @@
+seeds=[42, 43, 44]
+AGG subsidence gate=trained, no demonstrated skill beyond slope seeds_passed=0 seed_gates=['trained, no demonstrated skill beyond slope', 'trained, no demonstrated skill beyond slope', 'trained, no demonstrated skill beyond slope']
+  seed 42: gate=trained, no demonstrated skill beyond slope roc=0.4974365234375 dAUC=-0.06103515625
+  seed 43: gate=trained, no demonstrated skill beyond slope roc=0.4979248046875 dAUC=-0.060546875
+  seed 44: gate=trained, no demonstrated skill beyond slope roc=0.4853515625 dAUC=-0.0731201171875
+AGG landslide gate=trained, no demonstrated skill beyond slope seeds_passed=0 seed_gates=['trained, no demonstrated skill beyond slope', 'trained, no demonstrated skill beyond slope', 'trained, no demonstrated skill beyond slope']
+  seed 42: gate=trained, no demonstrated skill beyond slope roc=0.5233154296875 dAUC=0.081787109375
+  seed 43: gate=trained, no demonstrated skill beyond slope roc=0.4471435546875 dAUC=0.005615234375
+  seed 44: gate=trained, no demonstrated skill beyond slope roc=0.49365234375 dAUC=0.0521240234375
+AGG sinkhole gate=trained, no demonstrated skill beyond slope seeds_passed=0 seed_gates=['trained, no demonstrated skill beyond slope', 'trained, no demonstrated skill beyond slope', 'trained, no demonstrated skill beyond slope']
+  seed 42: gate=trained, no demonstrated skill beyond slope roc=None dAUC=None
+  seed 43: gate=trained, no demonstrated skill beyond slope roc=None dAUC=None
+  seed 44: gate=trained, no demonstrated skill beyond slope roc=None dAUC=None
