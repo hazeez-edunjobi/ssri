@@ -8,7 +8,7 @@
         "HEAD"
       ],
       "returncode": 0,
-      "stdout_tail": "finish/ssri-platform-rc2\n",
+      "stdout_tail": "consolidate/ssri-integration-ready\n",
       "stderr_tail": ""
     },
     "commit": {
@@ -18,7 +18,7 @@
         "HEAD"
       ],
       "returncode": 0,
-      "stdout_tail": "6a3eab671bdb49227c5cc17cfb32fd2fae2b4e62\n",
+      "stdout_tail": "e0e9017393e5a1befa660034deb5c6c00c32bdb5\n",
       "stderr_tail": ""
     },
     "new_tests": {
@@ -39,7 +39,7 @@
         "--tb=line"
       ],
       "returncode": 0,
-      "stdout_tail": "..........................                                               [100%]\n26 passed in 14.00s\n",
+      "stdout_tail": "...............................                                          [100%]\n31 passed in 10.29s\n",
       "stderr_tail": ""
     },
     "assess_93": {
@@ -61,7 +61,7 @@
         "--tb=no"
       ],
       "returncode": 0,
-      "stdout_tail": "........................................................................ [ 77%]\n.....................                                                    [100%]\n93 passed in 18.18s\n",
+      "stdout_tail": "........................................................................ [ 77%]\n.....................                                                    [100%]\n93 passed in 13.77s\n",
       "stderr_tail": ""
     },
     "deepslide_9": {
@@ -76,7 +76,7 @@
         "--tb=no"
       ],
       "returncode": 0,
-      "stdout_tail": ".........                                                                [100%]\n9 passed in 9.82s\n",
+      "stdout_tail": ".........                                                                [100%]\n9 passed in 8.66s\n",
       "stderr_tail": ""
     },
     "no_trained_model": {
