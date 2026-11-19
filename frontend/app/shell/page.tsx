@@ -10,6 +10,8 @@ import {
   getShellEvaluation,
   getShellJob,
   getShellStatusFull,
+  applyShellLineaments,
+  applyShellOverburden,
   inspectShellLineaments,
   listTrainedModels,
   startShellTrainingJob,
@@ -64,6 +66,8 @@ export default function ReleaseShellPage() {
   const [layerFile, setLayerFile] = useState<File | null>(null);
   const [layerName, setLayerName] = useState("overburden_thickness");
   const [layerCrs, setLayerCrs] = useState("EPSG:32631");
+  const [measurementType, setMeasurementType] = useState("thickness");
+  const [layerUnits, setLayerUnits] = useState("m");
   const [layerReport, setLayerReport] = useState<ShellLayerReport | null>(null);
   const [labelFile, setLabelFile] = useState<File | null>(null);
   const [labelCrs, setLabelCrs] = useState("");
@@ -71,9 +75,17 @@ export default function ReleaseShellPage() {
     null,
   );
   const [lineamentFile, setLineamentFile] = useState<File | null>(null);
+  const [lineamentCrs, setLineamentCrs] = useState("EPSG:32631");
   const [lineamentInfo, setLineamentInfo] = useState<Record<string, unknown> | null>(
     null,
   );
+  const [lineamentApplied, setLineamentApplied] = useState<Record<string, unknown> | null>(
+    null,
+  );
+  const [overburdenApplied, setOverburdenApplied] = useState<Record<string, unknown> | null>(
+    null,
+  );
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   // Hazards come from the backend registry (settings.hazards), never a local list.
   const hazardNames = (settings?.hazards ?? []).map((h) => h.name);
@@ -147,6 +159,7 @@ export default function ReleaseShellPage() {
   const onUpload = async () => {
     setBusy(true);
     setError(null);
+    setUploadProgress(0);
     try {
       if (!file) throw new Error("Choose a Stage 2.5 dataset ZIP.");
       const created = await createTrainingDataset({
@@ -155,7 +168,9 @@ export default function ReleaseShellPage() {
         hazard_notes: hazardNotes,
       });
       const id = created.dataset.dataset_id;
-      await uploadShellDatasetZip(id, file);
+      await uploadShellDatasetZip(id, file, undefined, (ratio) =>
+        setUploadProgress(ratio),
+      );
       setDatasetId(id);
       const validated = await validateShellDataset(id);
       setValidation(validated.validation);
@@ -164,6 +179,7 @@ export default function ReleaseShellPage() {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(false);
+      setUploadProgress(null);
     }
   };
 
@@ -235,6 +251,10 @@ export default function ReleaseShellPage() {
         layerFile,
         layerName.trim(),
         layerCrs.trim(),
+        undefined,
+        undefined,
+        measurementType,
+        layerUnits.trim() || undefined,
       );
       setLayerReport(result.layer);
     } catch (err) {
@@ -268,6 +288,61 @@ export default function ReleaseShellPage() {
       if (!lineamentFile) throw new Error("Choose a lineament vector file (GeoJSON).");
       const result = await inspectShellLineaments(lineamentFile);
       setLineamentInfo(result.lineaments);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onApplyLineaments = async () => {
+    setBusy(true);
+    setError(null);
+    setLineamentApplied(null);
+    try {
+      if (!datasetId)
+        throw new Error("Upload and validate a dataset first, then apply lineaments.");
+      if (!lineamentFile) throw new Error("Choose a lineament vector file (GeoJSON).");
+      if (!lineamentCrs.trim())
+        throw new Error("Declare the lineament CRS. SSRI will not guess it.");
+      const result = await applyShellLineaments(
+        datasetId,
+        lineamentFile,
+        lineamentCrs.trim(),
+      );
+      setLineamentApplied(result.lineaments_applied);
+      const validated = await validateShellDataset(datasetId);
+      setValidation(validated.validation);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onApplyOverburden = async () => {
+    setBusy(true);
+    setError(null);
+    setOverburdenApplied(null);
+    try {
+      if (!datasetId)
+        throw new Error("Upload and validate a dataset first, then apply overburden.");
+      if (!layerFile) throw new Error("Choose an overburden point-grid CSV.");
+      if (!layerCrs.trim()) throw new Error("Declare the overburden CRS.");
+      if (measurementType !== "thickness") {
+        throw new Error(
+          "Only measurement_type=thickness can be written into the v2 overburden_thickness channel. Depth-to-interface must use layer name depth_to_bedrock and is not auto-converted.",
+        );
+      }
+      const result = await applyShellOverburden(datasetId, layerFile, {
+        layerName: layerName.trim() || "overburden_thickness",
+        crs: layerCrs.trim(),
+        measurementType,
+        units: layerUnits.trim() || "m",
+      });
+      setOverburdenApplied(result.overburden_applied);
+      const validated = await validateShellDataset(datasetId);
+      setValidation(validated.validation);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -366,6 +441,26 @@ export default function ReleaseShellPage() {
                 {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Upload and validate
               </button>
+              {file && (
+                <p className="text-[11px] text-stone">
+                  {(file.size / (1024 * 1024)).toFixed(1)} MB selected. There is no
+                  arbitrary app-level size rejection; disk, ZIP expansion guards, and
+                  optional SSRI_UPLOAD_MAX_BYTES still apply.
+                </p>
+              )}
+              {uploadProgress !== null && (
+                <div className="space-y-1">
+                  <div className="h-2 overflow-hidden rounded bg-mist">
+                    <div
+                      className="h-full bg-leaf transition-[width]"
+                      style={{ width: `${Math.round(uploadProgress * 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-stone">
+                    Upload progress {Math.round(uploadProgress * 100)}%
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -459,6 +554,7 @@ export default function ReleaseShellPage() {
                     {settings?.channel_schemas?.v2?.channel_names?.map((c) => (
                       <option key={c} value={c} />
                     ))}
+                    <option value="depth_to_bedrock" />
                   </datalist>
                 </label>
                 <label className="block">
@@ -479,16 +575,51 @@ export default function ReleaseShellPage() {
                     onChange={(e) => setLayerFile(e.target.files?.[0] || null)}
                   />
                 </label>
+                <label className="block">
+                  Measurement type
+                  <select
+                    className="mt-1 w-full rounded-lg border border-meadow bg-chalk px-3 py-2"
+                    value={measurementType}
+                    onChange={(e) => setMeasurementType(e.target.value)}
+                  >
+                    <option value="thickness">Thickness (overburden)</option>
+                    <option value="depth_to_interface">Depth to interface</option>
+                  </select>
+                </label>
+                <label className="block">
+                  Units (required for thickness)
+                  <input
+                    className="mt-1 w-full rounded-lg border border-meadow bg-chalk px-3 py-2"
+                    value={layerUnits}
+                    onChange={(e) => setLayerUnits(e.target.value)}
+                    placeholder="e.g. m — do not assume metres"
+                  />
+                </label>
               </div>
-              <button
-                type="button"
-                disabled={busy || !layerFile}
-                onClick={onValidateLayer}
-                className="mt-2 inline-flex items-center gap-2 rounded-lg border border-bark px-3 py-2 disabled:opacity-50"
-              >
-                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Check layer
-              </button>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={busy || !layerFile}
+                  onClick={onValidateLayer}
+                  className="inline-flex items-center gap-2 rounded-lg border border-bark px-3 py-2 disabled:opacity-50"
+                >
+                  {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Check layer
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || !layerFile || !datasetId}
+                  onClick={onApplyOverburden}
+                  className="inline-flex items-center gap-2 rounded-lg border border-bark px-3 py-2 disabled:opacity-50"
+                >
+                  Apply thickness into dataset (v2)
+                </button>
+              </div>
+              {overburdenApplied && (
+                <pre className="mt-2 max-h-40 overflow-auto rounded-lg bg-chalk p-3 text-[11px] text-stone">
+                  {JSON.stringify(overburdenApplied, null, 2)}
+                </pre>
+              )}
               {layerReport && (
                 <div className="mt-2 rounded-lg border border-meadow/60 bg-chalk px-3 py-2">
                   <div className="flex justify-between gap-2">
@@ -563,27 +694,52 @@ export default function ReleaseShellPage() {
             <div className="rounded-xl border border-meadow/60 bg-mist px-3 py-3 text-xs">
               <p className="font-medium text-bark">Lineament vectors (optional)</p>
               <p className="mt-1 text-stone">
-                Upload a GeoJSON of lineaments. We report how many segments we read and
-                their extent — no geometry is derived without your data.
+                Upload a GeoJSON of lineaments in the same projected metres CRS as the
+                tiles. Inspect first, then apply to derive lineament_density /
+                lineament_distance into every feature_stack (schema v2).
               </p>
+              <label className="mt-2 block">
+                CRS (required to apply)
+                <input
+                  className="mt-1 w-full rounded-lg border border-meadow bg-chalk px-3 py-2"
+                  value={lineamentCrs}
+                  onChange={(e) => setLineamentCrs(e.target.value)}
+                  placeholder="e.g. EPSG:32631"
+                />
+              </label>
               <input
                 type="file"
                 accept=".geojson,.json"
                 className="mt-2 w-full text-[11px]"
                 onChange={(e) => setLineamentFile(e.target.files?.[0] || null)}
               />
-              <button
-                type="button"
-                disabled={busy || !lineamentFile}
-                onClick={onInspectLineaments}
-                className="mt-2 inline-flex items-center gap-2 rounded-lg border border-bark px-3 py-2 disabled:opacity-50"
-              >
-                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Inspect lineaments
-              </button>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={busy || !lineamentFile}
+                  onClick={onInspectLineaments}
+                  className="inline-flex items-center gap-2 rounded-lg border border-bark px-3 py-2 disabled:opacity-50"
+                >
+                  {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Inspect lineaments
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || !lineamentFile || !datasetId}
+                  onClick={onApplyLineaments}
+                  className="inline-flex items-center gap-2 rounded-lg border border-bark px-3 py-2 disabled:opacity-50"
+                >
+                  Apply density/distance into dataset
+                </button>
+              </div>
               {lineamentInfo && (
                 <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-chalk p-3 text-[11px] text-stone">
                   {JSON.stringify(lineamentInfo, null, 2)}
+                </pre>
+              )}
+              {lineamentApplied && (
+                <pre className="mt-2 max-h-40 overflow-auto rounded-lg bg-chalk p-3 text-[11px] text-stone">
+                  {JSON.stringify(lineamentApplied, null, 2)}
                 </pre>
               )}
             </div>

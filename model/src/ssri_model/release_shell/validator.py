@@ -524,14 +524,21 @@ def validate_point_grid_layer(
     layer_name: str,
     crs: str,
     working_crs: str | None = None,
+    measurement_type: str | None = None,
+    units: str | None = None,
 ) -> dict[str, Any]:
     """Validate a single declared feature-layer upload (point-grid CSV).
 
     Always FEATURE_LAYER_ONLY — a single layer cannot supervise training.
     Surfaces a visible ``unit_sanity`` WARN/FAIL (for example negative
     ``overburden_thickness``) instead of hiding it inside a free-text message.
+
+    ``measurement_type`` for overburden must be ``thickness`` or
+    ``depth_to_interface``. Depth is never silently written as thickness.
     """
     checks: list[CheckResult] = []
+    mt = (measurement_type or "").strip().lower() or None
+    unit = (units or "").strip() or None
     try:
         layer = ingest_point_grid_csv(
             content,
@@ -553,7 +560,61 @@ def validate_point_grid_layer(
             "status": "FEATURE_LAYER_ONLY",
             "trainable": False,
             "scientific_validation_status": "NOT_VALIDATED",
+            "measurement_type": mt,
+            "units": unit,
         }
+
+    # Measurement-type contract for overburden / depth.
+    if mt in {"depth", "depth_to_interface", "depth_to_bedrock"}:
+        if layer.name == OVERBURDEN_THICKNESS:
+            checks.append(
+                CheckResult(
+                    "measurement_type",
+                    "FAIL",
+                    "measurement_type is depth-to-interface but the layer name is "
+                    f"'{OVERBURDEN_THICKNESS}'. Rename the layer to depth_to_bedrock "
+                    "— SSRI will not silently convert depth into thickness.",
+                    {"measurement_type": mt, "layer_name": layer.name},
+                )
+            )
+        else:
+            checks.append(
+                CheckResult(
+                    "measurement_type",
+                    "PASS",
+                    f"Declared measurement_type={mt} for layer '{layer.name}'. "
+                    "Depth is not auto-converted into the v2 overburden_thickness channel.",
+                    {"measurement_type": mt},
+                )
+            )
+    elif mt in {"thickness", "overburden_thickness"} or layer.name == OVERBURDEN_THICKNESS:
+        if not unit:
+            checks.append(
+                CheckResult(
+                    "units_declared",
+                    "WARN",
+                    "Overburden thickness units were not declared. "
+                    "State the unit (for example 'm'). Do not assume metres.",
+                    {"units": None},
+                )
+            )
+        else:
+            checks.append(
+                CheckResult(
+                    "units_declared",
+                    "PASS",
+                    f"Units declared as '{unit}'.",
+                    {"units": unit},
+                )
+            )
+        checks.append(
+            CheckResult(
+                "measurement_type",
+                "PASS",
+                "Treating values as overburden thickness (not depth-to-interface).",
+                {"measurement_type": mt or "thickness"},
+            )
+        )
 
     checks.append(
         CheckResult(
@@ -622,4 +683,8 @@ def validate_point_grid_layer(
         "status": layer.status,
         "trainable": layer.trainable,
         "scientific_validation_status": "NOT_VALIDATED",
+        "measurement_type": mt or ("thickness" if layer.name == OVERBURDEN_THICKNESS else None),
+        "units": unit,
+        "crs": layer.crs,
+        "working_crs": layer.working_crs,
     }

@@ -26,15 +26,22 @@ from ssri_model.jobs.executor import JobExecutor
 from ssri_model.jobs.models import JobStatus, JobType
 from ssri_model.jobs.service import JobService
 from ssri_model.manual_training.exceptions import ManualTrainingError
-from ssri_model.manual_training.ingest import ingest_zip_bytes
+from ssri_model.manual_training.ingest import ingest_zip_path
 from ssri_model.manual_training.registry import ModelRegistry
 from ssri_model.manual_training.storage import TrainingStorage
+from ssri_model.manual_training.upload_io import cleanup_temp, spool_upload_to_temp
 from ssri_model.release_shell.channel_schema import (
     CHANNEL_NAMES_V1,
     CHANNEL_NAMES_V2,
+    OVERBURDEN_THICKNESS,
     SCHEMA_V1,
     SCHEMA_V2,
 )
+from ssri_model.release_shell.feature_apply import (
+    apply_lineaments_to_dataset,
+    apply_overburden_to_dataset,
+)
+from ssri_model.release_shell.point_grid_csv import ingest_point_grid_csv
 from ssri_model.release_shell.flags import (
     default_limitations,
     preview_unevaluated_scores,
@@ -211,21 +218,32 @@ async def shell_upload(
     if blocked:
         return blocked
     storage = _storage(service_config)
-    raw = await file.read()
+    tmp_path = None
+    nbytes = 0
     try:
-        ingest_zip_bytes(
+        tmp_path, nbytes = await spool_upload_to_temp(
+            file, suffix=Path(file.filename or "upload.zip").suffix or ".zip"
+        )
+        ingest_zip_path(
             storage,
             dataset_id,
             filename=file.filename or "upload.zip",
-            content=raw,
+            zip_path=tmp_path,
         )
     except ManualTrainingError as exc:
-        status = 413 if exc.code == "UPLOAD_TOO_LARGE" else 400
+        status = 413 if exc.code in {
+            "UPLOAD_TOO_LARGE",
+            "ZIP_TOO_LARGE_EXPANDED",
+            "ZIP_BOMB",
+            "ZIP_TOO_MANY_FILES",
+        } else 400
         return JSONResponse(
             status_code=status,
             content={"error": {"code": exc.code, "message": exc.message}},
         )
-    return {"dataset_id": dataset_id, "uploaded": True, "bytes": len(raw)}
+    finally:
+        cleanup_temp(tmp_path)
+    return {"dataset_id": dataset_id, "uploaded": True, "bytes": nbytes}
 
 
 @router.post("/datasets/{dataset_id}/validate")
@@ -456,12 +474,17 @@ async def shell_validate_layer(
     layer_name: str = Form(...),
     crs: str = Form(""),
     working_crs: str | None = Form(None),
+    measurement_type: str | None = Form(None),
+    units: str | None = Form(None),
     _principal: AuthenticatedPrincipal = Depends(require_run_inference),
 ) -> Any:
     """Validate one declared feature layer (point-grid CSV). CRS is required.
 
     A single layer is FEATURE_LAYER_ONLY — this never trains. Surfaces
     unit-sanity warnings (for example negative overburden_thickness) explicitly.
+
+    For overburden, pass ``measurement_type`` (``thickness`` or ``depth_to_interface``)
+    and ``units`` (e.g. ``m``). Depth is never silently treated as thickness.
     """
     blocked = _require_shell()
     if blocked:
@@ -473,9 +496,104 @@ async def shell_validate_layer(
         layer_name=layer_name,
         crs=crs,
         working_crs=(working_crs or None),
+        measurement_type=measurement_type,
+        units=units,
     )
     status = 200 if report.get("overall") != "FAIL" else 400
     return JSONResponse(status_code=status, content={"layer": report})
+
+
+@router.post("/datasets/{dataset_id}/lineaments/apply")
+async def shell_apply_lineaments(
+    dataset_id: str,
+    file: UploadFile = File(...),
+    crs: str = Form(""),
+    window_m: float = Form(500.0),
+    service_config: ServiceConfig = Depends(get_service_config),
+    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+) -> Any:
+    """Derive lineament_density / lineament_distance and write them into every tile."""
+    blocked = _require_shell()
+    if blocked:
+        return blocked
+    if not (crs or "").strip():
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": {
+                    "code": "CRS_REQUIRED",
+                    "message": "Declare the lineament CRS (EPSG or WKT). SSRI will not guess.",
+                }
+            },
+        )
+    storage = _storage(service_config)
+    try:
+        record = storage.get_dataset(dataset_id)
+    except ManualTrainingError as exc:
+        return JSONResponse(
+            status_code=404, content={"error": {"code": exc.code, "message": exc.message}}
+        )
+    root = Path(record.root_path)
+    raw = await file.read()
+    try:
+        segments = load_lineament_segments(raw)
+        result = apply_lineaments_to_dataset(
+            root, segments, window_m=float(window_m), lineament_crs=crs.strip()
+        )
+    except (ValueError, KeyError, UnicodeDecodeError, json.JSONDecodeError, FileNotFoundError) as exc:
+        return JSONResponse(
+            status_code=400,
+            content={"error": {"code": "LINEAMENT_APPLY", "message": str(exc)}},
+        )
+    return {"lineaments_applied": result}
+
+
+@router.post("/datasets/{dataset_id}/overburden/apply")
+async def shell_apply_overburden(
+    dataset_id: str,
+    file: UploadFile = File(...),
+    layer_name: str = Form(OVERBURDEN_THICKNESS),
+    crs: str = Form(""),
+    working_crs: str | None = Form(None),
+    measurement_type: str = Form("thickness"),
+    units: str = Form("m"),
+    service_config: ServiceConfig = Depends(get_service_config),
+    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+) -> Any:
+    """Resample an overburden thickness grid onto every tile's overburden channel."""
+    blocked = _require_shell()
+    if blocked:
+        return blocked
+    storage = _storage(service_config)
+    try:
+        record = storage.get_dataset(dataset_id)
+    except ManualTrainingError as exc:
+        return JSONResponse(
+            status_code=404, content={"error": {"code": exc.code, "message": exc.message}}
+        )
+    root = Path(record.root_path)
+    raw = await file.read()
+    try:
+        layer = ingest_point_grid_csv(
+            raw,
+            filename=file.filename or "overburden.csv",
+            layer_name=layer_name,
+            crs=crs,
+            working_crs=(working_crs or None),
+        )
+        result = apply_overburden_to_dataset(
+            root,
+            layer,
+            measurement_type=measurement_type,
+            units=units,
+        )
+    except (ManualTrainingError, ValueError, FileNotFoundError) as exc:
+        code = getattr(exc, "code", "OVERBURDEN_APPLY")
+        message = getattr(exc, "message", str(exc))
+        return JSONResponse(
+            status_code=400, content={"error": {"code": code, "message": message}}
+        )
+    return {"overburden_applied": result}
 
 
 @router.post("/labels/inventory")

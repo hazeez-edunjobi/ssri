@@ -20,7 +20,7 @@
 ## What changed
 
 1. **`SSRI_UPLOAD_MAX_ROWS`** (new) — optional positive int; **default unset = no row limit**. Enforced in streaming `iter_csv_rows`.
-2. **`SSRI_UPLOAD_MAX_BYTES`** (new) — default **1073741824 (1 GiB)**. Shared helper `reject_if_upload_too_large` used by CSV convert, classic zip ingest, and platform upload. Oversize → **HTTP 413** with a readable message (`UPLOAD_TOO_LARGE`).
+2. **`SSRI_UPLOAD_MAX_BYTES`** — **optional**. Default is **unset = no application-level byte cap** (the former 1 GiB default was removed). When set, shared helper `reject_if_upload_too_large` enforces it (CSV convert, zip ingest, platform upload). Oversize → **HTTP 413** (`UPLOAD_TOO_LARGE`). ZIP bombs remain guarded by uncompressed-size / file-count / compression-ratio limits.
 3. CSV parse **streams** row-by-row into point maps (no full `list[dict]` of every row).
 4. Validator rules, spatial-split logic, minimums, and gates **unchanged**.
 5. Legacy flag-off behaviour: row cap removed on the shared CSV path (it was never flag-gated). Byte default raised 500 MiB → **1 GiB** on that shared path.

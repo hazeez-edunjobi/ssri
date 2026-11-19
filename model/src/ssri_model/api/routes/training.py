@@ -22,7 +22,8 @@ from ssri_model.jobs.executor import JobExecutor
 from ssri_model.jobs.models import JobStatus, JobType
 from ssri_model.jobs.service import JobService
 from ssri_model.manual_training.exceptions import ManualTrainingError
-from ssri_model.manual_training.ingest import ingest_zip_bytes, register_existing_path
+from ssri_model.manual_training.ingest import ingest_zip_path, register_existing_path
+from ssri_model.manual_training.upload_io import cleanup_temp, spool_upload_to_temp
 from ssri_model.manual_training.registry import ModelRegistry
 from ssri_model.manual_training.storage import TrainingStorage
 from ssri_model.manual_training.validation import validate_training_dataset
@@ -176,20 +177,32 @@ async def upload_dataset_zip(
     service_config: ServiceConfig = Depends(get_service_config),
     _principal: AuthenticatedPrincipal = Depends(require_run_inference),
 ) -> dict[str, Any]:
+    from pathlib import Path
+
     storage = _storage(service_config)
-    content = await file.read()
+    tmp_path = None
     try:
-        record, preview = ingest_zip_bytes(
+        tmp_path, _nbytes = await spool_upload_to_temp(
+            file, suffix=Path(file.filename or "dataset.zip").suffix or ".zip"
+        )
+        record, preview = ingest_zip_path(
             storage,
             dataset_id,
             filename=file.filename or "dataset.zip",
-            content=content,
+            zip_path=tmp_path,
         )
     except ManualTrainingError as exc:
         from fastapi.responses import JSONResponse
 
-        status = 413 if exc.code == "UPLOAD_TOO_LARGE" else 400
+        status = 413 if exc.code in {
+            "UPLOAD_TOO_LARGE",
+            "ZIP_TOO_LARGE_EXPANDED",
+            "ZIP_BOMB",
+            "ZIP_TOO_MANY_FILES",
+        } else 400
         return JSONResponse(status_code=status, content=_error_payload(exc))  # type: ignore[return-value]
+    finally:
+        cleanup_temp(tmp_path)
     return {
         "dataset": record.to_dict(),
         "preview": preview.to_dict(),

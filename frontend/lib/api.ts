@@ -556,16 +556,46 @@ export async function uploadShellDatasetZip(
   datasetId: string,
   file: File,
   apiKey?: string,
+  onProgress?: (ratio: number) => void,
 ): Promise<{ dataset_id: string; uploaded: boolean; bytes: number }> {
   const form = new FormData();
   form.append("file", file);
-  const response = await fetch(
-    `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/upload`,
-    { method: "POST", headers: formAuthHeaders(apiKey), body: form },
-  );
-  if (!response.ok)
-    throw new Error(await parseError(response, "Upload failed"));
-  return response.json();
+  // XHR so large uploads can report progress (fetch has no upload progress).
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/upload`);
+    const headers = formAuthHeaders(apiKey);
+    Object.entries(headers).forEach(([key, value]) => {
+      if (value) xhr.setRequestHeader(key, value);
+    });
+    xhr.upload.onprogress = (event) => {
+      if (!onProgress || !event.lengthComputable || event.total <= 0) return;
+      onProgress(Math.min(1, event.loaded / event.total));
+    };
+    xhr.onload = async () => {
+      const raw = xhr.responseText || "";
+      let body: unknown = {};
+      try {
+        body = raw ? JSON.parse(raw) : {};
+      } catch {
+        body = { error: { message: raw || "Upload failed" } };
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(body as { dataset_id: string; uploaded: boolean; bytes: number });
+        return;
+      }
+      const message =
+        typeof body === "object" &&
+        body &&
+        "error" in body &&
+        typeof (body as { error?: { message?: string } }).error?.message === "string"
+          ? (body as { error: { message: string } }).error.message
+          : `Upload failed (${xhr.status})`;
+      reject(new Error(message));
+    };
+    xhr.onerror = () => reject(new Error("Upload failed (network error)"));
+    xhr.send(form);
+  });
 }
 
 export async function validateShellDataset(
@@ -747,12 +777,16 @@ export async function validateShellLayer(
   crs: string,
   apiKey?: string,
   workingCrs?: string,
+  measurementType?: string,
+  units?: string,
 ): Promise<{ layer: ShellLayerReport }> {
   const form = new FormData();
   form.append("file", file);
   form.append("layer_name", layerName);
   form.append("crs", crs);
   if (workingCrs) form.append("working_crs", workingCrs);
+  if (measurementType) form.append("measurement_type", measurementType);
+  if (units) form.append("units", units);
   const response = await fetch(`${apiUrl}/api/v1/release-shell/layers/validate`, {
     method: "POST",
     headers: formAuthHeaders(apiKey),
@@ -760,6 +794,54 @@ export async function validateShellLayer(
   });
   if (!response.ok)
     throw new Error(await parseError(response, "Could not check the layer"));
+  return response.json();
+}
+
+export async function applyShellLineaments(
+  datasetId: string,
+  file: File,
+  crs: string,
+  windowM = 500,
+  apiKey?: string,
+): Promise<{ lineaments_applied: Record<string, unknown> }> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("crs", crs);
+  form.append("window_m", String(windowM));
+  const response = await fetch(
+    `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/lineaments/apply`,
+    { method: "POST", headers: formAuthHeaders(apiKey), body: form },
+  );
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not apply lineaments to the dataset"));
+  return response.json();
+}
+
+export async function applyShellOverburden(
+  datasetId: string,
+  file: File,
+  options: {
+    layerName?: string;
+    crs: string;
+    workingCrs?: string;
+    measurementType?: string;
+    units?: string;
+  },
+  apiKey?: string,
+): Promise<{ overburden_applied: Record<string, unknown> }> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("layer_name", options.layerName || "overburden_thickness");
+  form.append("crs", options.crs);
+  if (options.workingCrs) form.append("working_crs", options.workingCrs);
+  form.append("measurement_type", options.measurementType || "thickness");
+  form.append("units", options.units || "m");
+  const response = await fetch(
+    `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/overburden/apply`,
+    { method: "POST", headers: formAuthHeaders(apiKey), body: form },
+  );
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not apply overburden to the dataset"));
   return response.json();
 }
 

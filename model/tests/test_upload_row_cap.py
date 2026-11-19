@@ -37,9 +37,20 @@ def test_upload_max_rows_default_unlimited(monkeypatch: pytest.MonkeyPatch) -> N
     assert upload_max_rows() is None
 
 
-def test_upload_max_bytes_default_1gib(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_upload_max_bytes_default_unlimited(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("SSRI_UPLOAD_MAX_BYTES", raising=False)
+    assert upload_max_bytes() is None
+
+
+def test_upload_max_bytes_optional_cap_still_enforced(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SSRI_UPLOAD_MAX_BYTES", str(1 * 1024 * 1024 * 1024))
     assert upload_max_bytes() == 1 * 1024 * 1024 * 1024
+    reject_if_upload_too_large(1 * 1024 * 1024 * 1024)
+    with pytest.raises(ManualTrainingError) as caught:
+        reject_if_upload_too_large(1 * 1024 * 1024 * 1024 + 1)
+    assert caught.value.code == "UPLOAD_TOO_LARGE"
 
 
 def test_iter_csv_rows_streams_and_is_not_a_list() -> None:

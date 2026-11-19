@@ -280,11 +280,24 @@ def test_release_shell_disabled_when_flag_off(tmp_path, monkeypatch):
 # --- point-grid CSV layer (headed/headerless, delimiters, CRS) ----------------
 
 
-def _layer_post(client: TestClient, csv: bytes, *, crs: str, name: str = "overburden_thickness",
-                filename: str = "layer.csv", working_crs: str | None = None):
+def _layer_post(
+    client: TestClient,
+    csv: bytes,
+    *,
+    crs: str,
+    name: str = "overburden_thickness",
+    filename: str = "layer.csv",
+    working_crs: str | None = None,
+    measurement_type: str | None = "thickness",
+    units: str | None = "m",
+):
     data = {"layer_name": name, "crs": crs}
     if working_crs is not None:
         data["working_crs"] = working_crs
+    if measurement_type is not None:
+        data["measurement_type"] = measurement_type
+    if units is not None:
+        data["units"] = units
     return client.post(
         "/api/v1/release-shell/layers/validate",
         data=data,

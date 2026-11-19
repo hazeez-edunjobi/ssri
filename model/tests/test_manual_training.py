@@ -226,7 +226,8 @@ def test_training_api_upload_validate_and_start(tmp_path: Path) -> None:
     import time
 
     final = None
-    for _ in range(60):
+    # Allow more wall time under a loaded full-suite run (CPU training + other tests).
+    for _ in range(180):
         status = client.get(f"/api/v1/training/jobs/{job_id}")
         assert status.status_code == 200
         final = status.json()

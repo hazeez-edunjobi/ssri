@@ -13,10 +13,34 @@ from ssri_model.manual_training.exceptions import (
     UnsafePathError,
 )
 from ssri_model.manual_training.storage import DatasetRecord, TrainingStorage
-from ssri_model.manual_training.upload_limits import reject_if_upload_too_large
+from ssri_model.manual_training.upload_limits import (
+    reject_if_upload_too_large,
+    reject_if_zip_expansion_unsafe,
+)
 from ssri_model.manual_training.validation import DatasetPreview, validate_training_dataset
 
 ALLOWED_ZIP_SUFFIXES = {".zip"}
+
+
+def _zip_expansion_stats(archive: zipfile.ZipFile) -> tuple[int, int]:
+    """Return (file_count, total_uncompressed_size) for non-directory members."""
+    file_count = 0
+    uncompressed = 0
+    for info in archive.infolist():
+        if info.is_dir():
+            continue
+        file_count += 1
+        uncompressed += max(0, int(info.file_size))
+    return file_count, uncompressed
+
+
+def _guard_zip_archive(archive: zipfile.ZipFile, *, compressed_size: int) -> None:
+    file_count, uncompressed = _zip_expansion_stats(archive)
+    reject_if_zip_expansion_unsafe(
+        compressed_size=max(1, compressed_size),
+        uncompressed_size=uncompressed,
+        file_count=file_count,
+    )
 
 
 def _safe_extract_zip(archive: zipfile.ZipFile, destination: Path) -> None:
@@ -56,6 +80,54 @@ def _unwrap_single_root(data_root: Path) -> None:
     nested.rmdir()
 
 
+def _finalize_ingest(
+    storage: TrainingStorage,
+    dataset_id: str,
+    data_root: Path,
+) -> tuple[DatasetRecord, DatasetPreview]:
+    preview = validate_training_dataset(data_root)
+    record = storage.get_dataset(dataset_id)
+    record.validation_status = preview.validation_status
+    record.validation_errors = list(preview.errors)
+    record.preview = preview.to_dict()
+    record.root_path = str(data_root)
+    storage.save_dataset(record)
+    return record, preview
+
+
+def ingest_zip_path(
+    storage: TrainingStorage,
+    dataset_id: str,
+    *,
+    filename: str,
+    zip_path: Path,
+) -> tuple[DatasetRecord, DatasetPreview]:
+    """Extract a Stage 2.5 dataset zip from a disk path (preferred for large uploads)."""
+    suffix = Path(filename).suffix.lower()
+    if suffix not in ALLOWED_ZIP_SUFFIXES:
+        raise ManualTrainingError(
+            f"Unsupported upload type '{suffix or filename}'. "
+            "Upload a .zip containing a Stage 2.5 dataset "
+            "(manifest.json, statistics.json, train/, validation/).",
+            code="UNSUPPORTED_UPLOAD",
+        )
+    path = Path(zip_path)
+    size = path.stat().st_size
+    reject_if_upload_too_large(size)
+    if not zipfile.is_zipfile(path):
+        raise ManualTrainingError(
+            "The uploaded file is not a valid zip archive.",
+            code="INVALID_ZIP",
+        )
+
+    data_root = storage.clear_dataset_data(dataset_id)
+    with zipfile.ZipFile(path) as archive:
+        _guard_zip_archive(archive, compressed_size=size)
+        _safe_extract_zip(archive, data_root)
+    _unwrap_single_root(data_root)
+    return _finalize_ingest(storage, dataset_id, data_root)
+
+
 def ingest_zip_bytes(
     storage: TrainingStorage,
     dataset_id: str,
@@ -63,7 +135,7 @@ def ingest_zip_bytes(
     filename: str,
     content: bytes,
 ) -> tuple[DatasetRecord, DatasetPreview]:
-    """Extract a Stage 2.5 dataset zip into the dataset data directory."""
+    """Extract a Stage 2.5 dataset zip held in memory (small uploads / tests)."""
     suffix = Path(filename).suffix.lower()
     if suffix not in ALLOWED_ZIP_SUFFIXES:
         raise ManualTrainingError(
@@ -79,19 +151,12 @@ def ingest_zip_bytes(
             code="INVALID_ZIP",
         )
 
-    record = storage.get_dataset(dataset_id)
     data_root = storage.clear_dataset_data(dataset_id)
     with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        _guard_zip_archive(archive, compressed_size=max(1, len(content)))
         _safe_extract_zip(archive, data_root)
     _unwrap_single_root(data_root)
-
-    preview = validate_training_dataset(data_root)
-    record.validation_status = preview.validation_status
-    record.validation_errors = list(preview.errors)
-    record.preview = preview.to_dict()
-    record.root_path = str(data_root)
-    storage.save_dataset(record)
-    return record, preview
+    return _finalize_ingest(storage, dataset_id, data_root)
 
 
 def register_existing_path(
@@ -107,7 +172,6 @@ def register_existing_path(
             f"Dataset path does not exist or is not a directory: {source}",
             code="SOURCE_NOT_FOUND",
         )
-    record = storage.get_dataset(dataset_id)
     data_root = storage.clear_dataset_data(dataset_id)
     # Copy so later mutations stay under training storage
     for item in source.iterdir():
@@ -117,12 +181,7 @@ def register_existing_path(
         else:
             shutil.copy2(item, dest)
 
-    preview = validate_training_dataset(data_root)
-    record.validation_status = preview.validation_status
-    record.validation_errors = list(preview.errors)
-    record.preview = preview.to_dict()
-    record.root_path = str(data_root)
-    storage.save_dataset(record)
+    record, preview = _finalize_ingest(storage, dataset_id, data_root)
     if preview.validation_status != "passed":
         raise DatasetValidationFailed(
             "Dataset was registered but failed validation.",
