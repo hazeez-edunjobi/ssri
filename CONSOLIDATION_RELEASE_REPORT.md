@@ -126,7 +126,7 @@ Evidence: `poc/release_shell/outputs/consolidate_frontend_*.txt`
 Recorded after Phase 5 merge:
 
 ```text
-(see section footer / git rev-parse main after merge)
+3c5cb600cf2a269b5ef5a47e9e0ea4510c6e6055
 ```
 
 ---
