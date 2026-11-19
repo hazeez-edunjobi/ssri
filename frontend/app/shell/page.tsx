@@ -10,6 +10,7 @@ import {
   getShellEvaluation,
   getShellJob,
   getShellStatusFull,
+  applyShellLabels,
   applyShellLineaments,
   applyShellOverburden,
   inspectShellLineaments,
@@ -273,6 +274,22 @@ export default function ReleaseShellPage() {
       if (!labelCrs.trim()) throw new Error("Declare the CRS for the label file.");
       const result = await uploadShellLabelInventory(labelFile, labelCrs.trim());
       setLabelInventory(result.labels);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onApplyLabels = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      if (!datasetId) throw new Error("Upload a Stage 2.5 dataset before applying labels.");
+      if (!labelFile) throw new Error("Choose a label inventory CSV.");
+      if (!labelCrs.trim()) throw new Error("Declare the CRS for the label file.");
+      const result = await applyShellLabels(datasetId, labelFile, labelCrs.trim());
+      setLabelInventory(result.labels_applied);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -675,15 +692,30 @@ export default function ReleaseShellPage() {
                   />
                 </label>
               </div>
-              <button
-                type="button"
-                disabled={busy || !labelFile}
-                onClick={onUploadLabels}
-                className="mt-2 inline-flex items-center gap-2 rounded-lg border border-bark px-3 py-2 disabled:opacity-50"
-              >
-                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Upload label inventory
-              </button>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={busy || !labelFile}
+                  onClick={onUploadLabels}
+                  className="inline-flex items-center gap-2 rounded-lg border border-bark px-3 py-2 disabled:opacity-50"
+                >
+                  {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Summarise inventory
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || !labelFile || !datasetId}
+                  onClick={onApplyLabels}
+                  className="inline-flex items-center gap-2 rounded-lg border border-leaf px-3 py-2 disabled:opacity-50"
+                  data-testid="shell-apply-labels"
+                >
+                  Apply onto dataset tiles
+                </button>
+              </div>
+              <p className="mt-1 text-[11px] text-stone">
+                Apply snaps inventory points onto uploaded tiles. Empty cells stay
+                unchanged. Re-validate before training.
+              </p>
               {labelInventory && (
                 <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-chalk p-3 text-[11px] text-stone">
                   {JSON.stringify(labelInventory, null, 2)}

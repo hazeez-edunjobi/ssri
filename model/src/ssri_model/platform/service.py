@@ -135,6 +135,7 @@ def execute_platform_training(
     *,
     output_root: str,
     run_id: str,
+    epochs: int | None = None,
 ) -> None:
     """Train with the existing Stage 2.5 runner. Never marks a model scientifically validated."""
     run = store.get_run(run_id)
@@ -164,6 +165,12 @@ def execute_platform_training(
         )
         return
 
+    resolved_epochs = int(epochs) if epochs is not None else 5
+    if resolved_epochs < 1:
+        resolved_epochs = 1
+    if resolved_epochs > 500:
+        resolved_epochs = 500
+
     run.status = "TRAINING"
     run.started_at = run.started_at or _now()
     store.save_run(run)
@@ -176,7 +183,7 @@ def execute_platform_training(
             dataset_id=_ensure_manual_dataset(storage, version),
             run_id=f"platform_{run.id[:8]}",
             job_id=run.job_id,
-            epochs=1,
+            epochs=resolved_epochs,
             batch_size=2,
             learning_rate=1e-3,
             seed=run.seed,
@@ -204,11 +211,16 @@ def execute_platform_training(
     run.status = "EVALUATING"
     store.save_run(run)
     metrics = dict(result.get("metrics") or {})
+    metrics["epochs_requested"] = resolved_epochs
     run.metrics = metrics
     run.status = "COMPLETED"
     run.completed_at = _now()
     run.scientific_validation_status = "NOT_VALIDATED"
     store.save_run(run)
+    channel_count = int(result.get("channels") or version.channel_count or 13)
+    schema_version = "v1" if channel_count <= 13 else "v2"
+    metrics["registry_model_id"] = str(result.get("model_id") or "")
+    metrics["channel_schema_version"] = schema_version
     model = store.add_model(
         PlatformModel(
             id=str(uuid.uuid4()),
@@ -220,11 +232,13 @@ def execute_platform_training(
             name=str(result.get("model_name") or run.name),
             checkpoint_path=str(result.get("checkpoint_path") or ""),
             metrics=metrics,
-            feature_channels=13,
+            feature_channels=channel_count,
             scientific_validation_status="NOT_VALIDATED",
             created_at=_now(),
         )
     )
+    run.model_id = model.id
+    store.save_run(run)
     store.add_activity(
         user_id=run.user_id,
         action="training_completed",

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from ssri_model.api.app import create_app
@@ -133,13 +135,35 @@ def test_training_run_is_async_and_not_scientifically_validated(tmp_path) -> Non
 
     models = client.get("/api/v1/platform/models", headers=_auth("user-a"))
     assert models.json()["total"] == 1
-    assert models.json()["models"][0]["scientific_validation_status"] == "NOT_VALIDATED"
-    assert models.json()["models"][0]["feature_channels"] == 13
+    model_row = models.json()["models"][0]
+    assert model_row["scientific_validation_status"] == "NOT_VALIDATED"
+    assert model_row["feature_channels"] == 13
+    assert model_row["metrics"].get("registry_model_id")
+    assert model_row["metrics"].get("channel_schema_version") == "v1"
+    assert model_row["metrics"].get("epochs_requested") == 5
+
+    promoted = client.post(
+        f"/api/v1/platform/models/{model_row['id']}/promote",
+        headers=_auth("user-a"),
+    )
+    assert promoted.status_code == 200, promoted.text
+    assert Path(promoted.json()["checkpoint_path"]).exists()
+    active = client.get("/api/v1/training/models/active")
+    assert active.status_code == 200
+    assert active.json()["checkpoint_path"] == promoted.json()["checkpoint_path"]
+
+    # Ownership: another user cannot promote this model.
+    denied = client.post(
+        f"/api/v1/platform/models/{model_row['id']}/promote",
+        headers=_auth("user-b"),
+    )
+    assert denied.status_code == 404
 
     activity = client.get("/api/v1/platform/activity", headers=_auth("user-a"))
     actions = {item["action"] for item in activity.json()["activities"]}
     assert "training_completed" in actions
     assert "model_created" in actions
+    assert "model_promoted" in actions
 
 
 def test_admin_portal_is_role_gated(tmp_path) -> None:

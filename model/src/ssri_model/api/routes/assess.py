@@ -28,6 +28,7 @@ from ssri_model.api.dependencies import (
 from ssri_model.api.domain_similarity import resolve_domain_similarity
 from ssri_model.api.geojson import point_bbox, validate_polygon_geojson
 from ssri_model.api.geotiff_output import write_probability_geotiff
+from ssri_model.api.location_provenance import build_location_provenance
 from ssri_model.auth.models import AuthenticatedPrincipal
 from ssri_model.inference.checkpoint import load_inference_checkpoint
 from ssri_model.ml.constants import CHANNEL_COUNT, SUPPORTED_LABELS
@@ -94,6 +95,7 @@ class AssessResponseBody(BaseModel):
     channel_names: list[str] | None = None
     checkpoint_id: str | None = None
     evaluation_summary: dict[str, Any] | None = None
+    location_provenance: dict[str, Any] | None = None
 
 
 _ALLOWED_FEATURE_CHANNEL_COUNTS = frozenset({CHANNEL_COUNT, 16})
@@ -128,10 +130,10 @@ def _resolve_features(
     *,
     output_root: Path,
     assessment_id: str,
-) -> tuple[torch.Tensor, list[str]]:
+) -> tuple[torch.Tensor, list[str], dict[str, Any] | None]:
     notes: list[str] = []
     if body.features is not None:
-        return _load_feature_tensor(body.features), notes
+        return _load_feature_tensor(body.features), notes, None
 
     if body.point is None and body.polygon_geojson is None:
         raise InvalidServiceRequestError(
@@ -163,7 +165,7 @@ def _resolve_features(
         resolution_m=body.resolution_m,
     )
     notes.append(f"acquisition_bbox={meta['bbox']}")
-    return _array_to_tensor(array), notes
+    return _array_to_tensor(array), notes, meta
 
 
 def _persist_assessment_response(
@@ -210,6 +212,13 @@ def assess_endpoint(
         payload["notes"] = list(payload.get("notes") or []) + [
             f"requested_by={principal.key_id}",
         ]
+        if body.point is not None and not payload.get("location_provenance"):
+            payload["location_provenance"] = build_location_provenance(
+                latitude=body.point.latitude,
+                longitude=body.point.longitude,
+                resolution_m=body.resolution_m,
+                aoi_source="point",
+            )
         response = AssessResponseBody.model_validate(payload)
         _persist_assessment_response(
             output_root=output_root,
@@ -247,7 +256,7 @@ def assess_endpoint(
             )
         raise InvalidServiceRequestError("Assessment requires 'checkpoint'.")
 
-    features, acquisition_notes = _resolve_features(
+    features, acquisition_notes, acquisition_meta = _resolve_features(
         body,
         output_root=output_root,
         assessment_id=assessment_id,
@@ -441,6 +450,37 @@ def assess_endpoint(
 
         evaluation_summary = load_evaluation_summary(checkpoint_path)
 
+    aoi_source = None
+    for note in acquisition_notes:
+        if note.startswith("aoi_source="):
+            aoi_source = note.split("=", 1)[1]
+            break
+    if aoi_source is None and body.features is not None:
+        aoi_source = "offline_features"
+    location_provenance = build_location_provenance(
+        latitude=query_lat,
+        longitude=query_lon,
+        resolution_m=body.resolution_m,
+        aoi_source=aoi_source,
+        acquisition_meta=acquisition_meta,
+    )
+    if body.features is not None:
+        location_provenance["notes"].append(
+            "Offline feature tensor supplied; map point (if any) is used for region gating, "
+            "not for raster sampling of the .npy stack."
+        )
+    notes.append(
+        "location_provenance="
+        + (
+            f"submitted={query_lat},{query_lon}"
+            if query_lat is not None and query_lon is not None
+            else "none"
+        )
+    )
+    grid = location_provenance.get("model_grid") or {}
+    if grid.get("pixel_row") is not None and grid.get("pixel_col") is not None:
+        notes.append(f"model_grid_pixel=row{grid['pixel_row']}_col{grid['pixel_col']}")
+
     response = AssessResponseBody(
         assessment_id=result.assessment_id,
         hazard_profiles=result_profiles,
@@ -458,6 +498,7 @@ def assess_endpoint(
         channel_names=schema_names,
         checkpoint_id=checkpoint_path.stem if release_shell_enabled() else None,
         evaluation_summary=evaluation_summary,
+        location_provenance=location_provenance,
     )
     _persist_assessment_response(
         output_root=output_root,

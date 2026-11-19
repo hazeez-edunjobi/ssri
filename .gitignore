@@ -87,3 +87,7 @@ poc/release_shell/outputs/measure_upload_profile/*/
 
 # Local scratch from other finish branches / recovery
 poc/release_shell/outputs/frontend_rehearsal/
+
+# Local handover acceptance scratch
+model/_handover_tmp/
+

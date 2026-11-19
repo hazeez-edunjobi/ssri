@@ -365,7 +365,12 @@ def start_run(
             if current and current.status == "CANCELLED":
                 return
             try:
-                execute_platform_training(store, output_root=output_root, run_id=run_id)
+                execute_platform_training(
+                    store,
+                    output_root=output_root,
+                    run_id=run_id,
+                    epochs=int((job.payload or {}).get("epochs") or 5),
+                )
                 finished = store.get_run(run_id)
                 if finished and finished.status == "COMPLETED":
                     job_service.mark_completed(
@@ -511,6 +516,64 @@ def get_model(
     except PlatformError as exc:
         return _error(exc)
     return {"model": model.to_dict()}
+
+
+@router.post("/models/{model_id}/promote")
+def promote_model(
+    model_id: str,
+    request: Request,
+    authorization: str | None = Header(default=None),
+    service_config: ServiceConfig = Depends(get_service_config),
+) -> Any:
+    """Promote an owned platform checkpoint into the active assessment registry.
+
+    Training completion never auto-promotes. This copies the existing registry
+    entry (created during training) into the active assess path used by
+    ``/dashboard``. It does not mark the model scientifically validated.
+    """
+    try:
+        store = _store(request)
+        actor = get_actor(request, authorization)
+        model = store.get_model(model_id)
+        if model is None or (model.user_id != actor.user_id and not actor.is_admin):
+            raise PlatformError("Model not found.", code="NOT_FOUND", status=404)
+        registry_model_id = str((model.metrics or {}).get("registry_model_id") or "").strip()
+        if not registry_model_id:
+            raise PlatformError(
+                "This model is missing its training-registry id, so it cannot be promoted for assessment.",
+                code="MODEL_NOT_PROMOTABLE",
+                status=400,
+            )
+        from ssri_model.manual_training.exceptions import ManualTrainingError
+        from ssri_model.manual_training.registry import ModelRegistry
+        from ssri_model.manual_training.storage import TrainingStorage
+
+        registry = ModelRegistry(TrainingStorage(service_config.output_root))
+        try:
+            activated = registry.activate(registry_model_id)
+        except ManualTrainingError as exc:
+            raise PlatformError(exc.message, code=exc.code, status=400) from exc
+        store.add_activity(
+            user_id=actor.user_id,
+            action="model_promoted",
+            resource_type="model",
+            resource_id=model.id,
+            metadata={
+                "registry_model_id": registry_model_id,
+                "checkpoint_path": activated.checkpoint_path,
+            },
+        )
+    except PlatformError as exc:
+        return _error(exc)
+    return {
+        "model": model.to_dict(),
+        "checkpoint_path": activated.checkpoint_path,
+        "registry_model_id": registry_model_id,
+        "message": (
+            "Model promoted for assessments that use the active checkpoint path. "
+            "This does not mark the model as scientifically validated."
+        ),
+    }
 
 
 @router.get("/activity")

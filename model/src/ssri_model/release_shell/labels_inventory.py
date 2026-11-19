@@ -198,3 +198,91 @@ def insufficient_label_message(counts: dict[str, int], *, min_per_hazard: int) -
 
 
 EMPTY_LABEL_GRID_VALUE = LABEL_NODATA
+
+
+def apply_labels_to_dataset(
+    dataset_root: "Path",
+    inventory: LabelInventory,
+) -> dict[str, Any]:
+    """Write inventory labels onto every sample's ``label.tif`` (nearest cell).
+
+    Cells without a snapped label keep their existing value (typically nodata).
+    Never invents hazard classes. Returns join counts for the operator.
+    """
+    from pathlib import Path
+
+    import numpy as np
+    import rasterio
+
+    root = Path(dataset_root)
+    sample_dirs: list[Path] = []
+    for split in ("train", "validation", "test"):
+        d = root / split
+        if not d.is_dir():
+            continue
+        for p in sorted(d.iterdir()):
+            if p.is_dir() and (p / "label.tif").exists():
+                sample_dirs.append(p)
+
+    if not sample_dirs:
+        raise ManualTrainingError(
+            "No labelled samples found under this dataset. Upload a Stage 2.5 dataset first.",
+            code="DATASET_EMPTY",
+        )
+
+    totals = {n: 0 for n in hazard_names()}
+    samples_updated = 0
+    for sample_dir in sample_dirs:
+        label_path = sample_dir / "label.tif"
+        with rasterio.open(label_path) as ds:
+            data = ds.read(1).astype(np.int16, copy=True)
+            profile = ds.profile.copy()
+            h, w = ds.height, ds.width
+            xs = [float(ds.xy(0, c)[0]) for c in range(w)]
+            ys = [float(ds.xy(r, 0)[1]) for r in range(h)]
+        if len(xs) < 2 or len(ys) < 2:
+            x_spacing = 1.0
+            y_spacing = 1.0
+        else:
+            x_spacing = abs(xs[1] - xs[0]) or 1.0
+            y_spacing = abs(ys[1] - ys[0]) or 1.0
+        on_grid, counts = join_labels_to_grid(
+            inventory, xs, ys, x_spacing=x_spacing, y_spacing=y_spacing
+        )
+        if not on_grid:
+            continue
+        changed = False
+        y_index = {round(float(y), 8): i for i, y in enumerate(ys)}
+        x_index = {round(float(x), 8): i for i, x in enumerate(xs)}
+        for (x_key, y_key), class_id in on_grid.items():
+            col = x_index.get(x_key)
+            row = y_index.get(y_key)
+            if col is None or row is None:
+                continue
+            data[row, col] = int(class_id)
+            changed = True
+        if changed:
+            profile.update(dtype="int16", count=1, nodata=LABEL_NODATA)
+            with rasterio.open(label_path, "w", **profile) as dst:
+                dst.write(data, 1)
+            samples_updated += 1
+            for name, n in counts.items():
+                totals[name] = totals.get(name, 0) + int(n)
+
+    joined = sum(totals.values())
+    if joined == 0:
+        raise ManualTrainingError(
+            "No inventory points snapped onto the dataset grid. "
+            "Check CRS and that labels fall within tile bounds.",
+            code="LABEL_JOIN_EMPTY",
+        )
+    return {
+        "samples_updated": samples_updated,
+        "labels_joined": joined,
+        "counts_by_hazard": totals,
+        "inventory_crs": inventory.crs,
+        "note": (
+            "Labels were snapped to nearest cells. Empty cells were left unchanged. "
+            "Re-validate before training. Labels are never invented."
+        ),
+    }

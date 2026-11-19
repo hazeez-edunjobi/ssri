@@ -79,6 +79,11 @@ def test_xyz_reconstructs_regular_grid_and_channel_order(tmp_path) -> None:
     root = version["preview"]["extracted_root"]
     preview = validate_training_dataset(root)
     assert preview.validation_status == "passed"
+    manifest = __import__("json").loads(
+        (__import__("pathlib").Path(root) / "manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["channel_schema_version"] == "v1"
+    assert len(manifest["channel_names"]) == 13
     sample = next((tmp_path / "outputs").rglob("feature_stack.npy")) if False else None
     array = np.load(list(__import__("pathlib").Path(root).rglob("feature_stack.npy"))[0])
     assert array.shape[0] == 13

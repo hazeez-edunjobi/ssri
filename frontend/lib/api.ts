@@ -106,6 +106,21 @@ export type AssessResponse = {
   checkpoint_id?: string | null;
   /** Held-out evaluation trimmed for the report; null when not available. */
   evaluation_summary?: AssessmentEvaluationSummary | null;
+  /** Traceable map→grid location record from the assessment API. */
+  location_provenance?: {
+    submitted_crs?: string;
+    submitted?: { latitude: number; longitude: number; crs?: string } | null;
+    acquisition_bbox_wgs84?: number[] | null;
+    model_grid?: {
+      crs?: string | null;
+      pixel_row?: number;
+      pixel_col?: number;
+      outside_grid?: boolean;
+      transformed?: { x: number; y: number; crs?: string | null; axis_order?: string };
+    } | null;
+    outside_acquisition_grid?: boolean | null;
+    notes?: string[];
+  } | null;
 };
 
 export type JobStatusResponse = {
@@ -860,6 +875,24 @@ export async function uploadShellLabelInventory(
   });
   if (!response.ok)
     throw new Error(await parseError(response, "Could not read the label inventory"));
+  return response.json();
+}
+
+export async function applyShellLabels(
+  datasetId: string,
+  file: File,
+  crs: string,
+  apiKey?: string,
+): Promise<{ labels_applied: Record<string, unknown> }> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("crs", crs);
+  const response = await fetch(
+    `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/labels/apply`,
+    { method: "POST", headers: formAuthHeaders(apiKey), body: form },
+  );
+  if (!response.ok)
+    throw new Error(await parseError(response, "Could not apply labels to the dataset"));
   return response.json();
 }
 

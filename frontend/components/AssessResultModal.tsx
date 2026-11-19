@@ -181,6 +181,23 @@ export function AssessResultModal({
             AOI / point: {locationLabel}
           </p>
         )}
+        {result?.location_provenance?.submitted && (
+          <p
+            className="mt-1 font-mono text-[10px] text-stone"
+            data-testid="assess-location-provenance"
+          >
+            API confirmed {result.location_provenance.submitted.latitude.toFixed(6)},{" "}
+            {result.location_provenance.submitted.longitude.toFixed(6)} (
+            {result.location_provenance.submitted_crs ?? "EPSG:4326"})
+            {result.location_provenance.model_grid?.pixel_row != null &&
+            result.location_provenance.model_grid?.pixel_col != null
+              ? ` · grid r${result.location_provenance.model_grid.pixel_row} c${result.location_provenance.model_grid.pixel_col}`
+              : ""}
+            {result.location_provenance.model_grid?.crs
+              ? ` · ${result.location_provenance.model_grid.crs}`
+              : ""}
+          </p>
+        )}
 
         {loading && (
           <p className="mt-6 font-mono text-sm text-stone" data-testid="assess-result-loading">

@@ -169,6 +169,8 @@ def convert_csv_dataset(
     manifest_path = dataset_root / "manifest.json"
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     payload["source_format"] = "csv"
+    payload["channel_schema_version"] = "v1"
+    payload["channel_names"] = list(CHANNEL_NAMES)
     payload["conversion"] = {
         "crs": declared_crs,
         "x_spacing": x_spacing,

@@ -55,7 +55,11 @@ from ssri_model.release_shell.flags import (
 )
 from ssri_model.release_shell.geography import describe_checkpoint_geography
 from ssri_model.release_shell.hazards import default_hazard_registry
-from ssri_model.release_shell.labels_inventory import parse_label_csv, parse_label_geojson
+from ssri_model.release_shell.labels_inventory import (
+    apply_labels_to_dataset,
+    parse_label_csv,
+    parse_label_geojson,
+)
 from ssri_model.release_shell.lineaments import LineamentMethod, load_lineament_segments
 from ssri_model.release_shell.spatial_split import DEFAULT_BLOCK_SIZE_DEG, resolve_block_size_deg
 from ssri_model.release_shell.validator import (
@@ -623,6 +627,55 @@ async def shell_label_inventory(
             status_code=400, content={"error": {"code": code, "message": message}}
         )
     return {"labels": inventory.to_dict()}
+
+
+@router.post("/datasets/{dataset_id}/labels/apply")
+async def shell_apply_labels(
+    dataset_id: str,
+    file: UploadFile = File(...),
+    crs: str = Form(""),
+    date_column: str | None = Form(None),
+    service_config: ServiceConfig = Depends(get_service_config),
+    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+) -> Any:
+    """Snap a label inventory onto existing Stage 2.5 tiles (no fabricated labels)."""
+    blocked = _require_shell()
+    if blocked:
+        return blocked
+    if not (crs or "").strip():
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": {
+                    "code": "CRS_REQUIRED",
+                    "message": "Declare the label CRS (EPSG or WKT). SSRI will not guess.",
+                }
+            },
+        )
+    storage = _storage(service_config)
+    try:
+        record = storage.get_dataset(dataset_id)
+    except ManualTrainingError as exc:
+        return JSONResponse(
+            status_code=404, content={"error": {"code": exc.code, "message": exc.message}}
+        )
+    raw = await file.read()
+    filename = file.filename or "labels.csv"
+    try:
+        if filename.lower().endswith((".geojson", ".json")):
+            inventory = parse_label_geojson(raw, crs=crs, filename=filename)
+        else:
+            inventory = parse_label_csv(
+                raw, crs=crs, filename=filename, date_column=date_column or "date"
+            )
+        result = apply_labels_to_dataset(Path(record.root_path), inventory)
+    except (ManualTrainingError, ValueError, KeyError, FileNotFoundError) as exc:
+        code = getattr(exc, "code", "LABEL_APPLY")
+        message = getattr(exc, "message", str(exc))
+        return JSONResponse(
+            status_code=400, content={"error": {"code": code, "message": message}}
+        )
+    return {"labels_applied": result}
 
 
 @router.post("/lineaments/inspect")

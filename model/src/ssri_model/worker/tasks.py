@@ -165,8 +165,12 @@ def execute_job_record(job_id: str) -> None:
                 else:
                     execute_platform_training(
                         store,
-                        output_root=str(claimed.payload.get("output_root") or api_config.service_config.output_root),
+                        output_root=str(
+                            claimed.payload.get("output_root")
+                            or api_config.service_config.output_root
+                        ),
                         run_id=str(platform_run_id),
+                        epochs=int(claimed.payload.get("epochs") or 5),
                     )
                     finished = store.get_run(str(platform_run_id))
                     if finished and finished.status == "COMPLETED":

@@ -309,6 +309,17 @@ def build_demo_assessment_response(
         assessment_id,
     )
 
+    from ssri_model.api.location_provenance import build_location_provenance
+
+    location_provenance = build_location_provenance(
+        latitude=latitude if point else None,
+        longitude=longitude if point else None,
+        aoi_source="point" if point else ("polygon_geojson" if polygon_geojson else None),
+    )
+    location_provenance["notes"].append(
+        "Demo mode: scores are scenario-based; grid provenance is geometric only."
+    )
+
     return {
         "assessment_id": assessment_id,
         "hazard_profiles": profiles,
@@ -322,4 +333,5 @@ def build_demo_assessment_response(
         "checkpoint_dataset_version": None,
         "is_fixture_checkpoint": False,
         "domain_similarity_calibrated": True,
+        "location_provenance": location_provenance,
     }
