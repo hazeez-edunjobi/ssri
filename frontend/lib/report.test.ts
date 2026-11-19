@@ -137,6 +137,8 @@ test("report includes schema, ordered channels, block size and training CRS", ()
 
 test("report includes conditioning layers and GeoTIFF metadata", () => {
   const html = build();
+  assert.ok(html.includes("Overburden thickness"));
+  assert.ok(html.includes("Lineaments"));
   assert.ok(html.includes("overburden_thickness"));
   assert.ok(html.includes("unavailable"));
   assert.ok(html.includes("NoData (not treated as zero)"));

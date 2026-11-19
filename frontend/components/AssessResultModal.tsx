@@ -3,6 +3,10 @@
 import { useEffect, useRef } from "react";
 import { Download, Gauge, X } from "lucide-react";
 import type { AssessResponse, HazardProfile, ShellSettings } from "@/lib/api";
+import {
+  buildConditioningGroups,
+  conditioningSampleCaption,
+} from "@/lib/conditioning";
 import { buildAssessmentReportHtml } from "@/lib/report";
 
 /**
@@ -48,6 +52,12 @@ function scoreAllowed(profile: HazardProfile): boolean {
   if (gate == null) return true; // classic (flag OFF) response
   if (gate === "evaluated") return true;
   return Boolean(profile.preview_unevaluated_scores);
+}
+
+function conditioningStatusClass(status: string): string {
+  if (status === "available") return "border-leaf/40 bg-leaf/10 text-moss";
+  if (status === "nodata") return "border-amber-300 bg-amber-50 text-amber-900";
+  return "border-meadow bg-chalk text-stone";
 }
 
 type AssessResultModalProps = {
@@ -322,36 +332,71 @@ export function AssessResultModal({
               );
             })}
 
-            {result.conditioning_features?.layers && (
-              <div
-                className="rounded-xl border border-meadow bg-mist px-4 py-3"
-                data-testid="assess-conditioning"
-              >
+            <div className="space-y-3" data-testid="assess-conditioning">
+              <div>
                 <p className="text-xs uppercase tracking-widest text-stone">
-                  Conditioning layers at sample cell
+                  Lineament &amp; overburden analytics
                 </p>
-                <ul className="mt-2 space-y-1 text-xs text-bark">
-                  {Object.entries(result.conditioning_features.layers).map(([name, layer]) => (
-                    <li key={name} data-testid={`assess-conditioning-${name}`}>
-                      <span className="font-medium">{name}</span>:{" "}
-                      {layer.status === "available" && layer.value != null
-                        ? `${layer.value.toFixed(3)}${layer.unit ? ` ${layer.unit}` : ""}`
-                        : layer.status === "nodata"
-                          ? "NoData (not treated as zero)"
-                          : "unavailable"}
-                      {layer.reason && layer.status !== "available" ? (
-                        <span className="block text-[11px] text-stone">{layer.reason}</span>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-                {result.conditioning_features.notes?.[0] && (
-                  <p className="mt-2 text-[11px] text-stone">
-                    {result.conditioning_features.notes[0]}
+                {conditioningSampleCaption(result.conditioning_features) && (
+                  <p
+                    className="mt-1 font-mono text-[10px] text-stone"
+                    data-testid="assess-conditioning-sample"
+                  >
+                    {conditioningSampleCaption(result.conditioning_features)}
                   </p>
                 )}
               </div>
-            )}
+              {buildConditioningGroups(result.conditioning_features).map((group) => (
+                <div
+                  key={group.id}
+                  className="rounded-xl border border-meadow bg-mist px-4 py-3"
+                  data-testid={`assess-conditioning-group-${group.id}`}
+                >
+                  <p className="text-sm font-medium text-bark">{group.title}</p>
+                  <p className="mt-0.5 text-[11px] text-stone">{group.subtitle}</p>
+                  <ul className="mt-3 space-y-2">
+                    {group.metrics.map((metric) => (
+                      <li
+                        key={metric.key}
+                        className="rounded-lg border border-meadow/70 bg-chalk/60 px-3 py-2"
+                        data-testid={`assess-conditioning-${metric.key}`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-xs font-medium text-bark">{metric.label}</span>
+                          <span
+                            className={`rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide ${conditioningStatusClass(metric.status)}`}
+                            data-testid={`assess-conditioning-status-${metric.key}`}
+                          >
+                            {metric.status}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-bark" data-testid={`assess-conditioning-value-${metric.key}`}>
+                          {metric.valueText}
+                          {metric.status === "available" && metric.unit
+                            ? ` · ${metric.unit}`
+                            : metric.status !== "available" && metric.unit
+                              ? ` · expected unit: ${metric.unit}`
+                              : ""}
+                        </p>
+                        {metric.reason ? (
+                          <p className="mt-1 text-[11px] text-stone">{metric.reason}</p>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              {result.conditioning_features?.notes?.[0] && (
+                <p className="text-[11px] text-stone" data-testid="assess-conditioning-note">
+                  {result.conditioning_features.notes[0]}
+                </p>
+              )}
+              <p className="text-[11px] text-stone">
+                These analytics report stack sampling only. Unavailable or NoData is not
+                treated as zero, and live AOI (schema v1) does not imply lineaments or
+                overburden were used in inference.
+              </p>
+            </div>
 
             <p className="text-xs text-stone">{result.explanation}</p>
             {result.notes.length > 0 && (

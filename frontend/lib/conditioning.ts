@@ -1,0 +1,183 @@
+/**
+ * Presentation helpers for assess conditioning_features (overburden / lineaments).
+ * Never invents measurements or treats missing/NoData as zero.
+ */
+
+export type ConditioningLayer = {
+  status: "available" | "nodata" | "unavailable" | string;
+  value: number | null;
+  unit?: string;
+  reason?: string | null;
+};
+
+export type ConditioningFeatures = {
+  schema_channel_count?: number | null;
+  sample_policy?: string;
+  sample_row?: number;
+  sample_col?: number;
+  notes?: string[];
+  layers?: Record<string, ConditioningLayer>;
+} | null | undefined;
+
+export type ConditioningMetricView = {
+  key: string;
+  label: string;
+  status: string;
+  valueText: string;
+  unit: string | null;
+  reason: string | null;
+};
+
+export type ConditioningGroupView = {
+  id: "overburden" | "lineaments";
+  title: string;
+  subtitle: string;
+  metrics: ConditioningMetricView[];
+};
+
+const LAYER_META: Record<
+  string,
+  { group: "overburden" | "lineaments"; label: string; defaultUnit: string }
+> = {
+  overburden_thickness: {
+    group: "overburden",
+    label: "Thickness",
+    defaultUnit: "m (thickness; not depth-to-interface)",
+  },
+  lineament_density: {
+    group: "lineaments",
+    label: "Density",
+    defaultUnit: "derived density (training units)",
+  },
+  lineament_distance: {
+    group: "lineaments",
+    label: "Distance to nearest lineament",
+    defaultUnit: "m (distance to nearest lineament segment)",
+  },
+};
+
+const EXPECTED_KEYS = [
+  "overburden_thickness",
+  "lineament_density",
+  "lineament_distance",
+] as const;
+
+function formatValue(layer: ConditioningLayer): string {
+  if (layer.status === "available" && layer.value != null && Number.isFinite(layer.value)) {
+    return Number.isInteger(layer.value)
+      ? String(layer.value)
+      : layer.value.toFixed(3);
+  }
+  if (layer.status === "nodata") {
+    return "NoData (not treated as zero)";
+  }
+  if (layer.status === "unavailable") {
+    return "Unavailable";
+  }
+  return layer.status || "Unknown";
+}
+
+function absentLayer(key: (typeof EXPECTED_KEYS)[number], reason: string): ConditioningLayer {
+  return {
+    status: "unavailable",
+    value: null,
+    unit: LAYER_META[key].defaultUnit,
+    reason,
+  };
+}
+
+/**
+ * Build always-visible Overburden + Lineaments groups for the assess UI.
+ * When the API omits conditioning_features, surfaces honest "not reported" states.
+ */
+export function buildConditioningGroups(
+  conditioning: ConditioningFeatures,
+): ConditioningGroupView[] {
+  const layers = conditioning?.layers ?? {};
+  const apiReported = Boolean(conditioning?.layers);
+
+  const resolved: Record<string, ConditioningLayer> = {};
+  for (const key of EXPECTED_KEYS) {
+    const fromApi = layers[key];
+    if (fromApi) {
+      resolved[key] = fromApi;
+    } else if (apiReported) {
+      resolved[key] = absentLayer(
+        key,
+        "This layer was not included in the assessment conditioning payload.",
+      );
+    } else {
+      resolved[key] = absentLayer(
+        key,
+        "The assessment API did not return conditioning_features. Re-run against an API that includes this field, or inspect the raw response.",
+      );
+    }
+  }
+
+  // Include any unexpected conditioning keys under the closest group.
+  for (const [key, layer] of Object.entries(layers)) {
+    if (key in resolved) continue;
+    resolved[key] = layer;
+  }
+
+  const toMetric = (key: string, layer: ConditioningLayer): ConditioningMetricView => {
+    const meta = LAYER_META[key];
+    return {
+      key,
+      label: meta?.label ?? key,
+      status: layer.status,
+      valueText: formatValue(layer),
+      unit:
+        layer.status === "available"
+          ? layer.unit ?? meta?.defaultUnit ?? null
+          : layer.unit ?? meta?.defaultUnit ?? null,
+      reason: layer.reason ?? null,
+    };
+  };
+
+  const overburdenKeys = Object.keys(resolved).filter(
+    (k) => LAYER_META[k]?.group === "overburden" || k.includes("overburden"),
+  );
+  const lineamentKeys = Object.keys(resolved).filter(
+    (k) => LAYER_META[k]?.group === "lineaments" || k.includes("lineament"),
+  );
+
+  return [
+    {
+      id: "overburden",
+      title: "Overburden thickness",
+      subtitle:
+        "Thickness only when available. Depth-to-interface is not auto-converted and is never shown as zero when missing.",
+      metrics: overburdenKeys.map((k) => toMetric(k, resolved[k])),
+    },
+    {
+      id: "lineaments",
+      title: "Lineaments",
+      subtitle:
+        "Derived density and distance when present in a schema-v2 stack. Live AOI acquisition (v1) does not download lineaments.",
+      metrics: lineamentKeys.map((k) => toMetric(k, resolved[k])),
+    },
+  ];
+}
+
+export function conditioningSampleCaption(
+  conditioning: ConditioningFeatures,
+): string | null {
+  if (!conditioning) return null;
+  const parts: string[] = [];
+  if (conditioning.sample_policy) {
+    parts.push(`Sample: ${conditioning.sample_policy}`);
+  }
+  if (
+    conditioning.sample_row != null &&
+    conditioning.sample_col != null &&
+    Number.isFinite(conditioning.sample_row) &&
+    Number.isFinite(conditioning.sample_col)
+  ) {
+    parts.push(`cell r${conditioning.sample_row} c${conditioning.sample_col}`);
+  }
+  if (conditioning.schema_channel_count != null) {
+    parts.push(`${conditioning.schema_channel_count} channels in stack`);
+  }
+  return parts.length ? parts.join(" · ") : null;
+}

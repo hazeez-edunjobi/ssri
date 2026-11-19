@@ -6,6 +6,10 @@
  * shown here is copied from the API response; nothing is inferred or fabricated.
  */
 import type { AssessResponse, AssessmentEvaluationSummary, ShellSettings } from "./api";
+import {
+  buildConditioningGroups,
+  conditioningSampleCaption,
+} from "./conditioning.ts";
 
 export type ReportInput = {
   result: AssessResponse;
@@ -262,26 +266,32 @@ export function buildAssessmentReportHtml(input: ReportInput): string {
   </table>
   <p class="muted">Rankings appear only where the gate status is evaluated (or an unevaluated preview is explicitly enabled).</p>
 
-  <h2>Conditioning layers</h2>
+  <h2>Lineament &amp; overburden analytics</h2>
+  ${buildConditioningGroups(result.conditioning_features)
+    .map(
+      (group) => `
+  <h3>${escapeHtml(group.title)}</h3>
+  <p class="muted">${escapeHtml(group.subtitle)}</p>
   <dl>
-    ${
-      result.conditioning_features?.layers
-        ? Object.entries(result.conditioning_features.layers)
-            .map(([name, layer]) => {
-              const value =
-                layer.status === "available" && layer.value != null
-                  ? `${layer.value}${layer.unit ? ` ${layer.unit}` : ""}`
-                  : layer.status === "nodata"
-                    ? "NoData (not treated as zero)"
-                    : "unavailable";
-              return `<dt>${escapeHtml(name)}</dt><dd>${escapeHtml(value)}${
-                layer.reason ? ` — ${escapeHtml(layer.reason)}` : ""
-              }</dd>`;
-            })
-            .join("")
-        : "<dt>Status</dt><dd>not reported by the API</dd>"
-    }
-  </dl>
+    ${group.metrics
+      .map((metric) => {
+        const detail =
+          metric.status === "available"
+            ? `${metric.valueText}${metric.unit ? ` ${metric.unit}` : ""}`
+            : `${metric.valueText}${metric.unit ? ` (expected unit: ${metric.unit})` : ""}`;
+        return `<dt>${escapeHtml(metric.label)} <span class="muted">(${escapeHtml(metric.key)} · ${escapeHtml(metric.status)})</span></dt><dd>${escapeHtml(detail)}${
+          metric.reason ? ` — ${escapeHtml(metric.reason)}` : ""
+        }</dd>`;
+      })
+      .join("")}
+  </dl>`,
+    )
+    .join("")}
+  ${
+    conditioningSampleCaption(result.conditioning_features)
+      ? `<p class="muted">${escapeHtml(conditioningSampleCaption(result.conditioning_features) || "")}</p>`
+      : ""
+  }
 
   <h2>Spatial output</h2>
   <dl>

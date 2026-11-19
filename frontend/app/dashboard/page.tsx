@@ -33,6 +33,7 @@ import {
 import { AssessResultModal } from "@/components/AssessResultModal";
 import { LandPhoto } from "@/components/theme/LandPhoto";
 import { RequireSession, useRequiredSession } from "@/components/auth/RequireSession";
+import { buildConditioningGroups } from "@/lib/conditioning";
 import { TRAINING_HREF } from "@/lib/navigation";
 import { getSupabase } from "@/lib/supabase";
 
@@ -980,18 +981,43 @@ function AssessmentWorkspace() {
         )}
 
         {result && !modalOpen && (
-          <button
-            type="button"
-            data-testid="reopen-assess-result"
-            onClick={() => setModalOpen(true)}
-            className="flex w-full items-center justify-between rounded-xl border border-meadow bg-chalk px-4 py-3 text-left text-xs text-bark"
+          <div
+            className="rounded-xl border border-meadow bg-chalk px-4 py-3 text-left text-xs text-bark"
+            data-testid="assess-analytics-summary"
           >
-            <span className="flex items-center gap-2">
-              <Gauge className="h-3.5 w-3.5 text-leaf" />
-              Last result · {result.assessment_id}
-            </span>
-            <span className="text-moss">View</span>
-          </button>
+            <button
+              type="button"
+              data-testid="reopen-assess-result"
+              onClick={() => setModalOpen(true)}
+              className="flex w-full items-center justify-between text-left"
+            >
+              <span className="flex items-center gap-2">
+                <Gauge className="h-3.5 w-3.5 text-leaf" />
+                Last result · {result.assessment_id}
+              </span>
+              <span className="text-moss">View</span>
+            </button>
+            <div className="mt-3 space-y-2 border-t border-meadow pt-3">
+              <p className="text-[10px] uppercase tracking-widest text-stone">
+                Lineament &amp; overburden
+              </p>
+              {buildConditioningGroups(result.conditioning_features).map((group) => (
+                <div key={group.id} data-testid={`assess-summary-${group.id}`}>
+                  <p className="font-medium text-bark">{group.title}</p>
+                  <ul className="mt-1 space-y-0.5 text-[11px] text-stone">
+                    {group.metrics.map((metric) => (
+                      <li key={metric.key}>
+                        {metric.label}: {metric.valueText}
+                        {metric.status === "available" && metric.unit
+                          ? ` ${metric.unit}`
+                          : ` · ${metric.status}`}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </aside>
 
