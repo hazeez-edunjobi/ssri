@@ -3,6 +3,7 @@
 Date: 2026-11-19  
 Baseline tip before work: `0f84a9c9e1c7c28477c60fe07fba6c265885a5e6` (`main` = `origin/main`)  
 Implementation branch: `feature/client-handover-acceptance`  
+Final `main` / `origin/main`: `bf8a6e80dac216f495e3e2e8bfb0684fed2f3a99`  
 Deployment: **none** (explicitly out of scope)
 
 Audits: [coordinate lifecycle](6df30a22-2c3a-4c4e-94f3-6d9d0113a614), [CSV train path](05ad6632-5da0-4790-b048-6ca08e3a0ace)
