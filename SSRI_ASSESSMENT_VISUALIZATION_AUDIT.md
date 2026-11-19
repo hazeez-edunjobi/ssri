@@ -1,7 +1,7 @@
 # SSRI — Assessment visualization audit
 
 **Baseline before work:** `2bc160d` (`main` = `origin/main`)  
-**Fix commit:** *(recorded after commit)*  
+**Fix commit:** `6a847cbfef8527e438e576e932ddb5b65b1ca7e4` (`6a847cb`)
 **Verdict:** **COMPLETE WITH WARNINGS**
 
 ---
@@ -118,7 +118,7 @@ Synthetic fixtures: unit tests use synthetic conditioning/gravity messages. Real
 ## 9. Exact commit SHA
 
 ```text
-SEE_AFTER_COMMIT
+6a847cbfef8527e438e576e932ddb5b65b1ca7e4
 ```
 
 ### Final verdict
