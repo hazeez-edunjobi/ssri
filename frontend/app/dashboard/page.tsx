@@ -966,8 +966,10 @@ function AssessmentWorkspace() {
             {loading ? "Assessing…" : "Run assessment"}
           </button>
           <p className="mt-2 text-[11px] text-stone">
-            Live AOI needs GEE/OpenTopo + SSRI_LIVE_ACQUISITION_ENABLED. Offline path uses
-            features + checkpoint on the API host.
+            Live AOI needs GEE/OpenTopo + SSRI_LIVE_ACQUISITION_ENABLED and acquires the
+            Stage 2.5 v1 (13-channel) stack — not lineaments or overburden. To include
+            those conditioning layers, apply them in /shell (schema v2) and assess with a
+            matching offline feature stack + checkpoint. Scores remain NOT_VALIDATED.
           </p>
         </div>
 

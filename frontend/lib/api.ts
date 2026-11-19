@@ -121,6 +121,27 @@ export type AssessResponse = {
     outside_acquisition_grid?: boolean | null;
     notes?: string[];
   } | null;
+  /** Point-sampled overburden / lineament channels when present in the feature stack. */
+  conditioning_features?: {
+    schema_channel_count?: number | null;
+    sample_policy?: string;
+    sample_row?: number;
+    sample_col?: number;
+    notes?: string[];
+    layers?: Record<
+      string,
+      {
+        status: "available" | "nodata" | "unavailable" | string;
+        value: number | null;
+        unit?: string;
+        reason?: string | null;
+      }
+    >;
+  } | null;
+  spatial_output_expires_seconds?: number | null;
+  spatial_output_hazard?: string | null;
+  spatial_output_crs?: string | null;
+  spatial_output_georef_quality?: string | null;
 };
 
 export type JobStatusResponse = {

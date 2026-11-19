@@ -306,6 +306,11 @@ export function AssessResultModal({
                       {profile.credible_interval_95[1].toFixed(3)}]
                     </p>
                   )}
+                  {profile.primary_drivers && profile.primary_drivers.length > 0 && (
+                    <p className="mt-1 text-[11px] text-stone" data-testid="assess-hazard-drivers">
+                      Contributing features: {profile.primary_drivers.join(", ")}
+                    </p>
+                  )}
                   {profile.limitations && profile.limitations.length > 0 && (
                     <ul className="mt-1 list-disc pl-4 text-[11px] text-stone">
                       {profile.limitations.map((item) => (
@@ -316,6 +321,37 @@ export function AssessResultModal({
                 </div>
               );
             })}
+
+            {result.conditioning_features?.layers && (
+              <div
+                className="rounded-xl border border-meadow bg-mist px-4 py-3"
+                data-testid="assess-conditioning"
+              >
+                <p className="text-xs uppercase tracking-widest text-stone">
+                  Conditioning layers at sample cell
+                </p>
+                <ul className="mt-2 space-y-1 text-xs text-bark">
+                  {Object.entries(result.conditioning_features.layers).map(([name, layer]) => (
+                    <li key={name} data-testid={`assess-conditioning-${name}`}>
+                      <span className="font-medium">{name}</span>:{" "}
+                      {layer.status === "available" && layer.value != null
+                        ? `${layer.value.toFixed(3)}${layer.unit ? ` ${layer.unit}` : ""}`
+                        : layer.status === "nodata"
+                          ? "NoData (not treated as zero)"
+                          : "unavailable"}
+                      {layer.reason && layer.status !== "available" ? (
+                        <span className="block text-[11px] text-stone">{layer.reason}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+                {result.conditioning_features.notes?.[0] && (
+                  <p className="mt-2 text-[11px] text-stone">
+                    {result.conditioning_features.notes[0]}
+                  </p>
+                )}
+              </div>
+            )}
 
             <p className="text-xs text-stone">{result.explanation}</p>
             {result.notes.length > 0 && (
@@ -341,6 +377,38 @@ export function AssessResultModal({
             >
               <Download className="h-3.5 w-3.5" /> Download report
             </button>
+          )}
+          {!loading && result?.spatial_output_url && (
+            <a
+              href={result.spatial_output_url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-meadow px-3 py-2 text-xs text-bark"
+              data-testid="assess-download-geotiff"
+            >
+              <Download className="h-3.5 w-3.5" /> Download GeoTIFF
+              {result.spatial_output_hazard ? ` (${result.spatial_output_hazard})` : ""}
+            </a>
+          )}
+          {!loading && result && !result.spatial_output_url && (
+            <p className="w-full text-[11px] text-stone" data-testid="assess-geotiff-absent">
+              No GeoTIFF URL was returned
+              {result.spatial_output_georef_quality
+                ? ` (georef: ${result.spatial_output_georef_quality})`
+                : ""}
+              . Enable “Produce GeoTIFF” before running, or the assessment type may not
+              generate spatial output (for example demo mode).
+            </p>
+          )}
+          {!loading && result?.spatial_output_url && result.spatial_output_expires_seconds != null && (
+            <p className="w-full text-[11px] text-stone" data-testid="assess-geotiff-expiry">
+              Signed URL typically expires after {result.spatial_output_expires_seconds}s
+              {result.spatial_output_crs ? ` · CRS ${result.spatial_output_crs}` : ""}
+              {result.spatial_output_georef_quality
+                ? ` · georef ${result.spatial_output_georef_quality}`
+                : ""}
+              . If the link fails later, re-run the assessment.
+            </p>
           )}
           <button
             type="button"

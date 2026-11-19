@@ -42,7 +42,6 @@ const SYNTHETIC: AssessResponse = {
   ],
   explanation: "Relative susceptibility rankings only where gate_status is evaluated.",
   model_version: "ssri-model",
-  spatial_output_url: null,
   notes: [
     "data_hash=ABCDEF0123",
     "assess_crs=EPSG:4326",
@@ -59,6 +58,27 @@ const SYNTHETIC: AssessResponse = {
   channel_schema_version: "v1",
   channel_names: ["slope", "elevation"],
   checkpoint_id: "shell",
+  conditioning_features: {
+    layers: {
+      overburden_thickness: {
+        status: "unavailable",
+        value: null,
+        unit: "m (thickness; not depth-to-interface)",
+        reason: "Channel not present in this assessment feature stack",
+      },
+      lineament_density: {
+        status: "nodata",
+        value: null,
+        unit: "derived density (training units)",
+        reason: "Cell is NoData",
+      },
+    },
+  },
+  spatial_output_url: "file:///tmp/example.tif",
+  spatial_output_hazard: "landslide",
+  spatial_output_crs: "EPSG:32631",
+  spatial_output_georef_quality: "acquisition_grid",
+  spatial_output_expires_seconds: 3600,
   evaluation_summary: {
     status: "completed",
     split_policy: "whole_5deg_blocks_with_buffer",
@@ -113,6 +133,16 @@ test("report includes schema, ordered channels, block size and training CRS", ()
   assert.ok(html.includes("slope, elevation"));
   assert.ok(html.includes("5.0° (checkpoint)"));
   assert.ok(html.includes("EPSG:4326"));
+});
+
+test("report includes conditioning layers and GeoTIFF metadata", () => {
+  const html = build();
+  assert.ok(html.includes("overburden_thickness"));
+  assert.ok(html.includes("unavailable"));
+  assert.ok(html.includes("NoData (not treated as zero)"));
+  assert.ok(html.includes("file:///tmp/example.tif"));
+  assert.ok(html.includes("acquisition_grid"));
+  assert.ok(html.includes("3600"));
 });
 
 test("report includes WGS84 lat/lon at 6 dp and the training-CRS location", () => {

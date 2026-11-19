@@ -28,6 +28,7 @@ from ssri_model.api.dependencies import (
 from ssri_model.api.domain_similarity import resolve_domain_similarity
 from ssri_model.api.geojson import point_bbox, validate_polygon_geojson
 from ssri_model.api.geotiff_output import write_probability_geotiff
+from ssri_model.api.assess_conditioning import sample_conditioning_features
 from ssri_model.api.location_provenance import build_location_provenance
 from ssri_model.auth.models import AuthenticatedPrincipal
 from ssri_model.inference.checkpoint import load_inference_checkpoint
@@ -96,6 +97,11 @@ class AssessResponseBody(BaseModel):
     checkpoint_id: str | None = None
     evaluation_summary: dict[str, Any] | None = None
     location_provenance: dict[str, Any] | None = None
+    conditioning_features: dict[str, Any] | None = None
+    spatial_output_expires_seconds: int | None = None
+    spatial_output_hazard: str | None = None
+    spatial_output_crs: str | None = None
+    spatial_output_georef_quality: str | None = None
 
 
 _ALLOWED_FEATURE_CHANNEL_COUNTS = frozenset({CHANNEL_COUNT, 16})
@@ -362,7 +368,17 @@ def assess_endpoint(
             query_lon=query_lon,
             requested=selected,
         )
-        # Replace scored profiles with contract-compliant entries (no score if not evaluated)
+        # Replace scored profiles with contract-compliant entries (no score if not evaluated).
+        # Preserve attribution drivers computed above when the shell entry omitted them.
+        for profile in shell_profiles:
+            hazard_name = str(profile.get("hazard_type") or "")
+            if hazard_name and not profile.get("primary_drivers"):
+                try:
+                    class_index = SUPPORTED_LABELS.index(hazard_name)
+                except ValueError:
+                    continue
+                if drivers.get(class_index):
+                    profile["primary_drivers"] = list(drivers[class_index])
         explanation = (
             "Relative susceptibility rankings only where gate_status is evaluated. "
             "Status remains NOT_VALIDATED. Not for insurance, engineering, safety, "
@@ -373,6 +389,10 @@ def assess_endpoint(
         explanation = build_template_explanation(result.hazard_profiles)
         result_profiles = [profile.to_dict() for profile in result.hazard_profiles]
     spatial_url: str | None = None
+    spatial_expires: int | None = None
+    spatial_hazard: str | None = None
+    spatial_crs: str | None = None
+    spatial_georef_quality: str | None = None
     if body.produce_geotiff and selected_indices:
         with torch.no_grad():
             model.eval()
@@ -392,21 +412,35 @@ def assess_endpoint(
         from ssri_model.release_shell.flags import use_assess_softmax as _uas
 
         score_name = "ranking_score" if _uas() else "probability"
+        spatial_hazard = selected[0]
         tif_path = (
             output_root
             / "assessments"
             / assessment_id
-            / f"{selected[0]}_{score_name}.tif"
+            / f"{spatial_hazard}_{score_name}.tif"
         )
-        write_probability_geotiff(tif_path, probs)
+        geotiff_transform = None
+        geotiff_crs = "EPSG:4326"
+        spatial_georef_quality = "placeholder_origin"
+        if acquisition_meta and acquisition_meta.get("transform") is not None:
+            geotiff_transform = tuple(acquisition_meta["transform"])
+            geotiff_crs = str(acquisition_meta.get("crs") or geotiff_crs)
+            spatial_georef_quality = "acquisition_grid"
+        write_probability_geotiff(
+            tif_path,
+            probs,
+            transform=geotiff_transform,
+            crs=geotiff_crs,
+        )
         storage = build_object_storage_from_env()
         key = storage.put_bytes(
-            f"assessments/{assessment_id}/{selected[0]}_{score_name}.tif",
+            f"assessments/{assessment_id}/{spatial_hazard}_{score_name}.tif",
             tif_path.read_bytes(),
             content_type="image/tiff",
         )
-        expires = int(os.getenv("SSRI_OBJECT_STORAGE_URL_EXPIRES", "3600"))
-        spatial_url = storage.signed_url(key, expires_seconds=expires)
+        spatial_expires = int(os.getenv("SSRI_OBJECT_STORAGE_URL_EXPIRES", "3600"))
+        spatial_url = storage.signed_url(key, expires_seconds=spatial_expires)
+        spatial_crs = geotiff_crs
 
     notes = list(result.notes) + acquisition_notes + list(domain.notes) + [
         f"requested_by={principal.key_id}",
@@ -481,6 +515,29 @@ def assess_endpoint(
     if grid.get("pixel_row") is not None and grid.get("pixel_col") is not None:
         notes.append(f"model_grid_pixel=row{grid['pixel_row']}_col{grid['pixel_col']}")
 
+    advertised_names = schema_names
+    if advertised_names is None and acquisition_meta and acquisition_meta.get("channel_names"):
+        advertised_names = [str(n) for n in acquisition_meta["channel_names"]]
+    conditioning_features = sample_conditioning_features(
+        features,
+        channel_names=advertised_names,
+        pixel_row=grid.get("pixel_row") if isinstance(grid, dict) else None,
+        pixel_col=grid.get("pixel_col") if isinstance(grid, dict) else None,
+        aoi_source=aoi_source,
+    )
+    for layer_name, layer in (conditioning_features.get("layers") or {}).items():
+        notes.append(
+            f"conditioning_{layer_name}={layer.get('status')}"
+            + (
+                f":{layer.get('value')}"
+                if layer.get("status") == "available" and layer.get("value") is not None
+                else ""
+            )
+        )
+    if spatial_url:
+        notes.append(f"spatial_output_hazard={spatial_hazard}")
+        notes.append(f"spatial_output_georef_quality={spatial_georef_quality}")
+
     response = AssessResponseBody(
         assessment_id=result.assessment_id,
         hazard_profiles=result_profiles,
@@ -495,10 +552,15 @@ def assess_endpoint(
         is_fixture_checkpoint=is_fixture,
         domain_similarity_calibrated=domain.calibrated,
         channel_schema_version=schema_version,
-        channel_names=schema_names,
+        channel_names=schema_names or advertised_names,
         checkpoint_id=checkpoint_path.stem if release_shell_enabled() else None,
         evaluation_summary=evaluation_summary,
         location_provenance=location_provenance,
+        conditioning_features=conditioning_features,
+        spatial_output_expires_seconds=spatial_expires,
+        spatial_output_hazard=spatial_hazard,
+        spatial_output_crs=spatial_crs,
+        spatial_output_georef_quality=spatial_georef_quality,
     )
     _persist_assessment_response(
         output_root=output_root,

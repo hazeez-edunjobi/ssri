@@ -96,6 +96,16 @@ def acquire_feature_array_for_bbox(
     sources = {}
     if isinstance(stack.manifest, dict):
         sources = dict(stack.manifest.get("sources") or {})
+    manifest = stack.manifest if isinstance(stack.manifest, dict) else {}
+    transform = None
+    projection = manifest.get("projection") if isinstance(manifest.get("projection"), dict) else {}
+    raw_transform = (
+        projection.get("transform")
+        if projection
+        else manifest.get("transform")
+    )
+    if isinstance(raw_transform, (list, tuple)) and len(raw_transform) >= 6:
+        transform = tuple(float(v) for v in raw_transform[:6])
     meta = {
         "bbox": bbox,
         "resolution_m": resolution_m,
@@ -104,6 +114,7 @@ def acquire_feature_array_for_bbox(
         "output_dir": str(output_dir),
         "channel_names": list(stack.channel_names),
         "sources": sources,
-        "crs": stack.manifest.get("crs") if isinstance(stack.manifest, dict) else None,
+        "crs": manifest.get("crs"),
+        "transform": transform,
     }
     return array, meta

@@ -262,6 +262,40 @@ export function buildAssessmentReportHtml(input: ReportInput): string {
   </table>
   <p class="muted">Rankings appear only where the gate status is evaluated (or an unevaluated preview is explicitly enabled).</p>
 
+  <h2>Conditioning layers</h2>
+  <dl>
+    ${
+      result.conditioning_features?.layers
+        ? Object.entries(result.conditioning_features.layers)
+            .map(([name, layer]) => {
+              const value =
+                layer.status === "available" && layer.value != null
+                  ? `${layer.value}${layer.unit ? ` ${layer.unit}` : ""}`
+                  : layer.status === "nodata"
+                    ? "NoData (not treated as zero)"
+                    : "unavailable";
+              return `<dt>${escapeHtml(name)}</dt><dd>${escapeHtml(value)}${
+                layer.reason ? ` — ${escapeHtml(layer.reason)}` : ""
+              }</dd>`;
+            })
+            .join("")
+        : "<dt>Status</dt><dd>not reported by the API</dd>"
+    }
+  </dl>
+
+  <h2>Spatial output</h2>
+  <dl>
+    <dt>GeoTIFF URL</dt><dd>${escapeHtml(result.spatial_output_url ?? "not produced")}</dd>
+    <dt>Hazard band</dt><dd>${escapeHtml(result.spatial_output_hazard ?? "—")}</dd>
+    <dt>CRS</dt><dd>${escapeHtml(result.spatial_output_crs ?? "—")}</dd>
+    <dt>Georef quality</dt><dd>${escapeHtml(result.spatial_output_georef_quality ?? "—")}</dd>
+    <dt>Signed URL TTL (s)</dt><dd>${
+      result.spatial_output_expires_seconds != null
+        ? String(result.spatial_output_expires_seconds)
+        : "—"
+    }</dd>
+  </dl>
+
   <h2>Evaluation summary</h2>
   ${evaluationSection(result.evaluation_summary)}
 

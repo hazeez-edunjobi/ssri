@@ -15,6 +15,7 @@ import torch
 import torch.nn as nn
 
 from ssri_model.ml.constants import CHANNEL_NAMES
+from ssri_model.release_shell.channel_schema import CHANNEL_NAMES_V2
 
 
 class ConfidenceTier(str, Enum):
@@ -213,7 +214,14 @@ def gradient_feature_attribution(
     channel_importance = features.grad.abs().mean(dim=(0, 2, 3)).detach().cpu().numpy()
     ranked = sorted(
         (
-            (CHANNEL_NAMES[i] if i < len(CHANNEL_NAMES) else f"channel_{i}", float(v))
+            (
+                (
+                    CHANNEL_NAMES_V2[i]
+                    if i < len(CHANNEL_NAMES_V2)
+                    else (CHANNEL_NAMES[i] if i < len(CHANNEL_NAMES) else f"channel_{i}")
+                ),
+                float(v),
+            )
             for i, v in enumerate(channel_importance)
         ),
         key=lambda item: item[1],

@@ -309,6 +309,7 @@ def build_demo_assessment_response(
         assessment_id,
     )
 
+    from ssri_model.api.assess_conditioning import CONDITIONING_CHANNELS, CONDITIONING_UNITS
     from ssri_model.api.location_provenance import build_location_provenance
 
     location_provenance = build_location_provenance(
@@ -319,6 +320,23 @@ def build_demo_assessment_response(
     location_provenance["notes"].append(
         "Demo mode: scores are scenario-based; grid provenance is geometric only."
     )
+    conditioning_features = {
+        "schema_channel_count": None,
+        "sample_policy": "demo_unavailable",
+        "notes": [
+            "Demo mode does not load a real feature stack, so lineament and overburden "
+            "values are unavailable (not zero)."
+        ],
+        "layers": {
+            name: {
+                "status": "unavailable",
+                "value": None,
+                "unit": CONDITIONING_UNITS[name],
+                "reason": "Demo assessment does not sample geospatial conditioning layers.",
+            }
+            for name in CONDITIONING_CHANNELS
+        },
+    }
 
     return {
         "assessment_id": assessment_id,
@@ -334,4 +352,9 @@ def build_demo_assessment_response(
         "is_fixture_checkpoint": False,
         "domain_similarity_calibrated": True,
         "location_provenance": location_provenance,
+        "conditioning_features": conditioning_features,
+        "spatial_output_expires_seconds": None,
+        "spatial_output_hazard": None,
+        "spatial_output_crs": None,
+        "spatial_output_georef_quality": None,
     }
