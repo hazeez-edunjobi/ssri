@@ -126,7 +126,7 @@ Evidence: `poc/release_shell/outputs/consolidate_frontend_*.txt`
 Recorded after Phase 5 merge:
 
 ```text
-3c5cb600cf2a269b5ef5a47e9e0ea4510c6e6055
+eb6195a8f0a39800aa5b321838f399fbe8f19019
 ```
 
 ---
