@@ -99,4 +99,11 @@ End-to-end: synthetic apply lineament/overburden + unlimited-byte proof via test
 
 ## 16–19. Git / push
 
-See final SHAs after merge/push in this file’s footer (updated at push time).
+| Item | Value |
+|------|-------|
+| Final local `main` | `4efdb6924fcc86bec8261eada4b9332eb2667214` |
+| Final `origin/main` | `4efdb6924fcc86bec8261eada4b9332eb2667214` |
+| Push | **Succeeded** (fast-forward `0c42929..4efdb69`) |
+| Deployment | **None** |
+
+Feature branch retained: `feature/upload-lineament-overburden-integration` (same tip).
