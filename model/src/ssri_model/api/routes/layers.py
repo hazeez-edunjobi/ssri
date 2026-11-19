@@ -143,7 +143,12 @@ def get_gravity_layer(
     if not path.is_file():
         raise HTTPException(
             status_code=404,
-            detail="GRAVITY_DATA_PATH GeoTIFF not found for visualization",
+            detail=(
+                "Optional gravity map overlay GeoTIFF not found. Set GRAVITY_DATA_PATH "
+                "to a mounted WGM2012 Bouguer GeoTIFF (or place it under "
+                "data/geophysics/processed/). This overlay is visualization-only and is "
+                "not required to run assessments."
+            ),
         )
 
     features, vmin, vmax, nodata = _raster_to_geojson(path, max_cells=max_cells)

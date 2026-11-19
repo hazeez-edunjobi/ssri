@@ -79,3 +79,7 @@ def test_gravity_layer_missing_file(monkeypatch: pytest.MonkeyPatch) -> None:
     client = TestClient(app)
     response = client.get("/api/v1/layers/gravity")
     assert response.status_code == 404
+    detail = response.json()["detail"]
+    assert "Optional gravity map overlay" in detail
+    assert "not required to run assessments" in detail
+    assert "GRAVITY_DATA_PATH" in detail

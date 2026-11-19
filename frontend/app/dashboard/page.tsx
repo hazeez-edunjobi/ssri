@@ -34,6 +34,11 @@ import { AssessResultModal } from "@/components/AssessResultModal";
 import { LandPhoto } from "@/components/theme/LandPhoto";
 import { RequireSession, useRequiredSession } from "@/components/auth/RequireSession";
 import { buildConditioningGroups } from "@/lib/conditioning";
+import {
+  formatGravityUnavailableMessage,
+  gravityLoadState,
+  gravityVisibilityLabel,
+} from "@/lib/gravityLayer";
 import { TRAINING_HREF } from "@/lib/navigation";
 import { getSupabase } from "@/lib/supabase";
 
@@ -83,12 +88,16 @@ function AssessmentWorkspace() {
   const [latInput, setLatInput] = useState("");
   const [lonInput, setLonInput] = useState("");
   const [coordError, setCoordError] = useState<string | null>(null);
-  const [gravityVisible, setGravityVisible] = useState(true);
+  const [gravityVisible, setGravityVisible] = useState(false);
   const [gravityMeta, setGravityMeta] = useState<GeophysicsLayerMetadata | null>(
     null,
   );
   const [gravityError, setGravityError] = useState<string | null>(null);
   const [gravityLoaded, setGravityLoaded] = useState(false);
+  const gravityState = gravityLoadState({
+    loaded: gravityLoaded,
+    error: gravityError,
+  });
   const [mapLoaded, setMapLoaded] = useState(false);
   const [shellEnabled, setShellEnabled] = useState(false);
   // Release-shell geography is keyed by checkpoint so a stale value is never
@@ -374,6 +383,7 @@ function AssessmentWorkspace() {
             setGravityMeta(layer.metadata);
             setGravityLoaded(true);
             setGravityError(null);
+            setGravityVisible(true);
             // Fit to gravity extent when available.
             const coords = layer.features.flatMap((f) => f.geometry.coordinates[0]);
             if (coords.length > 0) {
@@ -398,6 +408,8 @@ function AssessmentWorkspace() {
           } catch (err) {
             if (!cancelled) {
               setGravityLoaded(false);
+              setGravityVisible(false);
+              setGravityMeta(null);
               setGravityError(
                 err instanceof Error ? err.message : "Gravity layer failed to load",
               );
@@ -584,17 +596,15 @@ function AssessmentWorkspace() {
 
   const onAssess = useCallback(async () => {
     if (!featuresPath && mode === "point" && !point) {
-      setError("Click the map to select a point, or provide offline features path.");
+      setError("Click the map or enter coordinates to select a point.");
       return;
     }
     if (!featuresPath && mode === "polygon" && !polygon) {
-      setError("Draw a polygon (3+ clicks) or provide offline features path.");
+      setError("Draw a polygon on the map (3+ clicks).");
       return;
     }
     if (!featuresPath && !point && !polygon) {
-      setError(
-        "Provide offline features, or select a point/polygon on the map.",
-      );
+      setError("Select a point or polygon on the map before running an assessment.");
       return;
     }
     if (shellEnabled && checkpoint && geography && !geography.crs_declared) {
@@ -731,22 +741,35 @@ function AssessmentWorkspace() {
         <div
           className="rounded-xl border border-meadow bg-chalk px-4 py-3"
           data-testid="gravity-layer-panel"
+          data-gravity-state={gravityState}
         >
           <div className="flex items-center justify-between gap-2">
             <p className="text-[11px] uppercase tracking-widest text-stone">
-              Gravity layer
+              Gravity overlay
             </p>
             <label className="flex items-center gap-2 font-mono text-[11px] text-bark">
               <input
                 type="checkbox"
                 data-testid="gravity-visibility-toggle"
-                checked={gravityVisible}
+                checked={gravityLoaded && gravityVisible}
                 onChange={(e) => setGravityVisible(e.target.checked)}
                 disabled={!gravityLoaded}
               />
-              Visible
+              <span data-testid="gravity-visibility-label">
+                {gravityVisibilityLabel(gravityState, gravityVisible)}
+              </span>
             </label>
           </div>
+          <p
+            className="mt-2 text-[11px] text-stone"
+            data-testid="gravity-layer-status"
+          >
+            {gravityState === "ready"
+              ? "Optional map overlay ready (not required for assessment)."
+              : gravityState === "unavailable"
+                ? formatGravityUnavailableMessage(gravityError)
+                : "Loading optional WGM2012 Bouguer overlay…"}
+          </p>
           {gravityMeta ? (
             <div className="mt-2 space-y-1 text-[11px] text-stone">
               <p className="text-bark" data-testid="gravity-layer-title">
@@ -761,13 +784,7 @@ function AssessmentWorkspace() {
               <p>{gravityMeta.native_resolution}</p>
               <p className="text-[10px] leading-snug">{gravityMeta.scientific_limitation}</p>
             </div>
-          ) : (
-            <p className="mt-2 text-[11px] text-stone" data-testid="gravity-layer-status">
-              {gravityError
-                ? `Unavailable: ${gravityError}`
-                : "Loading WGM2012 Bouguer layer…"}
-            </p>
-          )}
+          ) : null}
         </div>
 
         <div className="rounded-xl border border-meadow bg-chalk px-4 py-4">
@@ -897,25 +914,43 @@ function AssessmentWorkspace() {
             </div>
           )}
 
-          <label className="mt-4 block text-[11px] text-stone">
-            Checkpoint path (server-visible)
-            <input
-              value={checkpoint}
-              onChange={(e) => setCheckpoint(e.target.value)}
-              className="mt-1 w-full rounded border border-meadow bg-mist px-2 py-1.5 font-mono text-xs text-bark"
-              placeholder="/data/models/best.pt"
-            />
-          </label>
-          <label className="mt-3 block text-[11px] text-stone">
-            Offline features .npy (optional)
-            <input
-              value={featuresPath}
-              onChange={(e) => setFeaturesPath(e.target.value)}
-              className="mt-1 w-full rounded border border-meadow bg-mist px-2 py-1.5 font-mono text-xs text-bark"
-              placeholder="/data/features/sample.npy"
-              data-testid="offline-features"
-            />
-          </label>
+          <details
+            className="mt-4 rounded-lg border border-meadow bg-mist px-3 py-2"
+            data-testid="advanced-operator-options"
+          >
+            <summary className="cursor-pointer text-[11px] text-stone">
+              Advanced operator options
+            </summary>
+            <p className="mt-2 text-[10px] leading-snug text-stone">
+              Server filesystem paths for operators and tests. Ordinary assessments use
+              the promoted model automatically and do not need these fields. Prefer{" "}
+              <Link href="/training/operator" className="underline">
+                operator training
+              </Link>{" "}
+              or <Link href="/shell" className="underline">/shell</Link> for schema-v2
+              offline workflows.
+            </p>
+            <label className="mt-3 block text-[11px] text-stone">
+              Checkpoint path (server-visible)
+              <input
+                value={checkpoint}
+                onChange={(e) => setCheckpoint(e.target.value)}
+                className="mt-1 w-full rounded border border-meadow bg-chalk px-2 py-1.5 font-mono text-xs text-bark"
+                placeholder="/data/models/best.pt"
+                data-testid="checkpoint-path"
+              />
+            </label>
+            <label className="mt-3 block text-[11px] text-stone">
+              Offline features .npy (optional)
+              <input
+                value={featuresPath}
+                onChange={(e) => setFeaturesPath(e.target.value)}
+                className="mt-1 w-full rounded border border-meadow bg-chalk px-2 py-1.5 font-mono text-xs text-bark"
+                placeholder="/data/features/sample.npy"
+                data-testid="offline-features"
+              />
+            </label>
+          </details>
 
           <div className="mt-3" data-testid="hazard-selector">
             <p className="text-[11px] uppercase tracking-widest text-stone">
@@ -967,10 +1002,10 @@ function AssessmentWorkspace() {
             {loading ? "Assessing…" : "Run assessment"}
           </button>
           <p className="mt-2 text-[11px] text-stone">
-            Live AOI needs GEE/OpenTopo + SSRI_LIVE_ACQUISITION_ENABLED and acquires the
-            Stage 2.5 v1 (13-channel) stack — not lineaments or overburden. To include
-            those conditioning layers, apply them in /shell (schema v2) and assess with a
-            matching offline feature stack + checkpoint. Scores remain NOT_VALIDATED.
+            Live map assessments use the Stage 2.5 v1 (13-channel) stack. Lineaments and
+            overburden appear in results as available/unavailable analytics; they are only
+            used in inference when present in a schema-v2 offline stack. Scores remain
+            NOT_VALIDATED.
           </p>
         </div>
 

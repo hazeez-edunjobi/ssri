@@ -43,17 +43,25 @@ test("buildConditioningGroups always exposes overburden and lineaments", () => {
   assert.equal(overburden.status, "unavailable");
   assert.match(overburden.valueText, /Unavailable/i);
   assert.ok(!overburden.valueText.includes("0"));
+  assert.equal(overburden.supportedInProduct, true);
+  assert.equal(overburden.availableAtLocation, false);
+  assert.equal(overburden.usedInThisAssessment, false);
+  assert.match(overburden.usageNote, /Not included in this assessment/i);
 
   const density = groups[1].metrics.find((m) => m.key === "lineament_density");
   assert.ok(density);
   assert.equal(density.status, "nodata");
   assert.match(density.valueText, /NoData/);
+  assert.equal(density.usedInThisAssessment, false);
+  assert.match(density.usageNote, /NoData/i);
 
   const distance = groups[1].metrics.find((m) => m.key === "lineament_distance");
   assert.ok(distance);
   assert.equal(distance.status, "available");
   assert.equal(distance.valueText, "42.500");
   assert.match(distance.unit || "", /m/);
+  assert.equal(distance.usedInThisAssessment, true);
+  assert.match(distance.usageNote, /Present in this assessment/i);
 });
 
 test("missing conditioning_features still yields visible unavailable groups", () => {

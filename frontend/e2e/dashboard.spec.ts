@@ -35,7 +35,7 @@ test.describe("SSRI dashboard smoke", () => {
     await expect(page.getByTestId("ssri-map")).toBeVisible({ timeout: 30_000 });
     await page.getByRole("button", { name: /Run assessment/i }).click();
     await expect(
-      page.getByText("Click the map to select a point, or provide offline features path."),
+      page.getByText("Click the map or enter coordinates to select a point."),
     ).toBeVisible({ timeout: 15_000 });
   });
 
@@ -46,8 +46,21 @@ test.describe("SSRI dashboard smoke", () => {
     await expect(page.getByTestId("ssri-map")).toBeVisible({ timeout: 30_000 });
     await page.getByRole("button", { name: /Run assessment/i }).click();
     await expect(
-      page.getByText("Draw a polygon (3+ clicks) or provide offline features path."),
+      page.getByText("Draw a polygon on the map (3+ clicks)."),
     ).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("developer path controls stay collapsed for ordinary clients", async ({
+    page,
+  }) => {
+    await openAssessmentOrSkip(page);
+    await page.goto(dashboard, { waitUntil: "networkidle" });
+    const advanced = page.getByTestId("advanced-operator-options");
+    await expect(advanced).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId("offline-features")).toBeHidden();
+    await advanced.locator("summary").click();
+    await expect(page.getByTestId("offline-features")).toBeVisible();
+    await expect(page.getByTestId("checkpoint-path")).toBeVisible();
   });
 
   test("point selection + missing checkpoint validates", async ({ page }) => {

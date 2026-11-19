@@ -26,6 +26,13 @@ export type ConditioningMetricView = {
   valueText: string;
   unit: string | null;
   reason: string | null;
+  /** Whether SSRI can carry this channel in schema v2 stacks. */
+  supportedInProduct: boolean;
+  /** Whether this sample cell has a finite measurement. */
+  availableAtLocation: boolean;
+  /** Whether this channel was present and usable in the assessed stack (inference input). */
+  usedInThisAssessment: boolean;
+  usageNote: string;
 };
 
 export type ConditioningGroupView = {
@@ -122,6 +129,23 @@ export function buildConditioningGroups(
 
   const toMetric = (key: string, layer: ConditioningLayer): ConditioningMetricView => {
     const meta = LAYER_META[key];
+    const availableAtLocation =
+      layer.status === "available" && layer.value != null && Number.isFinite(layer.value);
+    const usedInThisAssessment = availableAtLocation;
+    let usageNote: string;
+    if (usedInThisAssessment) {
+      usageNote =
+        "Present in this assessment feature stack at the sample cell. " +
+        "It is a conditioning channel, not a hazard score.";
+    } else if (layer.status === "nodata") {
+      usageNote =
+        "Channel exists in the stack but this cell is NoData — not treated as zero and " +
+        "not used as a finite measurement for this location.";
+    } else {
+      usageNote =
+        "Not included in this assessment's feature stack, so it was not used by this " +
+        "prediction. Live AOI uses Stage 2.5 v1 (13 channels) unless you assess a schema-v2 offline stack.";
+    }
     return {
       key,
       label: meta?.label ?? key,
@@ -132,6 +156,10 @@ export function buildConditioningGroups(
           ? layer.unit ?? meta?.defaultUnit ?? null
           : layer.unit ?? meta?.defaultUnit ?? null,
       reason: layer.reason ?? null,
+      supportedInProduct: Boolean(meta) || key.includes("overburden") || key.includes("lineament"),
+      availableAtLocation,
+      usedInThisAssessment,
+      usageNote,
     };
   };
 
@@ -147,14 +175,14 @@ export function buildConditioningGroups(
       id: "overburden",
       title: "Overburden thickness",
       subtitle:
-        "Thickness only when available. Depth-to-interface is not auto-converted and is never shown as zero when missing.",
+        "Supported in SSRI schema v2. Thickness only when available. Depth-to-interface is not auto-converted and is never shown as zero when missing.",
       metrics: overburdenKeys.map((k) => toMetric(k, resolved[k])),
     },
     {
       id: "lineaments",
       title: "Lineaments",
       subtitle:
-        "Derived density and distance when present in a schema-v2 stack. Live AOI acquisition (v1) does not download lineaments.",
+        "Supported in SSRI schema v2 (density and distance). Live AOI acquisition (v1) does not download lineaments.",
       metrics: lineamentKeys.map((k) => toMetric(k, resolved[k])),
     },
   ];

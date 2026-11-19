@@ -378,6 +378,23 @@ export function AssessResultModal({
                               ? ` · expected unit: ${metric.unit}`
                               : ""}
                         </p>
+                        <p
+                          className="mt-1 font-mono text-[10px] text-stone"
+                          data-testid={`assess-conditioning-usage-${metric.key}`}
+                        >
+                          In product: {metric.supportedInProduct ? "yes (schema v2)" : "no"}
+                          {" · "}
+                          At sample cell:{" "}
+                          {metric.availableAtLocation
+                            ? "measured"
+                            : metric.status === "nodata"
+                              ? "NoData"
+                              : "not available"}
+                          {" · "}
+                          Used in this assessment:{" "}
+                          {metric.usedInThisAssessment ? "yes" : "no"}
+                        </p>
+                        <p className="mt-1 text-[11px] text-stone">{metric.usageNote}</p>
                         {metric.reason ? (
                           <p className="mt-1 text-[11px] text-stone">{metric.reason}</p>
                         ) : null}
@@ -392,9 +409,9 @@ export function AssessResultModal({
                 </p>
               )}
               <p className="text-[11px] text-stone">
-                These analytics report stack sampling only. Unavailable or NoData is not
-                treated as zero, and live AOI (schema v1) does not imply lineaments or
-                overburden were used in inference.
+                Unavailable or NoData is never shown as zero. A layer only counts as used
+                in this assessment when it is present in the feature stack with a finite
+                sample value.
               </p>
             </div>
 

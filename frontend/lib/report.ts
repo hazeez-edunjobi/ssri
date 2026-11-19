@@ -279,9 +279,20 @@ export function buildAssessmentReportHtml(input: ReportInput): string {
           metric.status === "available"
             ? `${metric.valueText}${metric.unit ? ` ${metric.unit}` : ""}`
             : `${metric.valueText}${metric.unit ? ` (expected unit: ${metric.unit})` : ""}`;
+        const usage =
+          `In product: ${metric.supportedInProduct ? "yes" : "no"}; ` +
+          `at sample cell: ${
+            metric.availableAtLocation
+              ? "measured"
+              : metric.status === "nodata"
+                ? "NoData"
+                : "not available"
+          }; ` +
+          `used in this assessment: ${metric.usedInThisAssessment ? "yes" : "no"}. ` +
+          metric.usageNote;
         return `<dt>${escapeHtml(metric.label)} <span class="muted">(${escapeHtml(metric.key)} · ${escapeHtml(metric.status)})</span></dt><dd>${escapeHtml(detail)}${
           metric.reason ? ` — ${escapeHtml(metric.reason)}` : ""
-        }</dd>`;
+        }<br/><span class="muted">${escapeHtml(usage)}</span></dd>`;
       })
       .join("")}
   </dl>`,
