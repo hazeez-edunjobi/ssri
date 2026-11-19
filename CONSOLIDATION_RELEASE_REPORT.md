@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-19  
 **Consolidation branch:** `consolidate/ssri-integration-ready`  
-**Consolidation tip (pre-main merge):** see `git rev-parse consolidate/ssri-integration-ready`  
+**Verification-complete tip (suites + merges):** `3c5cb600cf2a269b5ef5a47e9e0ea4510c6e6055`  
 **Backup of prior main:** tag `backup/main-pre-consolidation-e89fa03` → `e89fa03a4fbbe1a75198bd1d3bf62d4a5b02cfd0`  
 **Remote push / deploy:** **not performed** (awaiting explicit confirmation)  
 **Identity on consolidation commits:** hazeez-edunjobi \<ifeoluwasuccess520@gmail.com\> · no Co-authored-by  
@@ -123,11 +123,11 @@ Evidence: `poc/release_shell/outputs/consolidate_frontend_*.txt`
 
 ## 5. Final `main` commit SHA
 
-Recorded after Phase 5 merge:
+- **Verification-complete tip** (all product merges + suite evidence): `3c5cb600cf2a269b5ef5a47e9e0ea4510c6e6055`
+- **Authoritative local `main` tip** after documentation pins: recorded in the commit that lands this section (see `git rev-parse main` / log subject *Clarify final main SHAs…*).
 
-```text
-bfd6a03b5fdea6e2b38ddf33b6f4e9b6c4c03f6f
-```
+Prior `main` before consolidation: `e89fa03a4fbbe1a75198bd1d3bf62d4a5b02cfd0` (tagged `backup/main-pre-consolidation-e89fa03`).
+`origin/main` is still at that prior tip — **not pushed**.
 
 ---
 
