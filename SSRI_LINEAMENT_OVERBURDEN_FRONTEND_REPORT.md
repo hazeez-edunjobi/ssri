@@ -2,7 +2,7 @@
 
 **Date (UTC):** 2026-11-19  
 **Baseline before fix:** `51fd4d0` on `main` / `origin/main`  
-**Fix commit:** *(filled after commit; see § Fix)*  
+**Fix commit:** `e2a9bd87978557abf8981347245adeec4d883c3f` (`e2a9bd8`)
 
 ---
 
@@ -93,11 +93,11 @@ API field behaviour (code-level): v1 stacks → all three layers `unavailable`; 
 
 ## Fix commit
 
-After committing this change set, the fix SHA is:
-
 ```text
-SEE_GIT_LOG_AFTER_COMMIT
+e2a9bd87978557abf8981347245adeec4d883c3f
 ```
+
+Message: *Make lineament and overburden assess analytics explicitly visible.*
 
 Files in the fix:
 
