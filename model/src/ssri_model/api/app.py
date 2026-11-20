@@ -26,6 +26,7 @@ from ssri_model.api.routes import (
     assess,
     auth_keys,
     batch,
+    geological,
     health,
     inference,
     jobs,
@@ -113,6 +114,7 @@ def create_app(
     app.include_router(jobs.router, prefix=config.api_prefix)
     app.include_router(training.router, prefix=config.api_prefix)
     app.include_router(platform.router, prefix=config.api_prefix)
+    app.include_router(geological.router, prefix=config.api_prefix)
     # Release shell (upload→validate→train→eval). Behaviour gated by SSRI_RELEASE_SHELL.
     app.include_router(release_shell_routes.router, prefix=config.api_prefix)
 

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { href: "/workspace", label: "Dashboard" },
   { href: "/datasets", label: "Datasets" },
+  { href: "/geological", label: "Geological" },
   { href: "/training", label: "Training" },
   { href: "/models", label: "Models" },
   { href: "/activity", label: "Activity" },
@@ -35,6 +36,12 @@ const BANNERS: Array<{
     unsplash: "farmland",
     alt: "Aerial crop fields used as land data",
     caption: "Land, packaged for training",
+  },
+  {
+    prefix: "/geological",
+    unsplash: "geology",
+    alt: "Exposed rock layers and ground structure",
+    caption: "Client geological layers",
   },
   {
     prefix: "/training",

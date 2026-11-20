@@ -526,6 +526,9 @@ def validate_point_grid_layer(
     working_crs: str | None = None,
     measurement_type: str | None = None,
     units: str | None = None,
+    x_column: str | int | None = None,
+    y_column: str | int | None = None,
+    value_column: str | int | None = None,
 ) -> dict[str, Any]:
     """Validate a single declared feature-layer upload (point-grid CSV).
 
@@ -535,6 +538,9 @@ def validate_point_grid_layer(
 
     ``measurement_type`` for overburden must be ``thickness`` or
     ``depth_to_interface``. Depth is never silently written as thickness.
+
+    Explicit ``x_column`` / ``y_column`` / ``value_column`` are passed through to
+    ``ingest_point_grid_csv`` (no silent fallback when provided).
     """
     checks: list[CheckResult] = []
     mt = (measurement_type or "").strip().lower() or None
@@ -546,6 +552,9 @@ def validate_point_grid_layer(
             layer_name=layer_name,
             crs=crs,
             working_crs=working_crs,
+            x_column=x_column,
+            y_column=y_column,
+            value_column=value_column,
         )
     except ManualTrainingError as exc:
         code = exc.code
