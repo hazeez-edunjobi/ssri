@@ -11,11 +11,11 @@ Reason: API-side Postgres/Redis/queue readiness is verified healthy, but (1) no 
 
 | Ref | SHA |
 |-----|-----|
-| Local `main` HEAD | `bf20337aaa171c3442cfe054beda33f2a36a4640` |
+| Local `main` HEAD | `bf7acdb` (this report commit; parent readiness tip `bf20337`) |
 | `origin/main` (remote) | `0654930bc73f549927e9a0a074676f3985d1fa02` |
-| Unpushed on local `main` | `4a7528c`, `bf20337` (dashboard readiness honesty + Redis ping exception typing + infra readiness report) |
+| Unpushed on local `main` | `4a7528c`, `bf20337`, `bf7acdb` |
 
-**Authoritative production tip intended after push:** `bf20337`.  
+**Authoritative production tip intended after push:** `bf7acdb`.  
 **Currently live remote tip:** `0654930` (visualization audit).
 
 ---
@@ -257,7 +257,7 @@ git status
 git push origin main
 ```
 
-Expected tip after push: `bf20337`.
+Expected tip after push: `bf7acdb`.
 
 3. Confirm Vercel rebuild for `ssri-gamma` from that commit (auto-deploy or manual Redeploy).  
 4. Confirm Render API redeploy if it tracks `main` (diagnostic Redis detail + no functional Redis change required if already healthy).
