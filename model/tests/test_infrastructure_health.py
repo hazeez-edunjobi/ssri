@@ -68,3 +68,28 @@ def test_distributed_mode_reports_invalid_config() -> None:
             worker_heartbeat_seconds=400,
             job_lease_seconds=300,
         )
+
+
+def test_ping_redis_with_reason_reports_exception_type_only() -> None:
+    from ssri_model.infrastructure.redis.client import ping_redis_with_reason
+
+    class _Boom:
+        def ping(self) -> bool:
+            raise TimeoutError("simulated")
+
+    ok, detail = ping_redis_with_reason(_Boom())  # type: ignore[arg-type]
+    assert ok is False
+    assert detail == "ping_failed:TimeoutError"
+    assert "simulated" not in detail
+
+
+def test_ping_redis_with_reason_connected() -> None:
+    from ssri_model.infrastructure.redis.client import ping_redis_with_reason
+
+    class _Ok:
+        def ping(self) -> bool:
+            return True
+
+    ok, detail = ping_redis_with_reason(_Ok())  # type: ignore[arg-type]
+    assert ok is True
+    assert detail == "connected"

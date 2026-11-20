@@ -10,7 +10,10 @@ from sqlalchemy import text
 from ssri_model.infrastructure.config import ExecutionMode, InfrastructureConfig
 from ssri_model.infrastructure.database.schema import create_database_engine, schema_initialized
 from ssri_model.infrastructure.observability import log_operational_event
-from ssri_model.infrastructure.redis.client import create_redis_client, ping_redis
+from ssri_model.infrastructure.redis.client import (
+    create_redis_client,
+    ping_redis_with_reason,
+)
 from ssri_model.infrastructure.redis.queue import RedisJobQueue
 
 
@@ -92,17 +95,24 @@ def check_infrastructure_health(config: InfrastructureConfig) -> InfrastructureH
     if config.redis_url:
         try:
             client = create_redis_client(config.redis_url)
-            redis_ok = ping_redis(client)
-            redis_detail = "connected" if redis_ok else "ping_failed"
+            redis_ok, redis_detail = ping_redis_with_reason(client)
             if redis_ok:
-                queue = RedisJobQueue(client)
-                _ = queue.depth()
-                queue_ok = True
-                queue_detail = "reachable"
+                try:
+                    queue = RedisJobQueue(client)
+                    _ = queue.depth()
+                    queue_ok = True
+                    queue_detail = "reachable"
+                except Exception as queue_exc:
+                    queue_ok = False
+                    queue_detail = f"unavailable:{type(queue_exc).__name__}"
+            else:
+                # Queue stays unconfigured until Redis PING succeeds.
+                queue_ok = False
+                queue_detail = "unconfigured"
             client.close()
         except Exception as exc:
-            redis_detail = f"unavailable: {type(exc).__name__}"
-            queue_detail = f"unavailable: {type(exc).__name__}"
+            redis_detail = f"unavailable:{type(exc).__name__}"
+            queue_detail = f"unavailable:{type(exc).__name__}"
     components.append(
         ComponentHealth(
             name="redis",

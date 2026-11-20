@@ -34,6 +34,7 @@ import { AssessResultModal } from "@/components/AssessResultModal";
 import { LandPhoto } from "@/components/theme/LandPhoto";
 import { RequireSession, useRequiredSession } from "@/components/auth/RequireSession";
 import { buildConditioningGroups } from "@/lib/conditioning";
+import { apiHealthLabel } from "@/lib/apiHealthStatus";
 import {
   formatGravityUnavailableMessage,
   gravityLoadState,
@@ -67,7 +68,9 @@ function AssessmentWorkspace() {
   const markerRef = useRef<import("maplibre-gl").Marker | undefined>();
   const drawPointsRef = useRef<[number, number][]>([]);
   const [mapReady, setMapReady] = useState(true);
-  const [apiStatus, setApiStatus] = useState<"checking" | "ok" | "down">("checking");
+  const [apiStatus, setApiStatus] = useState<
+    "checking" | "ok" | "degraded" | "down"
+  >("checking");
   const [mode, setMode] = useState<Mode>("point");
   const [point, setPoint] = useState<{ latitude: number; longitude: number } | null>(
     null,
@@ -203,8 +206,13 @@ function AssessmentWorkspace() {
     (async () => {
       try {
         await getHealth();
-        await getReady();
-        if (!cancelled) setApiStatus("ok");
+        try {
+          await getReady();
+          if (!cancelled) setApiStatus("ok");
+        } catch {
+          // API process is reachable; Redis/queue readiness failed separately.
+          if (!cancelled) setApiStatus("degraded");
+        }
       } catch {
         if (!cancelled) setApiStatus("down");
       }
@@ -696,11 +704,7 @@ function AssessmentWorkspace() {
           <p className="mt-2 flex items-center gap-2 font-mono text-[11px] text-stone">
             <Radio className="h-3.5 w-3.5" />
             API {apiUrl} —{" "}
-            {apiStatus === "checking"
-              ? "checking…"
-              : apiStatus === "ok"
-                ? "reachable"
-                : "unreachable"}
+            <span data-testid="api-health-status">{apiHealthLabel(apiStatus)}</span>
           </p>
           <Link
             href={TRAINING_HREF}
