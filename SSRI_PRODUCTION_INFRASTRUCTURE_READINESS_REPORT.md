@@ -3,7 +3,8 @@
 **Probe UTC:** 2026-11-20T07:11:04Z  
 **API:** `https://ssri-api.onrender.com`  
 **Frontend:** `https://ssri-gamma.vercel.app`  
-**Git baseline at investigation start:** `0654930` on `main` / `origin/main`
+**Git baseline at investigation start:** `0654930` on `main` / `origin/main`  
+**Investigation commit (local, not pushed — no prod redeploy):** `4a7528c`
 
 ---
 
