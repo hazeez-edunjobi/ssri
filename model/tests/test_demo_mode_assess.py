@@ -58,7 +58,9 @@ def test_demo_mode_false_uses_real_path_and_requires_checkpoint(tmp_path: Path) 
             json={"point": {"latitude": 6.52, "longitude": 3.38}},
         )
         assert response.status_code == 400
-        assert "checkpoint" in str(response.json()).lower()
+        detail = str(response.json()).lower()
+        assert "checkpoint" in detail
+        assert "production checkpoint" in detail or "no valid" in detail
         acquire.assert_not_called()
         load_ckpt.assert_not_called()
 
@@ -208,7 +210,8 @@ def test_demo_mode_false_preserves_live_acquisition_call(tmp_path: Path) -> None
 
     client = _demo_client(tmp_path, demo_mode=False)
     array = np.zeros((13, 8, 8), dtype=np.float32)
-    ckpt = tmp_path / "ckpt.pt"
+    ckpt = tmp_path / "service-outputs" / "ckpt.pt"
+    ckpt.parent.mkdir(parents=True, exist_ok=True)
     ckpt.write_bytes(b"not-a-real-checkpoint")
 
     with patch(

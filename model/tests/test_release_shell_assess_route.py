@@ -59,7 +59,7 @@ def _client_and_assets(tmp_path, monkeypatch, *, meta: dict):
     monkeypatch.setenv("SSRI_API_ENVIRONMENT", "development")
     monkeypatch.delenv("SSRI_DOMAIN_CENTROID_PATH", raising=False)
     ckpt = save_inference_checkpoint(
-        tmp_path / "shell.pt",
+        tmp_path / "service-outputs" / "shell.pt",
         model_config=SSRIModelConfig(base_channels=8, num_encoder_stages=2, dropout=0.0),
         dataset_identity={"name": "research-shell", "version": "0.0.1"},
     )

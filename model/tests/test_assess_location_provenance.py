@@ -17,7 +17,7 @@ from tests.inference_helpers import save_inference_checkpoint
 def test_assess_echoes_submitted_coordinates_and_grid_cell(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("SSRI_API_ENVIRONMENT", "development")
     ckpt = save_inference_checkpoint(
-        tmp_path / "best.pt",
+        tmp_path / "service-outputs" / "best.pt",
         model_config=SSRIModelConfig(base_channels=8, num_encoder_stages=2, dropout=0.0),
         dataset_identity={"name": "handover-coord", "version": "0"},
     )

@@ -22,12 +22,17 @@ def write_key_store(path: Path, records: list[APIKeyRecord]) -> Path:
 
 def provision_keys(tmp_path: Path) -> dict[str, tuple[str, APIKeyRecord]]:
     viewer = generate_api_key(role=Role.VIEWER, description="viewer test key")
+    user = generate_api_key(role=Role.USER, description="user test key")
     operator = generate_api_key(role=Role.OPERATOR, description="operator test key")
     admin = generate_api_key(role=Role.ADMIN, description="admin test key")
     store_path = tmp_path / "auth" / "keys.json"
-    write_key_store(store_path, [viewer.record, operator.record, admin.record])
+    write_key_store(
+        store_path,
+        [viewer.record, user.record, operator.record, admin.record],
+    )
     return {
         "viewer": (viewer.plaintext_key, viewer.record),
+        "user": (user.plaintext_key, user.record),
         "operator": (operator.plaintext_key, operator.record),
         "admin": (admin.plaintext_key, admin.record),
         "store_path": store_path,

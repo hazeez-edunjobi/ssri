@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile
@@ -16,6 +17,8 @@ from ssri_model.api.dependencies import (
     require_run_inference,
     require_read_status,
 )
+from ssri_model.auth.authorization import has_permission
+from ssri_model.auth.models import Permission
 from ssri_model.api.job_workers import run_training_job
 from ssri_model.auth.models import AuthenticatedPrincipal
 from ssri_model.jobs.executor import JobExecutor
@@ -398,26 +401,65 @@ def get_training_job(
     }
 
 
+def _public_model_payload(model: Any, *, active: bool | None = None) -> dict[str, Any]:
+    """Safe metadata for ordinary READ_STATUS callers (no filesystem paths)."""
+    return {
+        "model_id": model.model_id,
+        "name": model.name,
+        "created_at": model.created_at,
+        "dataset_id": model.dataset_id,
+        "dataset_name": model.dataset_name,
+        "job_id": model.job_id,
+        "evaluation_status": model.evaluation_status,
+        "scientific_validation_status": model.scientific_validation_status,
+        "active": bool(model.active if active is None else active),
+        "notes": model.notes,
+        "checkpoint_available": Path(model.checkpoint_path).is_file(),
+    }
+
+
 @router.get("/models")
 def list_models(
     service_config: ServiceConfig = Depends(get_service_config),
-    _principal: AuthenticatedPrincipal = Depends(require_read_status),
+    principal: AuthenticatedPrincipal = Depends(require_read_status),
 ) -> dict[str, Any]:
     registry = _registry(service_config)
-    return {"models": [item.to_dict() for item in registry.list_models()]}
+    models = registry.list_models()
+    if has_permission(principal, Permission.RUN_INFERENCE):
+        return {"models": [item.to_dict() for item in models]}
+    return {"models": [_public_model_payload(item) for item in models]}
 
 
 @router.get("/models/active")
 def get_active_model(
     service_config: ServiceConfig = Depends(get_service_config),
-    _principal: AuthenticatedPrincipal = Depends(require_read_status),
+    principal: AuthenticatedPrincipal = Depends(require_read_status),
 ) -> dict[str, Any]:
     registry = _registry(service_config)
     model_id = registry.get_active_model_id()
+    reveal_paths = has_permission(principal, Permission.RUN_INFERENCE)
     if not model_id:
-        return {"active": None, "checkpoint_path": None}
+        return {
+            "active": None,
+            "checkpoint_path": None,
+            "checkpoint_available": False,
+            "model_id": None,
+        }
     model = registry.get_model(model_id)
-    return {"active": model.to_dict(), "checkpoint_path": model.checkpoint_path}
+    checkpoint_available = Path(model.checkpoint_path).is_file()
+    if reveal_paths:
+        return {
+            "active": model.to_dict(),
+            "checkpoint_path": model.checkpoint_path,
+            "checkpoint_available": checkpoint_available,
+            "model_id": model.model_id,
+        }
+    return {
+        "active": _public_model_payload(model, active=True),
+        "checkpoint_path": None,
+        "checkpoint_available": checkpoint_available,
+        "model_id": model.model_id,
+    }
 
 
 @router.post("/models/activate")

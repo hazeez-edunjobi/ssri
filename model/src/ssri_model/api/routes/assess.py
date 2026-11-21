@@ -30,8 +30,13 @@ from ssri_model.api.geojson import point_bbox, validate_polygon_geojson
 from ssri_model.api.geotiff_output import write_probability_geotiff
 from ssri_model.api.assess_conditioning import sample_conditioning_features
 from ssri_model.api.location_provenance import build_location_provenance
-from ssri_model.auth.models import AuthenticatedPrincipal
+from ssri_model.auth.authorization import has_permission
+from ssri_model.auth.exceptions import AuthorizationError
+from ssri_model.auth.models import AuthenticatedPrincipal, Permission
 from ssri_model.inference.checkpoint import load_inference_checkpoint
+from ssri_model.manual_training.exceptions import ModelNotFoundError, UnsafePathError
+from ssri_model.manual_training.registry import ModelRegistry
+from ssri_model.manual_training.storage import TrainingStorage
 from ssri_model.ml.constants import CHANNEL_COUNT, SUPPORTED_LABELS
 from ssri_model.service.config import ServiceConfig
 from ssri_model.service.exceptions import InvalidServiceRequestError
@@ -46,7 +51,28 @@ from ssri_model.uncertainty import (
     run_mc_dropout,
 )
 
+_NO_PRODUCTION_CHECKPOINT_MESSAGE = (
+    "No valid production checkpoint is configured. Promote a trained "
+    "Stage 2.5 (13-channel) model in the training registry, then retry the "
+    "assessment. Clients should not supply server filesystem paths."
+)
+
+_CHECKPOINT_OVERRIDE_DENIED = (
+    "Explicit checkpoint paths require operator authorization. "
+    "Ordinary assessments use the promoted production model."
+)
+
+_MODEL_ID_OVERRIDE_DENIED = (
+    "Selecting a non-promoted model requires operator authorization. "
+    "Ordinary assessments use the promoted production model."
+)
+
 router = APIRouter(prefix="/assess", tags=["assess"])
+
+
+def can_override_assessment_checkpoint(principal: AuthenticatedPrincipal) -> bool:
+    """Operators/admins (RUN_INFERENCE) may select paths or non-active model ids."""
+    return has_permission(principal, Permission.RUN_INFERENCE)
 
 
 class GeoPoint(BaseModel):
@@ -69,6 +95,13 @@ class AssessRequestBody(BaseModel):
 
     request_id: str = Field(default_factory=lambda: f"assess-{secrets.token_hex(6)}")
     checkpoint: str | None = None
+    model_id: str | None = Field(
+        default=None,
+        description=(
+            "Optional registered training-model id. When set, the server resolves "
+            "the checkpoint from the model registry without exposing filesystem paths."
+        ),
+    )
     features: str | None = None
     point: GeoPoint | None = None
     polygon_geojson: dict[str, Any] | None = None
@@ -107,6 +140,108 @@ class AssessResponseBody(BaseModel):
 _ALLOWED_FEATURE_CHANNEL_COUNTS = frozenset({CHANNEL_COUNT, 16})
 
 
+def _model_registry(output_root: Path) -> ModelRegistry:
+    return ModelRegistry(TrainingStorage(str(output_root)))
+
+
+def _ensure_path_under_root(path: Path, *, root: Path, label: str) -> Path:
+    """Resolve ``path`` and require it stays under ``root`` (blocks symlink escape)."""
+    resolved = path.resolve()
+    root_resolved = root.resolve()
+    try:
+        resolved.relative_to(root_resolved)
+    except ValueError as exc:
+        raise InvalidServiceRequestError(
+            f"{label} resolves outside the allowed storage root."
+        ) from exc
+    return resolved
+
+
+def resolve_assessment_checkpoint(
+    *,
+    checkpoint: str | None,
+    model_id: str | None,
+    output_root: Path,
+    principal: AuthenticatedPrincipal,
+) -> tuple[str, str]:
+    """Resolve a filesystem checkpoint from client path, model id, or active registry.
+
+    Ordinary ``RUN_ASSESS`` principals may only use the promoted active model.
+    Explicit filesystem paths and non-active ``model_id`` selection require
+    ``RUN_INFERENCE`` (operator/admin).
+
+    Returns ``(checkpoint_path, source)`` where ``source`` is one of
+    ``client_path``, ``model_id``, or ``active_registry``.
+    """
+    allow_override = can_override_assessment_checkpoint(principal)
+    registry = _model_registry(output_root)
+    models_root = registry.storage.models_dir
+    output_root_path = Path(output_root)
+
+    if checkpoint:
+        if not allow_override:
+            raise AuthorizationError(_CHECKPOINT_OVERRIDE_DENIED)
+        reject_path_traversal(checkpoint, field_name="checkpoint")
+        candidate = Path(checkpoint)
+        # Operator/lab overrides must stay under the service output root.
+        resolved = _ensure_path_under_root(
+            candidate,
+            root=output_root_path,
+            label="Checkpoint path",
+        )
+        if not resolved.is_file():
+            raise InvalidServiceRequestError(
+                "Checkpoint not found at the provided operator path."
+            )
+        return str(resolved), "client_path"
+
+    active_id = registry.get_active_model_id()
+
+    if model_id:
+        if model_id == active_id:
+            # Explicitly naming the promoted model is equivalent to active resolution.
+            pass
+        elif not allow_override:
+            raise AuthorizationError(_MODEL_ID_OVERRIDE_DENIED)
+        else:
+            try:
+                record = registry.get_model(model_id)
+            except ModelNotFoundError as exc:
+                raise InvalidServiceRequestError(
+                    "The requested registered model was not found in the training registry."
+                ) from exc
+            path = _ensure_path_under_root(
+                Path(record.checkpoint_path),
+                root=models_root,
+                label="Registered model checkpoint",
+            )
+            if not path.is_file():
+                raise InvalidServiceRequestError(
+                    "The requested registered model exists but its checkpoint file is "
+                    "unavailable. Re-register or re-train the model, then promote it."
+                )
+            return str(path), "model_id"
+
+    try:
+        active = registry.get_active_checkpoint()
+    except (ModelNotFoundError, UnsafePathError, OSError, ValueError, TypeError):
+        active = None
+    if active:
+        path = _ensure_path_under_root(
+            Path(active),
+            root=models_root,
+            label="Promoted model checkpoint",
+        )
+        if not path.is_file():
+            raise InvalidServiceRequestError(
+                "A promoted model is selected, but its checkpoint file is unavailable. "
+                "Re-promote a valid Stage 2.5 checkpoint, then retry."
+            )
+        return str(path), "active_registry"
+
+    raise InvalidServiceRequestError(_NO_PRODUCTION_CHECKPOINT_MESSAGE)
+
+
 def _load_feature_tensor(path: str) -> torch.Tensor:
     reject_path_traversal(path, field_name="features")
     array = torch.as_tensor(np.load(path))
@@ -136,6 +271,7 @@ def _resolve_features(
     *,
     output_root: Path,
     assessment_id: str,
+    checkpoint_resolved: bool,
 ) -> tuple[torch.Tensor, list[str], dict[str, Any] | None]:
     notes: list[str] = []
     if body.features is not None:
@@ -145,14 +281,12 @@ def _resolve_features(
         raise InvalidServiceRequestError(
             "Assessment requires 'features' or a live AOI ('point'/'polygon_geojson')."
         )
-    if body.checkpoint is None:
-        raise InvalidServiceRequestError(
-            "Live AOI assessment requires a 'checkpoint' path."
-        )
+    if not checkpoint_resolved:
+        raise InvalidServiceRequestError(_NO_PRODUCTION_CHECKPOINT_MESSAGE)
     if not live_acquisition_enabled():
         raise InvalidServiceRequestError(
             "Live AOI feature acquisition is not enabled in this deployment. "
-            "Provide offline 'features' (.npy) and 'checkpoint', or set "
+            "Provide offline 'features' (.npy), or set "
             "SSRI_LIVE_ACQUISITION_ENABLED=true with GEE/OpenTopography configured."
         )
 
@@ -235,13 +369,26 @@ def assess_endpoint(
 
     assessment_id = f"assess-{secrets.token_hex(8)}"
 
-    if body.checkpoint is None:
-        from ssri_model.release_shell.flags import (
-            default_limitations,
-            release_shell_enabled,
-        )
+    from ssri_model.release_shell.flags import (
+        default_limitations,
+        release_shell_enabled,
+    )
 
-        if release_shell_enabled():
+    try:
+        resolved_checkpoint, checkpoint_source = resolve_assessment_checkpoint(
+            checkpoint=body.checkpoint,
+            model_id=body.model_id,
+            output_root=output_root,
+            principal=principal,
+        )
+    except AuthorizationError:
+        raise
+    except InvalidServiceRequestError:
+        if (
+            body.checkpoint is None
+            and body.model_id is None
+            and release_shell_enabled()
+        ):
             from fastapi.responses import JSONResponse
 
             return JSONResponse(  # type: ignore[return-value]
@@ -249,8 +396,8 @@ def assess_endpoint(
                 content={
                     "status": "no_trained_model",
                     "message": (
-                        "No trained model checkpoint was provided. "
-                        "Upload a labelled dataset, train, then select a checkpoint "
+                        "No trained model checkpoint is configured. "
+                        "Upload a labelled dataset, train, then promote a checkpoint "
                         "before running assess."
                     ),
                     "scientific_validation_status": "NOT_VALIDATED",
@@ -260,25 +407,39 @@ def assess_endpoint(
                     "assessment_id": assessment_id,
                 },
             )
-        raise InvalidServiceRequestError("Assessment requires 'checkpoint'.")
+        raise
 
     features, acquisition_notes, acquisition_meta = _resolve_features(
         body,
         output_root=output_root,
         assessment_id=assessment_id,
+        checkpoint_resolved=True,
     )
-    reject_path_traversal(body.checkpoint, field_name="checkpoint")
-    checkpoint_path = Path(body.checkpoint)
+    checkpoint_path = Path(resolved_checkpoint)
     if not checkpoint_path.is_file():
-        raise InvalidServiceRequestError(f"Checkpoint not found: {body.checkpoint}")
+        raise InvalidServiceRequestError(
+            "Resolved registry checkpoint is unavailable. Promote a valid "
+            "Stage 2.5 checkpoint, then retry."
+        )
 
     checkpoint_sha256 = sha256_file(checkpoint_path)
     model, payload = load_inference_checkpoint(
-        body.checkpoint,
+        resolved_checkpoint,
         device=torch.device("cpu"),
     )
     dataset_name, dataset_version = dataset_manifest_fields(payload)
     is_fixture = enforce_fixture_checkpoint_policy(dataset_name)
+
+    model_config = payload.get("model_config") or {}
+    expected_channels = int(model_config.get("in_channels") or CHANNEL_COUNT)
+    feature_channels = int(features.shape[1])
+    if feature_channels != expected_channels:
+        raise InvalidServiceRequestError(
+            f"Input features have {feature_channels} channels but the checkpoint "
+            f"expects {expected_channels}. Live production assessment uses the "
+            f"Stage 2.5 {CHANNEL_COUNT}-channel contract; a schema-v2 (16-channel) "
+            "stack is not compatible with this checkpoint."
+        )
 
     from ssri_model.release_shell.flags import default_limitations, release_shell_enabled
     from ssri_model.release_shell.meta import load_shell_meta
@@ -446,6 +607,7 @@ def assess_endpoint(
         f"requested_by={principal.key_id}",
         f"request_id={request_id}",
         f"checkpoint_sha256={checkpoint_sha256}",
+        f"checkpoint_source={checkpoint_source}",
         f"is_fixture_checkpoint={str(is_fixture).lower()}",
     ]
 

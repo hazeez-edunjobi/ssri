@@ -27,3 +27,4 @@ def test_assess_still_requires_checkpoint_when_flag_off(tmp_path, monkeypatch):
         json={"point": {"latitude": 6.52, "longitude": 3.38}},
     )
     assert response.status_code in {400, 422}
+    assert "checkpoint" in str(response.json()).lower()

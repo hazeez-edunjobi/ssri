@@ -45,7 +45,7 @@ def test_assess_persists_response_and_identity(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("SSRI_ALLOW_FIXTURE_CHECKPOINTS", raising=False)
 
     ckpt = save_inference_checkpoint(
-        tmp_path / "model.pt",
+        tmp_path / "service-outputs" / "model.pt",
         model_config=SSRIModelConfig(base_channels=8, num_encoder_stages=2, dropout=0.1),
         dataset_identity={"name": "research-v0", "version": "0.1.0"},
     )
@@ -85,7 +85,7 @@ def test_assess_tags_e2e_fixture(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("SSRI_DOMAIN_CENTROID_PATH", raising=False)
 
     ckpt = save_inference_checkpoint(
-        tmp_path / "e2e.pt",
+        tmp_path / "service-outputs" / "e2e.pt",
         model_config=SSRIModelConfig(base_channels=8, num_encoder_stages=2, dropout=0.0),
         dataset_identity={"name": "e2e", "version": "0"},
     )
@@ -108,7 +108,7 @@ def test_assess_uncalibrated_forces_low_confidence(tmp_path, monkeypatch) -> Non
     monkeypatch.delenv("SSRI_DOMAIN_CENTROID_PATH", raising=False)
 
     ckpt = save_inference_checkpoint(
-        tmp_path / "model.pt",
+        tmp_path / "service-outputs" / "model.pt",
         dataset_identity={"name": "research-v0", "version": "0.1.0"},
     )
     features = tmp_path / "features.npy"

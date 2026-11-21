@@ -33,6 +33,11 @@ def health_router(prefix: str) -> APIRouter:
 
     @prefixed.get("/ready")
     def readiness(api_config: APIConfig = Depends(get_api_config)) -> JSONResponse:
+        """Readiness: filesystem probe + one bounded infrastructure check.
+
+        Postgres and Redis probes use connect/socket timeouts (typically 5s each).
+        This handler does not depend on Supabase Auth or Celery workers.
+        """
         try:
             validate_service_config(api_config.service_config)
             output_root = Path(api_config.output_root)
@@ -40,6 +45,7 @@ def health_router(prefix: str) -> APIRouter:
             probe = output_root / ".ready_probe"
             probe.write_text("ok", encoding="utf-8")
             probe.unlink(missing_ok=True)
+            # Single probe — previously this path checked infrastructure twice.
             infra = check_infrastructure_health(api_config.infrastructure_config)
             if not infra.ready:
                 return api_error_response(
@@ -52,14 +58,12 @@ def health_router(prefix: str) -> APIRouter:
             return api_error_response(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 code=ErrorCode.SERVICE_NOT_READY,
-                message=f"Service is not ready: {exc}",
+                message=f"Service is not ready: {type(exc).__name__}",
             )
         payload = ReadinessResponse(
             status="ready",
             service=api_config.service_name,
-            infrastructure=check_infrastructure_health(
-                api_config.infrastructure_config
-            ).to_dict(),
+            infrastructure=infra.to_dict(),
         )
         return JSONResponse(status_code=status.HTTP_200_OK, content=payload.model_dump())
 

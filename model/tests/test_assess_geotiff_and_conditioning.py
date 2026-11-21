@@ -20,7 +20,7 @@ def test_assess_returns_conditioning_and_geotiff_url(tmp_path: Path, monkeypatch
     monkeypatch.setenv("SSRI_OBJECT_STORAGE_BACKEND", "local")
     monkeypatch.setenv("SSRI_OBJECT_STORAGE_ROOT", str(tmp_path / "objects"))
     ckpt = save_inference_checkpoint(
-        tmp_path / "best.pt",
+        tmp_path / "service-outputs" / "best.pt",
         model_config=SSRIModelConfig(base_channels=8, num_encoder_stages=2, dropout=0.0),
         dataset_identity={"name": "assess-cap", "version": "0"},
     )
@@ -60,7 +60,7 @@ def test_assess_returns_conditioning_and_geotiff_url(tmp_path: Path, monkeypatch
 def test_assess_v2_stack_exposes_available_overburden(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("SSRI_API_ENVIRONMENT", "development")
     ckpt = save_inference_checkpoint(
-        tmp_path / "v2.pt",
+        tmp_path / "service-outputs" / "v2.pt",
         model_config=SSRIModelConfig(
             in_channels=16, base_channels=8, num_encoder_stages=2, dropout=0.0
         ),
