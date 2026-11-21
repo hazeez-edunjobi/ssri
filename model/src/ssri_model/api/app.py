@@ -23,6 +23,7 @@ from ssri_model.api.routes import (
     assess,
     auth_keys,
     batch,
+    demo,
     geological,
     health,
     inference,
@@ -110,6 +111,7 @@ def create_app(
     app.include_router(inference.router, prefix=config.api_prefix)
     app.include_router(batch.router, prefix=config.api_prefix)
     app.include_router(assess.router, prefix=config.api_prefix)
+    app.include_router(demo.router, prefix=config.api_prefix)
     app.include_router(layers.router, prefix=config.api_prefix)
     app.include_router(auth_keys.router, prefix=config.api_prefix)
     app.include_router(jobs.router, prefix=config.api_prefix)

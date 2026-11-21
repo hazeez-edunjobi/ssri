@@ -71,6 +71,10 @@ services:
       SSRI_GRAVITY_SOURCE: ${SSRI_GRAVITY_SOURCE:-wgm2012_bouguer}
       SSRI_DATA_ROOT: /data
       SSRI_LIVE_ACQUISITION_ENABLED: ${SSRI_LIVE_ACQUISITION_ENABLED:-false}
+      # Demo catalogue assessments default off. Production/staging API environments
+      # force demo_mode off in APIConfig even if this flag is mistakenly true.
+      SSRI_DEMO_MODE: ${SSRI_DEMO_MODE:-false}
+      SSRI_ALLOW_FIXTURE_CHECKPOINTS: ${SSRI_ALLOW_FIXTURE_CHECKPOINTS:-false}
       # Do not set OPENTOPOGRAPHY_API_KEY here — empty ${VAR:-} interpolation from
       # infra/.env absence overrides env_file: ../.env and blanks the secret.
       # Key comes from env_file (../.env). DEM defaults: auto → OpenTopo then GEE.

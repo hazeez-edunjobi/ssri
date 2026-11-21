@@ -12,17 +12,28 @@ from typing import Any, Literal
 AssetKind = Literal["point_grid_csv", "vector_lineament"]
 ValidationStatus = Literal["pending", "inspected", "validated", "failed"]
 ActivationStatus = Literal["inactive", "reporting_only", "approved"]
+ProcessingStatus = Literal[
+    "not_started",
+    "processing",
+    "processed",
+    "processing_failed",
+    "feature_compatibility_review",
+    "accepted_with_limitations",
+    "rejected",
+]
 
 # Canonical measurement identities for point-grid uploads.
 MEASUREMENT_OVERBURDEN_THICKNESS = "overburden_thickness"
 MEASUREMENT_DEPTH_TO_BEDROCK = "depth_to_bedrock"
 MEASUREMENT_LINEAMENT = "lineament_vectors"
+MEASUREMENT_TOTAL_MAGNETIC_INTENSITY = "total_magnetic_intensity"
 
 KNOWN_MEASUREMENTS = frozenset(
     {
         MEASUREMENT_OVERBURDEN_THICKNESS,
         MEASUREMENT_DEPTH_TO_BEDROCK,
         MEASUREMENT_LINEAMENT,
+        MEASUREMENT_TOTAL_MAGNETIC_INTENSITY,
     }
 )
 
@@ -38,6 +49,11 @@ MEASUREMENT_ALIASES: dict[str, str] = {
     "lineament": MEASUREMENT_LINEAMENT,
     "lineaments": MEASUREMENT_LINEAMENT,
     "lineament_vectors": MEASUREMENT_LINEAMENT,
+    "total_magnetic_intensity": MEASUREMENT_TOTAL_MAGNETIC_INTENSITY,
+    "tmi": MEASUREMENT_TOTAL_MAGNETIC_INTENSITY,
+    "magnetic_intensity": MEASUREMENT_TOTAL_MAGNETIC_INTENSITY,
+    "total_magnetic": MEASUREMENT_TOTAL_MAGNETIC_INTENSITY,
+    "magnetics_tmi": MEASUREMENT_TOTAL_MAGNETIC_INTENSITY,
 }
 
 
@@ -49,6 +65,10 @@ def canonicalize_measurement_type(value: str | None) -> str | None:
     if key.startswith("other:"):
         return key
     return MEASUREMENT_ALIASES.get(key, key)
+
+
+def is_tmi_measurement(value: str | None) -> bool:
+    return canonicalize_measurement_type(value) == MEASUREMENT_TOTAL_MAGNETIC_INTENSITY
 
 
 @dataclass
@@ -113,6 +133,11 @@ class GeologicalDatasetRecord:
     geometry_type: str | None = None
     feature_count: int | None = None
     lineament_method: dict[str, Any] = field(default_factory=dict)
+    # Geophysical processing / TMI lifecycle (derived only; never overwrites original)
+    processing_status: ProcessingStatus = "not_started"
+    processing_report: dict[str, Any] = field(default_factory=dict)
+    feature_compatibility: dict[str, Any] = field(default_factory=dict)
+    derived_relpath: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -122,6 +147,7 @@ class GeologicalDatasetRecord:
         payload.pop("working_relpath", None)
         payload["has_original"] = bool(self.original_relpath)
         payload["has_working"] = bool(self.working_relpath)
+        payload["has_derived"] = bool(self.derived_relpath)
         return payload
 
     def to_storage_dict(self) -> dict[str, Any]:
@@ -175,4 +201,8 @@ class GeologicalDatasetRecord:
             geometry_type=payload.get("geometry_type"),
             feature_count=payload.get("feature_count"),
             lineament_method=dict(payload.get("lineament_method") or {}),
+            processing_status=payload.get("processing_status") or "not_started",  # type: ignore[arg-type]
+            processing_report=dict(payload.get("processing_report") or {}),
+            feature_compatibility=dict(payload.get("feature_compatibility") or {}),
+            derived_relpath=payload.get("derived_relpath"),
         )

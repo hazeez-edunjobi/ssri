@@ -7,7 +7,9 @@ from typing import Any
 from ssri_model.geological.models import (
     MEASUREMENT_DEPTH_TO_BEDROCK,
     MEASUREMENT_OVERBURDEN_THICKNESS,
+    MEASUREMENT_TOTAL_MAGNETIC_INTENSITY,
     canonicalize_measurement_type,
+    is_tmi_measurement,
 )
 from ssri_model.manual_training.exceptions import ManualTrainingError
 from ssri_model.release_shell.validator import validate_point_grid_layer
@@ -58,6 +60,7 @@ def validate_declared_point_grid(
     x_column: str | int | None = None,
     y_column: str | int | None = None,
     value_column: str | int | None = None,
+    provenance: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run ``validate_point_grid_layer`` with catalogue measurement semantics.
 
@@ -109,6 +112,21 @@ def validate_declared_point_grid(
                 "z_column": value_column,
             },
         }
+
+    # TMI point surveys use a dedicated validator (irregular clouds allowed).
+    if mt == MEASUREMENT_TOTAL_MAGNETIC_INTENSITY or is_tmi_measurement(mt):
+        from ssri_model.geological.tmi import validate_tmi_point_survey
+
+        return validate_tmi_point_survey(
+            content,
+            filename=filename,
+            crs=crs,
+            units=units,
+            x_column=x_column,
+            y_column=y_column,
+            z_column=value_column,
+            provenance=provenance,
+        )
 
     # Map catalogue identity onto shell layer_name / measurement_type.
     if mt == MEASUREMENT_DEPTH_TO_BEDROCK:

@@ -46,6 +46,83 @@ def test_api_config_from_env_reads_demo_mode(monkeypatch: pytest.MonkeyPatch) ->
     assert APIConfig.from_env().demo_mode is False
 
 
+def test_production_and_staging_force_demo_mode_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ssri_model.api.config import resolve_demo_mode
+    from ssri_model.auth.config import AuthConfig
+    from ssri_model.service.config import ServiceConfig
+    from ssri_model.service.schemas import ServiceEnvironment
+
+    assert resolve_demo_mode(requested=True, environment="production") is False
+    assert resolve_demo_mode(requested=True, environment="staging") is False
+    assert resolve_demo_mode(requested=True, environment="development") is True
+
+    monkeypatch.setenv("SSRI_DEMO_MODE", "true")
+    monkeypatch.setenv("SSRI_API_ENVIRONMENT", "staging")
+    assert APIConfig.from_env().demo_mode is False
+
+    monkeypatch.setenv("SSRI_API_ENVIRONMENT", "production")
+    monkeypatch.setenv("SSRI_AUTH_ENABLED", "true")
+    monkeypatch.setenv("SSRI_AUTH_DEVELOPMENT_MODE", "false")
+    assert APIConfig.from_env().demo_mode is False
+
+    # Direct construction also clamps (auth enabled required for production).
+    prod = APIConfig(
+        demo_mode=True,
+        service_config=ServiceConfig(
+            output_root="outputs/tmp",
+            environment=ServiceEnvironment.PRODUCTION,
+            scientific_validation_required=False,
+            allow_unvalidated_predictions=True,
+        ),
+        auth_config=AuthConfig(
+            enabled=True,
+            environment="production",
+            development_auth_mode=False,
+            key_store_path="auth/keys.json",
+        ),
+    )
+    assert prod.demo_mode is False
+
+
+def test_staging_config_cannot_serve_demo_assess(tmp_path: Path) -> None:
+    """Even if demo_mode is requested, staging clamps it off — no mock scores."""
+    from ssri_model.service.config import ServiceConfig
+    from ssri_model.service.schemas import ServiceEnvironment
+
+    cfg = APIConfig(
+        demo_mode=True,
+        service_config=ServiceConfig(
+            output_root=str(tmp_path / "out"),
+            environment=ServiceEnvironment.STAGING,
+            scientific_validation_required=False,
+            allow_unvalidated_predictions=True,
+        ),
+    )
+    assert cfg.demo_mode is False
+    client = TestClient(create_app(cfg))
+    with patch(
+        "ssri_model.api.routes.assess.acquire_feature_array_for_bbox"
+    ) as acquire, patch(
+        "ssri_model.api.routes.assess.load_inference_checkpoint"
+    ) as load_ckpt:
+        response = client.post(
+            "/api/v1/assess",
+            json={
+                "point": {"latitude": 6.52, "longitude": 3.38},
+                "demo_scenario_key": "lagos_elevated",
+            },
+        )
+        assert response.status_code == 400
+        body = response.json()
+        # Must not look like a successful demo catalogue assessment.
+        assert "hazard_profiles" not in body
+        assert body.get("assessment_mode") != "Assessment Preview"
+        acquire.assert_not_called()
+        load_ckpt.assert_not_called()
+
+
 def test_demo_mode_false_uses_real_path_and_requires_checkpoint(tmp_path: Path) -> None:
     client = _demo_client(tmp_path, demo_mode=False)
     with patch(
@@ -95,10 +172,12 @@ def test_demo_mode_true_never_calls_live_providers(tmp_path: Path) -> None:
     body = response.json()
     AssessResponseBody.model_validate(body)
     assert body["is_fixture_checkpoint"] is False
-    assert "demo" not in body["explanation"].lower()
-    assert not any("demo" in note.lower() for note in body["notes"])
+    # Methodology notes distinguish preview catalogue from live inference.
+    assert any("assessment preview" in n.lower() for n in body["notes"])
+    assert any("not live model inference" in n.lower() for n in body["notes"])
     assert "mock" not in body["explanation"].lower()
     assert "fixture" not in str(body.get("checkpoint_dataset_name")).lower()
+    assert body.get("spatial_output_url") is None
 
 
 def test_demo_response_schema_and_http_success(tmp_path: Path) -> None:

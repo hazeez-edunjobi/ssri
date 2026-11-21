@@ -187,6 +187,10 @@ class ReadinessResponse(BaseModel):
     status: str
     service: str
     infrastructure: dict[str, object] | None = None
+    # True when SSRI_DEMO_MODE is on — presentation placeholders only.
+    demo_mode: bool = False
+    # Promoted Stage 2.5 registry status (no filesystem paths exposed).
+    model_registry: dict[str, object] | None = None
 
 
 class BatchStatusResponseBody(BaseModel):

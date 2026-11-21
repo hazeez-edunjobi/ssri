@@ -19,11 +19,23 @@ from ssri_model.geological.models import (
     MEASUREMENT_LINEAMENT,
     NodataPolicy,
     canonicalize_measurement_type,
+    is_tmi_measurement,
 )
+from ssri_model.geological.durable import write_bytes_atomic
 from ssri_model.geological.storage import GeologicalStorage
+from ssri_model.geological.tmi import process_tmi_to_grid
 from ssri_model.geological.validate import validate_declared_point_grid
 from ssri_model.manual_training.exceptions import ManualTrainingError
 from ssri_model.manual_training.upload_limits import reject_if_upload_too_large
+
+_SURVEY_PROVENANCE_KEYS = (
+    "survey_date",
+    "survey_method",
+    "sampling_spacing",
+    "processing_history",
+    "source_organization",
+    "geographic_coverage",
+)
 
 
 def _utc_now() -> str:
@@ -32,6 +44,41 @@ def _utc_now() -> str:
 
 def _sha256(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
+
+
+def _extract_single_csv_from_zip(content: bytes) -> tuple[bytes, str]:
+    """Extract exactly one CSV from a zip; reject path traversal and multi-CSV."""
+    import io
+    import zipfile
+
+    if not zipfile.is_zipfile(io.BytesIO(content)):
+        raise ManualTrainingError(
+            "Upload is not a valid ZIP archive.",
+            code="ZIP_INVALID",
+        )
+    with zipfile.ZipFile(io.BytesIO(content)) as zf:
+        members = [
+            n
+            for n in zf.namelist()
+            if not n.endswith("/") and not n.split("/")[-1].startswith(".")
+        ]
+        for name in members:
+            # Path traversal / absolute paths
+            parts = name.replace("\\", "/").split("/")
+            if name.startswith("/") or ".." in parts:
+                raise ManualTrainingError(
+                    f"ZIP entry '{name}' has an unsafe path.",
+                    code="ZIP_PATH_TRAVERSAL",
+                )
+        csvs = [n for n in members if n.lower().endswith(".csv")]
+        if len(csvs) != 1:
+            raise ManualTrainingError(
+                f"ZIPCSV must contain exactly one CSV file (found {len(csvs)}).",
+                code="ZIPCSV_COUNT",
+            )
+        name = csvs[0]
+        data = zf.read(name)
+        return data, name.split("/")[-1]
 
 
 class GeologicalService:
@@ -79,11 +126,19 @@ class GeologicalService:
             )
         safe = self.storage.safe_filename(filename)
         original = self.storage.dataset_dir(geo_id) / "original" / safe
-        original.write_bytes(content)
-        working_csv = self.storage.dataset_dir(geo_id) / "working" / "layer.csv"
-        shutil.copyfile(original, working_csv)
+        write_bytes_atomic(original, content)
 
-        inspect = inspect_point_grid_bytes(content, filename=safe)
+        # ZIPCSV: preserve original zip; extract a single CSV into working/.
+        csv_bytes = content
+        working_name = "layer.csv"
+        lower = safe.lower()
+        if lower.endswith(".zip"):
+            csv_bytes, working_name = _extract_single_csv_from_zip(content)
+
+        working_csv = self.storage.dataset_dir(geo_id) / "working" / "layer.csv"
+        write_bytes_atomic(working_csv, csv_bytes)
+
+        inspect = inspect_point_grid_bytes(csv_bytes, filename=working_name)
         self.storage.write_working_json(geo_id, "inspect.json", inspect)
 
         record.original_filename = safe
@@ -130,7 +185,7 @@ class GeologicalService:
             )
         safe = self.storage.safe_filename(filename)
         original = self.storage.dataset_dir(geo_id) / "original" / safe
-        original.write_bytes(content)
+        write_bytes_atomic(original, content)
 
         lower = safe.lower()
         if lower.endswith(".gpkg"):
@@ -140,7 +195,7 @@ class GeologicalService:
             geojson_bytes, fmt = try_load_vector_archive(content, filename=safe)
 
         working = self.storage.dataset_dir(geo_id) / "working" / "lineaments.geojson"
-        working.write_bytes(geojson_bytes)
+        write_bytes_atomic(working, geojson_bytes)
         inspect = inspect_lineament_geojson(geojson_bytes, filename=safe)
         inspect["source_format"] = fmt
         self.storage.write_working_json(geo_id, "inspect.json", inspect)
@@ -202,7 +257,22 @@ class GeologicalService:
         if "nodata_policy" in body and isinstance(body.get("nodata_policy"), dict):
             record.nodata_policy = NodataPolicy.from_dict(body["nodata_policy"])
         if "provenance" in body and isinstance(body.get("provenance"), dict):
-            record.provenance = dict(body["provenance"])
+            merged = dict(record.provenance or {})
+            merged.update(dict(body["provenance"]))
+            record.provenance = merged
+        # Survey metadata fields — store only when provided; never fabricate.
+        prov = dict(record.provenance or {})
+        for key in _SURVEY_PROVENANCE_KEYS:
+            if key in body:
+                val = body.get(key)
+                if val is None or (isinstance(val, str) and not val.strip()):
+                    prov[key] = "unknown"
+                else:
+                    prov[key] = val
+        if "source_organization" in body and body.get("source_organization"):
+            if not record.source_client:
+                record.source_client = str(body["source_organization"])
+        record.provenance = prov
         self.storage.save(record)
         self.storage.append_event(
             {
@@ -263,17 +333,26 @@ class GeologicalService:
                 x_column=record.x_column,
                 y_column=record.y_column,
                 value_column=record.z_column,
+                provenance=record.provenance,
             )
             # Refresh spacing / bbox from validation when available
             if report.get("overall") != "FAIL":
                 insp = record.inspect_report or {}
-                record.coverage_bbox = record.coverage_bbox or insp.get("coverage_bbox")
+                record.coverage_bbox = (
+                    report.get("coverage_bbox")
+                    or record.coverage_bbox
+                    or insp.get("coverage_bbox")
+                )
                 record.grid_spacing_x = record.grid_spacing_x or insp.get(
                     "dominant_spacing_x"
                 )
                 record.grid_spacing_y = record.grid_spacing_y or insp.get(
                     "dominant_spacing_y"
                 )
+            if report.get("feature_compatibility"):
+                record.feature_compatibility = dict(report["feature_compatibility"])
+                if record.processing_status == "not_started":
+                    record.processing_status = "feature_compatibility_review"
 
         self.storage.write_working_json(geo_id, "validate.json", report)
         record.validation_report = report
@@ -336,6 +415,13 @@ class GeologicalService:
                 + ", ".join(missing),
                 code="ACTIVATION_WARNINGS",
             )
+        if status == "approved" and is_tmi_measurement(record.measurement_type):
+            raise ManualTrainingError(
+                "Client TMI cannot be approved into the Stage 2.5 feature stack. "
+                "Use reporting_only for catalogue visibility, or mark "
+                "accepted_with_limitations after feature-compatibility review.",
+                code="TMI_NOT_APPROVABLE",
+            )
         if status == "approved":
             # Milestone: approved is catalogue-only; never means live inference.
             record.activation_status = "approved"
@@ -354,6 +440,156 @@ class GeologicalService:
                 "at": _utc_now(),
                 "activation_status": record.activation_status,
                 "acknowledged_warnings": list(ack),
+            }
+        )
+        return record
+
+    def process_tmi(
+        self,
+        geo_id: str,
+        *,
+        resolution: float,
+        nodata: float = -9999.0,
+    ):
+        """Grid validated TMI points into a derived GeoTIFF (original untouched)."""
+        record = self.storage.get(geo_id)
+        if not is_tmi_measurement(record.measurement_type):
+            raise ManualTrainingError(
+                "Processing is only available for total_magnetic_intensity datasets.",
+                code="NOT_TMI",
+            )
+        if record.validation_status != "validated":
+            raise ManualTrainingError(
+                "Validate the TMI dataset before processing. Failed validation blocks processing.",
+                code="PROCESS_REQUIRES_VALIDATED",
+            )
+        report = record.validation_report or {}
+        if report.get("overall") == "FAIL" or not report.get("can_process", True):
+            if report.get("overall") == "FAIL":
+                raise ManualTrainingError(
+                    "Validation failed; processing is blocked.",
+                    code="PROCESS_BLOCKED",
+                )
+            if report.get("can_process") is False:
+                raise ManualTrainingError(
+                    "Dataset is not suitable for gridding yet "
+                    "(insufficient spatial coverage or points).",
+                    code="PROCESS_NOT_SUITABLE",
+                )
+        original = self.storage.original_path(record)
+        if original is None or not original.exists():
+            raise ManualTrainingError(
+                "Original upload missing.",
+                code="UPLOAD_REQUIRED",
+            )
+        if not record.crs:
+            raise ManualTrainingError("CRS required for processing.", code="CRS_REQUIRED")
+
+        # Prefer working CSV (ZIPCSV extracts here); never mutate original bytes.
+        working = self.storage.working_path(record)
+        if working and working.exists():
+            csv_content = working.read_bytes()
+        elif (original.name or "").lower().endswith(".zip"):
+            csv_content, _ = _extract_single_csv_from_zip(original.read_bytes())
+        else:
+            csv_content = original.read_bytes()
+
+        record.processing_status = "processing"
+        self.storage.save(record)
+
+        out_tif = self.storage.dataset_dir(geo_id) / "working" / "derived" / "tmi_grid.tif"
+        prov_path = (
+            self.storage.dataset_dir(geo_id) / "working" / "derived" / "tmi_process.json"
+        )
+        try:
+            proc = process_tmi_to_grid(
+                csv_content,
+                out_tif=out_tif,
+                provenance_json=prov_path,
+                source_geo_id=geo_id,
+                crs=record.crs,
+                units=record.units,
+                resolution=float(resolution),
+                x_column=record.x_column,
+                y_column=record.y_column,
+                z_column=record.z_column,
+                nodata=float(nodata),
+            )
+        except Exception as exc:
+            record.processing_status = "processing_failed"
+            record.processing_report = {
+                "error": str(exc),
+                "failed_at": _utc_now(),
+            }
+            self.storage.save(record)
+            self.storage.append_event(
+                {
+                    "event": "processing_failed",
+                    "geo_id": geo_id,
+                    "at": _utc_now(),
+                    "error": str(exc),
+                }
+            )
+            raise ManualTrainingError(
+                f"TMI processing failed: {exc}",
+                code="PROCESS_FAILED",
+            ) from exc
+
+        record.processing_status = "processed"
+        record.processing_report = proc
+        record.derived_relpath = "working/derived/tmi_grid.tif"
+        if proc.get("feature_compatibility"):
+            record.feature_compatibility = dict(proc["feature_compatibility"])
+        self.storage.save(record)
+        self.storage.append_event(
+            {
+                "event": "processed",
+                "geo_id": geo_id,
+                "at": _utc_now(),
+                "derived": record.derived_relpath,
+                "method": proc.get("processing_method"),
+            }
+        )
+        return record, proc
+
+    def set_compatibility_decision(
+        self,
+        geo_id: str,
+        *,
+        decision: str,
+        notes: str = "",
+    ):
+        """Operator decision after feature-compatibility review (not training-ready)."""
+        record = self.storage.get(geo_id)
+        if decision not in {"accepted_with_limitations", "rejected", "feature_compatibility_review"}:
+            raise ManualTrainingError(
+                "decision must be accepted_with_limitations, rejected, "
+                "or feature_compatibility_review.",
+                code="COMPATIBILITY_DECISION",
+            )
+        if is_tmi_measurement(record.measurement_type) and decision == "accepted_with_limitations":
+            # Explicit: accepted for catalogue / research review only.
+            record.processing_status = "accepted_with_limitations"
+            record.notes = (
+                (record.notes + "\n" if record.notes else "")
+                + "accepted_with_limitations: not Stage 2.5 training-ready; "
+                "not live magnetics channel; NOT_VALIDATED."
+                + (f" {notes}" if notes else "")
+            ).strip()
+        else:
+            record.processing_status = decision  # type: ignore[assignment]
+            if notes:
+                record.notes = (
+                    (record.notes + "\n" if record.notes else "") + notes
+                ).strip()
+        record.scientific_validation_status = "NOT_VALIDATED"
+        self.storage.save(record)
+        self.storage.append_event(
+            {
+                "event": "compatibility_decision",
+                "geo_id": geo_id,
+                "at": _utc_now(),
+                "decision": decision,
             }
         )
         return record

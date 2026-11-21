@@ -135,9 +135,15 @@ export default function GeologicalListPage() {
     <PlatformShell>
       <h1 className="font-display text-2xl">Geological datasets</h1>
       <p className="mt-2 max-w-2xl text-sm text-stone">
-        Catalogue client point-grid CSVs and lineament vectors separately from Stage 2.5
-        training. Availability here does not mean the layer was used in live assessment
-        inference.
+        Catalogue client point-grid CSVs (including TMI magnetic surveys), ZIPCSV, and
+        lineament vectors separately from Stage 2.5 training. TMI is a conditioning
+        measurement — not a hazard label and not the live EMAG2 magnetics channel.
+        Availability here does not mean the layer was used in live assessment inference.
+        Upload, declare, validate, and original download require an{" "}
+        <strong className="font-medium text-ink">operator or admin</strong> session (or
+        an API key with <code className="text-xs">manage_geological</code>). Ordinary
+        signed-in users cannot mutate the catalogue. Scientific status remains
+        NOT_VALIDATED.
       </p>
 
       <form

@@ -15,12 +15,14 @@ from ssri_model.api.dependencies import (
 )
 from ssri_model.auth.models import AuthenticatedPrincipal
 from ssri_model.geological.apply import apply_geological_to_offline_dataset
+from ssri_model.geological.durable import build_geological_storage
 from ssri_model.geological.service import GeologicalService
 from ssri_model.geological.storage import GeologicalStorage
 from ssri_model.geological.target import resolve_offline_apply_target
 from ssri_model.manual_training.exceptions import ManualTrainingError
 from ssri_model.manual_training.storage import TrainingStorage
 from ssri_model.service.config import ServiceConfig
+from ssri_model.service.exceptions import InvalidServiceConfigError
 
 router = APIRouter(prefix="/geological", tags=["geological"])
 
@@ -30,7 +32,7 @@ GEOLOGICAL_TENANCY_MODEL = "single_tenant_shared_operator_catalogue"
 
 
 def _storage(config: ServiceConfig) -> GeologicalStorage:
-    return GeologicalStorage(config.output_root)
+    return build_geological_storage(config.output_root)
 
 
 def _service(config: ServiceConfig) -> GeologicalService:
@@ -68,11 +70,28 @@ class DeclareBody(BaseModel):
     grid_spacing_units: str | None = None
     nodata_policy: dict[str, Any] | None = None
     provenance: dict[str, Any] | None = None
+    # Optional survey provenance — omitted fields stay unknown (never fabricated).
+    survey_date: str | None = None
+    survey_method: str | None = None
+    sampling_spacing: str | None = None
+    processing_history: str | None = None
+    source_organization: str | None = None
+    geographic_coverage: str | None = None
 
 
 class ActivationBody(BaseModel):
     activation_status: str
     acknowledged_warnings: list[str] = Field(default_factory=list)
+
+
+class ProcessTmiBody(BaseModel):
+    resolution: float = Field(..., gt=0, description="Grid cell size in CRS units")
+    nodata: float = -9999.0
+
+
+class CompatibilityBody(BaseModel):
+    decision: str
+    notes: str = ""
 
 
 class CoverageBody(BaseModel):
@@ -160,8 +179,16 @@ def get_dataset(
         "dataset": record.to_dict(),
         "inspect": record.inspect_report,
         "validation": record.validation_report,
+        "processing": record.processing_report,
+        "feature_compatibility": record.feature_compatibility,
         "feature_application": app_status,
         "tenancy_model": GEOLOGICAL_TENANCY_MODEL,
+        "storage_backend": "filesystem_private_under_output_root",
+        "storage_note": (
+            "Geological originals are stored under the API output root "
+            "(not Supabase Storage / not Cloudinary). "
+            "Platform training zips may use Supabase; geospatial catalogue does not."
+        ),
     }
 
 
@@ -220,6 +247,46 @@ def validate_dataset(
         status_code=status,
         content={"dataset": record.to_dict(), "validation": report},
     )
+
+
+@router.post("/datasets/{geo_id}/process")
+def process_dataset(
+    geo_id: str,
+    body: ProcessTmiBody,
+    service_config: ServiceConfig = Depends(get_service_config),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
+) -> Any:
+    """Grid validated TMI points to a derived GeoTIFF (original preserved)."""
+    try:
+        record, report = _service(service_config).process_tmi(
+            geo_id, resolution=body.resolution, nodata=body.nodata
+        )
+    except ManualTrainingError as exc:
+        return _error(exc)
+    return {
+        "dataset": record.to_dict(),
+        "processing": report,
+        "feature_compatibility": record.feature_compatibility,
+    }
+
+
+@router.post("/datasets/{geo_id}/compatibility")
+def set_compatibility(
+    geo_id: str,
+    body: CompatibilityBody,
+    service_config: ServiceConfig = Depends(get_service_config),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
+) -> Any:
+    try:
+        record = _service(service_config).set_compatibility_decision(
+            geo_id, decision=body.decision, notes=body.notes
+        )
+    except ManualTrainingError as exc:
+        return _error(exc, status=404 if exc.code == "DATASET_NOT_FOUND" else 400)
+    return {
+        "dataset": record.to_dict(),
+        "feature_compatibility": record.feature_compatibility,
+    }
 
 
 @router.post("/datasets/{geo_id}/activation")

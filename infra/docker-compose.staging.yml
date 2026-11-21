@@ -29,8 +29,11 @@ services:
       SSRI_API_ENVIRONMENT: ${SSRI_API_ENVIRONMENT:-staging}
       # Fixtures refused unless explicitly allowed for a named qualification run.
       SSRI_ALLOW_FIXTURE_CHECKPOINTS: ${SSRI_ALLOW_FIXTURE_CHECKPOINTS:-false}
+      # Staging hard-disables demo catalogue assessments (also enforced in APIConfig).
+      SSRI_DEMO_MODE: "false"
 
   worker:
     environment:
       SSRI_API_ENVIRONMENT: ${SSRI_API_ENVIRONMENT:-staging}
       SSRI_ALLOW_FIXTURE_CHECKPOINTS: ${SSRI_ALLOW_FIXTURE_CHECKPOINTS:-false}
+      SSRI_DEMO_MODE: "false"

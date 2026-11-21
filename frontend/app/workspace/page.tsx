@@ -35,9 +35,9 @@ export default function WorkspacePage() {
       {error && <p className="mt-4 text-sm text-amber-900">{error}</p>}
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {[
-          ["Datasets", me?.counts.datasets ?? "—", "/datasets"],
-          ["Training runs", me?.counts.training_runs ?? "—", "/training"],
-          ["Models", me?.counts.models ?? "—", "/models"],
+          ["Datasets", me ? me.counts.datasets : "—", "/datasets"],
+          ["Training runs", me ? me.counts.training_runs : "—", "/training"],
+          ["Models", me ? me.counts.models : "—", "/models"],
         ].map(([label, value, href]) => (
           <Link key={label} href={String(href)} className="rounded-2xl border border-meadow bg-chalk p-5">
             <div className="text-xs text-stone">{label}</div>

@@ -19,6 +19,8 @@ export type AssessRequestPayload = {
   model_version?: string;
   produce_geotiff?: boolean;
   resolution_m?: number;
+  /** Presentation catalogue key — only meaningful when SSRI_DEMO_MODE is on. */
+  demo_scenario_key?: string;
 };
 
 export function buildAssessRequestBody(
@@ -37,6 +39,11 @@ export function buildAssessRequestBody(
   }
   if (!body.features?.trim()) {
     delete body.features;
+  }
+  if (!body.demo_scenario_key?.trim()) {
+    delete body.demo_scenario_key;
+  } else {
+    body.demo_scenario_key = body.demo_scenario_key.trim();
   }
   return body;
 }

@@ -18,6 +18,7 @@ def test_local_object_storage_roundtrip(tmp_path: Path) -> None:
         content_type="image/tiff",
     )
     assert (tmp_path / "objects" / key).read_bytes() == b"tiff-bytes"
+    assert store.get_bytes(key) == b"tiff-bytes"
     url = store.signed_url(key, expires_seconds=60)
     assert key in url
     store.delete(key)
@@ -50,9 +51,13 @@ def test_s3_signed_url_uses_presign(monkeypatch: pytest.MonkeyPatch) -> None:
         "boto3.session.Session",
         lambda **_kwargs: FakeSession(),
     )
+    fake_body = MagicMock()
+    fake_body.read.return_value = b"data"
+    fake_client.get_object.return_value = {"Body": fake_body}
     store = S3CompatibleObjectStorage(bucket="ssri-artifacts")
     key = store.put_bytes("a/b.tif", b"data", content_type="image/tiff")
     assert key == "a/b.tif"
+    assert store.get_bytes(key) == b"data"
     url = store.signed_url(key, expires_seconds=120)
     assert url == "https://example.test/signed"
     fake_client.generate_presigned_url.assert_called_once()

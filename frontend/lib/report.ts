@@ -23,6 +23,8 @@ export type ReportInput = {
   } | null;
   settings?: ShellSettings | null;
   generatedAt?: Date;
+  /** When true, label the report as demonstration / sample data. */
+  presentationDemo?: boolean;
 };
 
 function escapeHtml(value: unknown): string {
@@ -151,7 +153,8 @@ function evaluationSection(summary: AssessmentEvaluationSummary | null | undefin
 }
 
 export function buildAssessmentReportHtml(input: ReportInput): string {
-  const { result, locationLabel, point, projectedPoint, settings } = input;
+  const { result, locationLabel, point, projectedPoint, settings, presentationDemo } =
+    input;
   const generatedAt = (input.generatedAt ?? new Date()).toISOString();
   const notes = result.notes ?? [];
   const dataHash = noteValue(notes, "data_hash");
@@ -221,6 +224,12 @@ export function buildAssessmentReportHtml(input: ReportInput): string {
 </head>
 <body>
   <span class="badge">NOT_VALIDATED · relative susceptibility ranking</span>
+  ${
+    presentationDemo
+      ? `<p class="badge" style="letter-spacing:.08em;text-transform:uppercase;font-size:10px;color:#2D6A4F;background:transparent;border:0;padding:0;">Assessment Preview</p>
+  <p class="muted">Methodology: Assessment Preview catalogue scenario — not live model inference or field-verified measurements for the named location.</p>`
+      : ""
+  }
   <h1>SSRI assessment report</h1>
   <p class="muted">Assessment ${escapeHtml(result.assessment_id)} · generated ${escapeHtml(generatedAt)}</p>
 

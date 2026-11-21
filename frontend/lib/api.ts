@@ -18,6 +18,16 @@ export type ReadyResponse = {
   status: string;
   service?: string;
   infrastructure?: Record<string, unknown>;
+  /** Server SSRI_DEMO_MODE — presentation placeholders, not live inference. */
+  demo_mode?: boolean;
+  /** Promoted Stage 2.5 registry summary (no filesystem paths). */
+  model_registry?: {
+    active_model_id?: string | null;
+    checkpoint_available?: boolean;
+    scientific_validation_status?: string | null;
+    dataset_name?: string | null;
+    detail?: string;
+  };
 };
 
 export type AssessRequest = {
@@ -37,6 +47,8 @@ export type AssessRequest = {
   model_version?: string;
   produce_geotiff?: boolean;
   resolution_m?: number;
+  /** Presentation catalogue key — only used when SSRI_DEMO_MODE is on. */
+  demo_scenario_key?: string;
 };
 
 export type GeoJsonPolygon = {
@@ -288,6 +300,37 @@ export async function getReady(): Promise<ReadyResponse> {
   const response = await fetch(`${apiUrl}/api/v1/ready`);
   if (!response.ok)
     throw new Error(await parseError(response, "The service is not ready yet"));
+  return response.json();
+}
+
+export type DemoScenariosResponse = {
+  demo_mode: boolean;
+  disclosure: string;
+  count: number;
+  scenarios: Array<{
+    key: string;
+    location_name: string;
+    profile_label: string;
+    latitude: number;
+    longitude: number;
+    assessment_type: string;
+    summary: string;
+    landslide: number;
+    subsidence: number;
+    sinkhole: number;
+    confidence_tier: string;
+    timestamp_iso: string;
+    disclosure?: string;
+  }>;
+};
+
+export async function getDemoScenarios(): Promise<DemoScenariosResponse> {
+  const response = await fetch(`${apiUrl}/api/v1/demo/scenarios`);
+  if (!response.ok) {
+    throw new Error(
+      await parseError(response, "Presentation demo catalogue unavailable"),
+    );
+  }
   return response.json();
 }
 

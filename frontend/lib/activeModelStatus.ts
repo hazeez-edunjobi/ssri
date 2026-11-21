@@ -114,7 +114,9 @@ export function activeModelFromNetworkError(): ActiveModelView {
 export function hasAssessmentModelAccess(
   status: ActiveModelView,
   checkpoint: string,
+  options?: { presentationDemo?: boolean },
 ): boolean {
+  if (options?.presentationDemo) return true;
   if (checkpoint.trim()) return true;
   return status.kind === "available" && status.checkpointAvailable;
 }
@@ -124,12 +126,25 @@ export function assessmentButtonDisabled(args: {
   selectedHazardCount: number;
   status: ActiveModelView;
   checkpoint: string;
+  presentationDemo?: boolean;
 }): boolean {
   if (args.loading) return true;
   if (args.selectedHazardCount === 0) return true;
-  if (!hasAssessmentModelAccess(args.status, args.checkpoint)) return true;
+  if (
+    !hasAssessmentModelAccess(args.status, args.checkpoint, {
+      presentationDemo: args.presentationDemo,
+    })
+  ) {
+    return true;
+  }
   return false;
 }
+
+/** Discreet UI label when the API is running with SSRI_DEMO_MODE=true. */
+export const ASSESSMENT_PREVIEW_LABEL = "Assessment Preview";
+
+/** @deprecated Use ASSESSMENT_PREVIEW_LABEL — kept for older imports. */
+export const PRESENTATION_DEMO_BANNER = ASSESSMENT_PREVIEW_LABEL;
 
 export function modelStatusPanelMessage(status: ActiveModelView): string {
   switch (status.kind) {
@@ -151,7 +166,11 @@ export function modelStatusPanelMessage(status: ActiveModelView): string {
 }
 
 /** Shown near Run assessment when the control is blocked by model status. */
-export function modelStatusAssessHint(status: ActiveModelView): string | null {
+export function modelStatusAssessHint(
+  status: ActiveModelView,
+  options?: { presentationDemo?: boolean },
+): string | null {
+  if (options?.presentationDemo) return null;
   if (status.kind === "available" && status.checkpointAvailable) return null;
   switch (status.kind) {
     case "loading":

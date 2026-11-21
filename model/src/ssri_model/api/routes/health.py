@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from ssri_model.api.config import APIConfig
 from ssri_model.api.dependencies import get_api_config
 from ssri_model.api.errors import ErrorCode, api_error_response
+from ssri_model.api.registry_status import active_model_registry_status
 from ssri_model.api.schemas import HealthResponse, ReadinessResponse
 from ssri_model.infrastructure.health import check_infrastructure_health
 from ssri_model.service.validation import validate_service_config
@@ -60,10 +61,13 @@ def health_router(prefix: str) -> APIRouter:
                 code=ErrorCode.SERVICE_NOT_READY,
                 message=f"Service is not ready: {type(exc).__name__}",
             )
+        model_registry = active_model_registry_status(api_config.output_root)
         payload = ReadinessResponse(
             status="ready",
             service=api_config.service_name,
             infrastructure=infra.to_dict(),
+            demo_mode=bool(api_config.demo_mode),
+            model_registry=model_registry,
         )
         return JSONResponse(status_code=status.HTTP_200_OK, content=payload.model_dump())
 

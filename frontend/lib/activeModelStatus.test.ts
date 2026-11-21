@@ -93,6 +93,27 @@ describe("assessmentButtonDisabled / hasAssessmentModelAccess", () => {
     assert.equal(modelStatusAssessHint(missing), MISSING_MODEL_ASSESS_HINT);
   });
 
+  it("enables Run assessment under presentation demo mode without a promoted model", () => {
+    assert.equal(
+      hasAssessmentModelAccess(missing, "", { presentationDemo: true }),
+      true,
+    );
+    assert.equal(
+      assessmentButtonDisabled({
+        loading: false,
+        selectedHazardCount: 3,
+        status: missing,
+        checkpoint: "",
+        presentationDemo: true,
+      }),
+      false,
+    );
+    assert.equal(
+      modelStatusAssessHint(missing, { presentationDemo: true }),
+      null,
+    );
+  });
+
   it("enables Run assessment when a promoted model is available", () => {
     assert.equal(hasAssessmentModelAccess(available, ""), true);
     assert.equal(

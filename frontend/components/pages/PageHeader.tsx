@@ -90,21 +90,19 @@ export function PageHeader({
             />
           </div>
           <div
-            role="img"
-            aria-label="Sample result. Landslide risk is moderate, with high confidence."
+            role="note"
             className="relative z-10 mx-4 -mt-10 rounded-lg border border-black/[0.08] bg-chalk p-4 lg:absolute lg:-bottom-4 lg:-left-4 lg:mx-0 lg:mt-0 lg:w-72"
           >
-            <p className="font-body text-xs font-semibold leading-[1.4] text-stone">Sample result</p>
-            <div className="mt-2 flex items-center justify-between gap-4">
-              <p className="font-body text-sm font-semibold leading-[1.4] text-bark">Landslide risk</p>
-              <span className="inline-flex rounded-full bg-amber-100 px-2 py-1 font-body text-xs font-semibold leading-none text-amber-800">
-                Moderate
-              </span>
-            </div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-black/10" aria-hidden>
-              <div className="h-full w-[48%] rounded-full bg-amber-600" />
-            </div>
-            <p className="mt-2 font-body text-xs leading-[1.4] text-stone">Confidence: high</p>
+            <p className="font-body text-xs font-semibold leading-[1.4] text-stone">
+              Map assessment
+            </p>
+            <p className="mt-2 font-body text-sm font-semibold leading-[1.4] text-bark">
+              Live hazard scores require a promoted Stage 2.5 model
+            </p>
+            <p className="mt-2 font-body text-xs leading-[1.4] text-stone">
+              SSRI does not invent sample predictions on this page. Scientific
+              status remains NOT_VALIDATED until independently verified.
+            </p>
           </div>
         </div>
       </div>

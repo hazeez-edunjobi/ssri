@@ -12,6 +12,8 @@ from urllib.parse import quote
 class ObjectStorage(Protocol):
     def put_bytes(self, key: str, payload: bytes, *, content_type: str) -> str: ...
 
+    def get_bytes(self, key: str) -> bytes: ...
+
     def signed_url(self, key: str, *, expires_seconds: int = 3600) -> str: ...
 
     def delete(self, key: str) -> None: ...
@@ -43,6 +45,12 @@ class LocalObjectStorage:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(payload)
         return safe
+
+    def get_bytes(self, key: str) -> bytes:
+        path = self.root / _safe_key(key)
+        if not path.is_file():
+            raise FileNotFoundError(f"Object not found: {key}")
+        return path.read_bytes()
 
     def signed_url(self, key: str, *, expires_seconds: int = 3600) -> str:
         _ = expires_seconds
@@ -100,6 +108,15 @@ class S3CompatibleObjectStorage:
             ContentType=content_type,
         )
         return safe
+
+    def get_bytes(self, key: str) -> bytes:
+        safe = _safe_key(key)
+        try:
+            response = self._client.get_object(Bucket=self.bucket, Key=safe)
+        except Exception as exc:  # boto3 ClientError and transport failures
+            raise FileNotFoundError(f"Object not found: {key}") from exc
+        body = response["Body"].read()
+        return bytes(body)
 
     def signed_url(self, key: str, *, expires_seconds: int = 3600) -> str:
         safe = _safe_key(key)

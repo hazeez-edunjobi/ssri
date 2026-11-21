@@ -84,9 +84,16 @@ class GeoPoint(BaseModel):
 class AssessRequestBody(BaseModel):
     """Assessment request.
 
-    Preferred offline path: ``features`` (.npy) + ``checkpoint``.
-    Live path: ``point`` or ``polygon_geojson`` + ``checkpoint`` when
-    ``SSRI_LIVE_ACQUISITION_ENABLED=true``.
+    Ordinary clients omit ``checkpoint``. The server resolves the promoted Stage
+    2.5 model from the training registry (``active.json``). Customers must not
+    supply server filesystem paths.
+
+    Preferred offline path: ``features`` (.npy); checkpoint resolved from the
+    active registry (or optional operator ``checkpoint`` / ``model_id``).
+    Live path: ``point`` or ``polygon_geojson`` when
+    ``SSRI_LIVE_ACQUISITION_ENABLED=true``, with the same server-side checkpoint
+    resolution.
+
     When ``APIConfig.demo_mode`` is enabled (``SSRI_DEMO_MODE``), live
     acquisition and checkpoint loading are bypassed server-side only.
     """
@@ -94,12 +101,20 @@ class AssessRequestBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     request_id: str = Field(default_factory=lambda: f"assess-{secrets.token_hex(6)}")
-    checkpoint: str | None = None
+    checkpoint: str | None = Field(
+        default=None,
+        description=(
+            "Optional operator filesystem override under the service output root. "
+            "Requires RUN_INFERENCE. Ordinary assessments omit this field; the "
+            "server injects the promoted registry checkpoint internally."
+        ),
+    )
     model_id: str | None = Field(
         default=None,
         description=(
-            "Optional registered training-model id. When set, the server resolves "
-            "the checkpoint from the model registry without exposing filesystem paths."
+            "Optional registered training-model id. When set to the promoted "
+            "model (or by an operator for a non-active model), the server "
+            "resolves the checkpoint without exposing filesystem paths to clients."
         ),
     )
     features: str | None = None
@@ -110,6 +125,14 @@ class AssessRequestBody(BaseModel):
     model_version: str = "ssri-model"
     produce_geotiff: bool = False
     resolution_m: float = Field(default=30.0, gt=1.0, le=500.0)
+    # Honoured only when SSRI_DEMO_MODE is on; ignored for live inference.
+    demo_scenario_key: str | None = Field(
+        default=None,
+        description=(
+            "Optional presentation catalogue scenario key. Used only when "
+            "SSRI_DEMO_MODE is enabled; ignored otherwise."
+        ),
+    )
 
 
 class AssessResponseBody(BaseModel):
@@ -331,11 +354,18 @@ def assess_endpoint(
     request_id = sanitize_request_id(body.request_id)
     output_root = Path(service_config.output_root)
 
-    # Presentation path — controlled only by server ``SSRI_DEMO_MODE``.
+    # Presentation path — development-only; forced off in production/staging
+    # (see APIConfig.resolve_demo_mode). Never invent scores when demo is off.
     if api_config.demo_mode:
-        if body.point is None and body.polygon_geojson is None and body.features is None:
+        if (
+            body.point is None
+            and body.polygon_geojson is None
+            and body.features is None
+            and not body.demo_scenario_key
+        ):
             raise InvalidServiceRequestError(
-                "Assessment requires 'features' or a live AOI ('point'/'polygon_geojson')."
+                "Assessment requires 'features', a live AOI ('point'/'polygon_geojson'), "
+                "or a presentation demo_scenario_key."
             )
         payload = build_demo_assessment_response(
             request_id=request_id,
@@ -348,6 +378,7 @@ def assess_endpoint(
             ),
             polygon_geojson=body.polygon_geojson,
             checkpoint=body.checkpoint,
+            scenario_key=body.demo_scenario_key,
         )
         payload["notes"] = list(payload.get("notes") or []) + [
             f"requested_by={principal.key_id}",
@@ -360,11 +391,7 @@ def assess_endpoint(
                 aoi_source="point",
             )
         response = AssessResponseBody.model_validate(payload)
-        _persist_assessment_response(
-            output_root=output_root,
-            assessment_id=response.assessment_id,
-            body=response,
-        )
+        # Do not persist illustrative demo payloads as production assessments.
         return response
 
     assessment_id = f"assess-{secrets.token_hex(8)}"

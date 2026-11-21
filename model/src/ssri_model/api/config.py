@@ -24,6 +24,18 @@ def _env_flag(name: str, default: bool = False) -> bool:
     return str(raw).strip().lower() in {"1", "true", "yes", "on"}
 
 
+# Presentation catalogue / mock assess must never run in deployed product envs.
+_DEMO_FORBIDDEN_ENVIRONMENTS = frozenset({"production", "staging"})
+
+
+def resolve_demo_mode(*, requested: bool, environment: str) -> bool:
+    """Return effective demo_mode — forced off in production/staging."""
+    env = (environment or "development").strip().lower()
+    if env in _DEMO_FORBIDDEN_ENVIRONMENTS:
+        return False
+    return bool(requested)
+
+
 @dataclass(frozen=True)
 class APIConfig:
     """Configuration for the SSRI HTTP API."""
@@ -50,6 +62,13 @@ class APIConfig:
         if self.max_request_body_bytes <= 0:
             raise InvalidServiceConfigError("max_request_body_bytes must be positive")
         validate_service_config(self.service_config)
+        # Belt-and-suspenders: never keep demo_mode on in production/staging.
+        effective_demo = resolve_demo_mode(
+            requested=self.demo_mode,
+            environment=self.service_config.environment.value,
+        )
+        if effective_demo != self.demo_mode:
+            object.__setattr__(self, "demo_mode", effective_demo)
         auth_environment = self.auth_config.environment
         if auth_environment != self.service_config.environment.value:
             object.__setattr__(
@@ -109,6 +128,7 @@ class APIConfig:
             if isinstance(infrastructure_payload, InfrastructureConfig)
             else InfrastructureConfig.from_dict(infrastructure_payload)
         )
+        requested_demo = bool(payload.get("demo_mode", False))
         return cls(
             host=str(payload.get("host", "0.0.0.0")),
             port=int(payload.get("port", 8000)),
@@ -116,7 +136,10 @@ class APIConfig:
             docs_enabled=bool(payload.get("docs_enabled", True)),
             max_batch_jobs=int(payload.get("max_batch_jobs", 100)),
             max_request_body_bytes=int(payload.get("max_request_body_bytes", 1_048_576)),
-            demo_mode=bool(payload.get("demo_mode", False)),
+            demo_mode=resolve_demo_mode(
+                requested=requested_demo,
+                environment=service_config.environment.value,
+            ),
             service_config=service_config,
             auth_config=auth_config,
             operational_config=operational_config,
@@ -176,7 +199,10 @@ class APIConfig:
             docs_enabled=os.getenv(f"{prefix}DOCS_ENABLED", "true").lower()
             not in {"0", "false", "no"},
             max_batch_jobs=int(os.getenv(f"{prefix}MAX_BATCH_JOBS", "100")),
-            demo_mode=_env_flag("SSRI_DEMO_MODE", default=False),
+            demo_mode=resolve_demo_mode(
+                requested=_env_flag("SSRI_DEMO_MODE", default=False),
+                environment=service_config.environment.value,
+            ),
             service_config=service_config,
             auth_config=auth_config,
             operational_config=operational_config,

@@ -111,7 +111,22 @@ def inspect_point_grid_bytes(content: bytes, *, filename: str = "layer.csv") -> 
         for names, key in (
             (("x", "lon", "longitude", "easting"), "x"),
             (("y", "lat", "latitude", "northing"), "y"),
-            (("z", "value", "val", "thickness", "depth"), "z"),
+            (
+                (
+                    "z",
+                    "value",
+                    "val",
+                    "thickness",
+                    "depth",
+                    "tmi",
+                    "mag",
+                    "magnetic",
+                    "magnetics",
+                    "total_magnetic_intensity",
+                    "intensity",
+                ),
+                "z",
+            ),
         ):
             for name in names:
                 if name in lowered:

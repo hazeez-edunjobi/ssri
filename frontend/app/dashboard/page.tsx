@@ -15,6 +15,7 @@ import {
   type ShellSettings,
   fetchCheckpointGeography,
   getGravityLayer,
+  getDemoScenarios,
   getHealth,
   getReady,
   getShellStatusFull,
@@ -30,7 +31,17 @@ import {
   parseLatLon,
   pointInRegion,
 } from "@/lib/coordinates";
+import {
+  PRESENTATION_DEMO_DURATION_MS,
+  waitForPresentationDemo,
+  type DemoScenarioSummary,
+} from "@/lib/presentationDemo";
+import {
+  demoMisconfigurationNotice,
+  resolvePresentationDemoActive,
+} from "@/lib/productionIntegrity";
 import { AssessResultModal } from "@/components/AssessResultModal";
+import { PresentationScenarioPicker } from "@/components/PresentationScenarioPicker";
 import { ProductCapabilities } from "@/components/product/ProductCapabilities";
 import { LandPhoto } from "@/components/theme/LandPhoto";
 import { RequireSession, useRequiredSession } from "@/components/auth/RequireSession";
@@ -80,6 +91,21 @@ function AssessmentWorkspace() {
   const [apiStatus, setApiStatus] = useState<
     "checking" | "ok" | "degraded" | "down"
   >("checking");
+  /**
+   * Presentation demo UI — only when server demo_mode AND client opt-in
+   * (never in production builds). See productionIntegrity.ts.
+   */
+  const [presentationDemo, setPresentationDemo] = useState(false);
+  const [demoMisconfigNotice, setDemoMisconfigNotice] = useState<string | null>(
+    null,
+  );
+  const [registryReadyDetail, setRegistryReadyDetail] = useState<string | null>(
+    null,
+  );
+  const [demoScenarios, setDemoScenarios] = useState<DemoScenarioSummary[]>([]);
+  const [demoScenarioKey, setDemoScenarioKey] = useState<string | null>(null);
+  const assessAbortRef = useRef<AbortController | null>(null);
+  const assessInFlightRef = useRef(false);
   const [mode, setMode] = useState<Mode>("point");
   const [point, setPoint] = useState<{ latitude: number; longitude: number } | null>(
     null,
@@ -238,14 +264,47 @@ function AssessmentWorkspace() {
       try {
         await getHealth();
         try {
-          await getReady();
-          if (!cancelled) setApiStatus("ok");
+          const ready = await getReady();
+          if (!cancelled) {
+            setApiStatus("ok");
+            const demoActive = resolvePresentationDemoActive(ready.demo_mode);
+            setPresentationDemo(demoActive);
+            setDemoMisconfigNotice(demoMisconfigurationNotice(ready.demo_mode));
+            setRegistryReadyDetail(ready.model_registry?.detail ?? null);
+          }
+          if (!cancelled && resolvePresentationDemoActive(ready.demo_mode)) {
+            try {
+              const catalogue = await getDemoScenarios();
+              if (!cancelled) {
+                setDemoScenarios(catalogue.scenarios ?? []);
+              }
+            } catch {
+              if (!cancelled) setDemoScenarios([]);
+            }
+          } else if (!cancelled) {
+            setDemoScenarios([]);
+            setDemoScenarioKey(null);
+          }
         } catch {
           // API process is reachable; Redis/queue readiness failed separately.
-          if (!cancelled) setApiStatus("degraded");
+          if (!cancelled) {
+            setApiStatus("degraded");
+            setPresentationDemo(false);
+            setDemoMisconfigNotice(null);
+            setRegistryReadyDetail(null);
+            setDemoScenarios([]);
+            setDemoScenarioKey(null);
+          }
         }
       } catch {
-        if (!cancelled) setApiStatus("down");
+        if (!cancelled) {
+          setApiStatus("down");
+          setPresentationDemo(false);
+          setDemoMisconfigNotice(null);
+          setRegistryReadyDetail(null);
+          setDemoScenarios([]);
+          setDemoScenarioKey(null);
+        }
       }
       // Session is already required by RequireSession; fetch with current credentials.
       if (!cancelled) {
@@ -423,6 +482,7 @@ function AssessmentWorkspace() {
           const active = mapRef.current;
           if (!active) return;
           if (modeRef.current === "point") {
+            setDemoScenarioKey(null);
             setPoint({ latitude: lat, longitude: lng });
             setLatInput(lat.toFixed(COORD_DECIMALS));
             setLonInput(lng.toFixed(COORD_DECIMALS));
@@ -656,16 +716,55 @@ function AssessmentWorkspace() {
     }
   }, [latInput, lonInput, clearPolygon, placePointMarker]);
 
+  const cancelAssess = useCallback(() => {
+    assessAbortRef.current?.abort();
+    assessAbortRef.current = null;
+    assessInFlightRef.current = false;
+    setLoading(false);
+    setError("Assessment cancelled.");
+  }, []);
+
+  const applyDemoScenario = useCallback(
+    (scenario: DemoScenarioSummary) => {
+      setDemoScenarioKey(scenario.key);
+      setMode("point");
+      clearPolygon();
+      const lat = scenario.latitude;
+      const lon = scenario.longitude;
+      setPoint({ latitude: lat, longitude: lon });
+      setLatInput(lat.toFixed(COORD_DECIMALS));
+      setLonInput(lon.toFixed(COORD_DECIMALS));
+      setCoordError(null);
+      placePointMarker(lat, lon);
+      const map = mapRef.current;
+      if (map) {
+        map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 11) });
+      }
+    },
+    [clearPolygon, placePointMarker],
+  );
+
   const onAssess = useCallback(async () => {
-    if (!featuresPath && mode === "point" && !point) {
-      setError("Click the map or enter coordinates to select a point.");
+    if (assessInFlightRef.current || loading) return;
+    if (
+      !featuresPath &&
+      mode === "point" &&
+      !point &&
+      !(presentationDemo && demoScenarioKey)
+    ) {
+      setError("Click the map or enter coordinates to select a location.");
       return;
     }
     if (!featuresPath && mode === "polygon" && !polygon) {
       setError("Draw a polygon on the map (3+ clicks).");
       return;
     }
-    if (!featuresPath && !point && !polygon) {
+    if (
+      !featuresPath &&
+      !point &&
+      !polygon &&
+      !(presentationDemo && demoScenarioKey)
+    ) {
       setError("Select a point or polygon on the map before running an assessment.");
       return;
     }
@@ -677,21 +776,30 @@ function AssessmentWorkspace() {
       );
       return;
     }
-    if (!hasAssessmentModelAccess(modelStatus, checkpoint)) {
+    if (
+      !hasAssessmentModelAccess(modelStatus, checkpoint, {
+        presentationDemo,
+      })
+    ) {
       setError(
-        modelStatusAssessHint(modelStatus) ??
-          "No valid production checkpoint is configured. Ask an operator to promote " +
-            "a trained Stage 2.5 (13-channel) model, then retry. Ordinary assessments " +
-            "do not require a server filesystem path.",
+        modelStatusAssessHint(modelStatus, { presentationDemo }) ??
+          "Assessment unavailable: no production Stage 2.5 checkpoint is promoted. " +
+            "Live model inference is pending until a scientifically eligible model is " +
+            "available. Retry after an operator promotes a compatible checkpoint. " +
+            "This client will not invent hazard scores.",
       );
       return;
     }
+    assessInFlightRef.current = true;
+    const abort = new AbortController();
+    assessAbortRef.current?.abort();
+    assessAbortRef.current = abort;
     setLoading(true);
     setError(null);
-    setResult(null);
+    setResult(null); // Never keep prior/demo results as current inference.
     setModalOpen(true);
     try {
-      const response = await submitAssess({
+      const assessPromise = submitAssess({
         // Always send the picked AOI: the backend accepts a point/polygon
         // alongside offline `features`, and the release-shell gate needs it to
         // decide in-region vs outside_training_region.
@@ -707,12 +815,32 @@ function AssessmentWorkspace() {
         hazards: selectedHazards,
         mc_samples: 20,
         produce_geotiff: produceGeotiff,
+        demo_scenario_key:
+          presentationDemo && demoScenarioKey ? demoScenarioKey : undefined,
       });
+      const waitPromise = presentationDemo
+        ? waitForPresentationDemo(PRESENTATION_DEMO_DURATION_MS, abort.signal)
+        : Promise.resolve();
+      const [response] = await Promise.all([assessPromise, waitPromise]);
+      if (abort.signal.aborted) return;
       setResult(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      if (abort.signal.aborted) return;
+      setResult(null); // Failed inference must not leave fabricated/prior scores visible.
+      const message = err instanceof Error ? err.message : String(err);
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("Assessment cancelled.");
+      } else {
+        setError(message);
+      }
     } finally {
-      setLoading(false);
+      if (assessAbortRef.current === abort) {
+        assessAbortRef.current = null;
+      }
+      assessInFlightRef.current = false;
+      if (!abort.signal.aborted) {
+        setLoading(false);
+      }
     }
   }, [
     mode,
@@ -725,6 +853,9 @@ function AssessmentWorkspace() {
     produceGeotiff,
     shellEnabled,
     geography,
+    presentationDemo,
+    demoScenarioKey,
+    loading,
   ]);
 
   const toggleHazard = (hazard: string) => {
@@ -775,6 +906,21 @@ function AssessmentWorkspace() {
             API {apiUrl} —{" "}
             <span data-testid="api-health-status">{apiHealthLabel(apiStatus)}</span>
           </p>
+          {presentationDemo && (
+            <PresentationScenarioPicker
+              scenarios={demoScenarios}
+              selectedKey={demoScenarioKey}
+              onSelect={applyDemoScenario}
+            />
+          )}
+          {demoMisconfigNotice && (
+            <p
+              className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] text-amber-950"
+              data-testid="demo-misconfig-notice"
+            >
+              {demoMisconfigNotice}
+            </p>
+          )}
           <Link
             href={TRAINING_HREF}
             className="mt-3 inline-flex text-xs text-moss hover:underline"
@@ -1023,9 +1169,18 @@ function AssessmentWorkspace() {
               {modelStatusPanelMessage(modelStatus)}
             </p>
             <p className="mt-1 text-[10px] text-stone">
-              Live inference uses the 13-channel Stage 2.5 contract. Schema-v2
-              (16-channel) stacks are not used for live map assessment.
+              {presentationDemo
+                ? "Assessment Preview (development opt-in only) uses curated catalogue scenarios — not live inference. Production builds never enable this path."
+                : "Assessments require a promoted Stage 2.5 (13-channel) checkpoint. A healthy API or readiness response is not scientific validation. Schema-v2 stacks are not used for live map assessment. Scientific status remains NOT_VALIDATED until independently verified."}
             </p>
+            {!presentationDemo && registryReadyDetail && (
+              <p
+                className="mt-1 text-[10px] text-stone"
+                data-testid="registry-ready-detail"
+              >
+                Registry: {registryReadyDetail}
+              </p>
+            )}
           </div>
 
           <details
@@ -1149,19 +1304,22 @@ function AssessmentWorkspace() {
               selectedHazardCount: selectedHazards.length,
               status: modelStatus,
               checkpoint,
+              presentationDemo,
             })}
             className="mt-4 w-full rounded-lg bg-leaf px-4 py-2 text-sm font-medium text-chalk disabled:opacity-40"
           >
             {loading ? "Assessing…" : "Run assessment"}
           </button>
-          {!hasAssessmentModelAccess(modelStatus, checkpoint) &&
-            modelStatusAssessHint(modelStatus) && (
+          {!hasAssessmentModelAccess(modelStatus, checkpoint, {
+            presentationDemo,
+          }) &&
+            modelStatusAssessHint(modelStatus, { presentationDemo }) && (
               <p
                 className="mt-2 text-[11px] text-amber-900"
                 data-testid="assess-model-blocked-hint"
                 role="status"
               >
-                {modelStatusAssessHint(modelStatus)}
+                {modelStatusAssessHint(modelStatus, { presentationDemo })}
               </p>
             )}
           <p className="mt-2 text-[11px] text-stone">
@@ -1249,9 +1407,14 @@ function AssessmentWorkspace() {
         loading={loading}
         error={error}
         result={result}
+        presentationDemo={presentationDemo}
         locationLabel={
           mode === "point" && point
-            ? formatLatLon(point.latitude, point.longitude)
+            ? `${formatLatLon(point.latitude, point.longitude)}${
+                demoScenarioKey
+                  ? ` · sample ${demoScenarios.find((s) => s.key === demoScenarioKey)?.location_name ?? demoScenarioKey}`
+                  : ""
+              }`
             : mode === "polygon" && polygon
               ? `Polygon (${polygon.coordinates[0].length - 1} vertices)`
               : featuresPath
@@ -1261,7 +1424,11 @@ function AssessmentWorkspace() {
         point={mode === "point" ? point : null}
         projectedPoint={projectedPoint}
         settings={shellSettings}
-        onClose={() => setModalOpen(false)}
+        onCancelLoading={cancelAssess}
+        onClose={() => {
+          if (loading) cancelAssess();
+          setModalOpen(false);
+        }}
         onViewMap={() => setModalOpen(false)}
       />
     </main>

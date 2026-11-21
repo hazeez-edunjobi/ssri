@@ -1,12 +1,20 @@
 /**
  * Central client for `/api/v1/geological/*`.
  * UI components must use these helpers — no direct fetch in pages.
+ *
+ * Auth matches Stage 2.5 clients: optional NEXT_PUBLIC_SSRI_API_KEY for
+ * operator machine keys, otherwise Supabase session. Backend still enforces
+ * MANAGE_GEOLOGICAL for mutations — USER accounts remain read-only.
  */
 
 import { apiUrl } from "./env";
-import { getSupabase } from "./supabase";
+import {
+  geologicalHttpErrorMessage,
+  type GeologicalErrorBody,
+} from "./geologicalErrors";
 
-export type GeologicalError = { error?: { code?: string; message?: string } };
+export type GeologicalError = GeologicalErrorBody;
+export { geologicalHttpErrorMessage } from "./geologicalErrors";
 
 export type GeologicalDataset = {
   geo_id: string;
@@ -14,6 +22,7 @@ export type GeologicalDataset = {
   asset_kind: "point_grid_csv" | "vector_lineament";
   original_filename: string;
   uploaded_at: string;
+  content_sha256?: string;
   measurement_type: string | null;
   measurement_description?: string;
   description?: string;
@@ -28,13 +37,18 @@ export type GeologicalDataset = {
   validation_status: string;
   activation_status: string;
   scientific_validation_status?: string;
+  processing_status?: string;
   has_original?: boolean;
   has_working?: boolean;
+  has_derived?: boolean;
   feature_count?: number | null;
   geometry_type?: string | null;
   x_column?: string | number | null;
   y_column?: string | number | null;
   z_column?: string | number | null;
+  provenance?: Record<string, unknown>;
+  feature_compatibility?: Record<string, unknown>;
+  processing_report?: Record<string, unknown>;
 };
 
 export type InspectReport = Record<string, unknown> & {
@@ -50,18 +64,45 @@ export type InspectReport = Record<string, unknown> & {
 export type ValidationReport = {
   overall?: string;
   can_activate_reporting?: boolean;
-  checks?: Array<{ name: string; status: string; message: string }>;
+  can_process?: boolean;
+  can_train?: boolean;
+  checks?: Array<{ name: string; status: string; message: string; detail?: unknown }>;
   messages?: string[];
   measurement_type?: string;
+  tmi_statistics?: Record<string, unknown>;
+  spatial?: Record<string, unknown>;
+  feature_compatibility?: Record<string, unknown>;
+  coverage_bbox?: number[] | null;
 };
 
-async function authHeader(): Promise<Record<string, string>> {
-  const supabase = getSupabase();
+/**
+ * Prefer configured operator API key, then Supabase session.
+ * Does not invent elevated roles — backend RBAC stays authoritative.
+ */
+export async function geologicalAuthHeaders(
+  apiKey?: string,
+): Promise<Record<string, string>> {
   const headers: Record<string, string> = {};
-  if (!supabase) return headers;
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (token) headers.Authorization = `Bearer ${token}`;
+  const envKey =
+    apiKey ||
+    (typeof process !== "undefined"
+      ? process.env.NEXT_PUBLIC_SSRI_API_KEY
+      : undefined);
+  if (envKey && envKey.trim()) {
+    headers.Authorization = `Bearer ${envKey.trim()}`;
+    return headers;
+  }
+  try {
+    const { getSupabase } = await import("./supabase");
+    const supabase = getSupabase();
+    if (supabase) {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // Leave unauthenticated; backend returns AUTHENTICATION_REQUIRED.
+  }
   return headers;
 }
 
@@ -72,23 +113,23 @@ function connectionError(): Error {
 }
 
 async function parse(response: Response) {
-  const body = await response.json().catch(() => ({}));
+  const body = (await response.json().catch(() => ({}))) as GeologicalError & {
+    validation?: ValidationReport;
+  };
   if (!response.ok) {
-    const message =
-      (body as GeologicalError).error?.message ||
-      (body as { validation?: ValidationReport }).validation?.checks
-        ?.filter((c) => c.status === "FAIL")
-        .map((c) => c.message)
-        .join(" ") ||
-      response.statusText ||
-      "Request failed";
-    throw new Error(message);
+    throw new Error(
+      geologicalHttpErrorMessage(
+        response.status,
+        body,
+        response.statusText || "Request failed",
+      ),
+    );
   }
   return body;
 }
 
 async function geoGet<T>(path: string): Promise<T> {
-  const headers = await authHeader();
+  const headers = await geologicalAuthHeaders();
   let response: Response;
   try {
     response = await fetch(`${apiUrl}/api/v1/geological${path}`, { headers });
@@ -100,7 +141,7 @@ async function geoGet<T>(path: string): Promise<T> {
 
 async function geoPost<T>(path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {
-    ...(await authHeader()),
+    ...(await geologicalAuthHeaders()),
     "Content-Type": "application/json",
   };
   let response: Response;
@@ -150,6 +191,10 @@ export async function getGeologicalDataset(geoId: string) {
     dataset: GeologicalDataset;
     inspect: InspectReport;
     validation: ValidationReport;
+    processing?: Record<string, unknown>;
+    feature_compatibility?: Record<string, unknown>;
+    storage_backend?: string;
+    storage_note?: string;
   }>(`/datasets/${geoId}`);
 }
 
@@ -159,13 +204,16 @@ export function uploadGeologicalFile(
   onProgress?: (ratio: number) => void,
 ): Promise<{ dataset: GeologicalDataset; inspect: InspectReport }> {
   return new Promise((resolve, reject) => {
-    authHeader()
+    geologicalAuthHeaders()
       .then((headers) => {
         const form = new FormData();
+        // Backend UploadFile field name must remain "file".
         form.append("file", file);
         const request = new XMLHttpRequest();
         request.open("POST", `${apiUrl}/api/v1/geological/datasets/${geoId}/upload`);
-        Object.entries(headers).forEach(([key, value]) => request.setRequestHeader(key, value));
+        Object.entries(headers).forEach(([key, value]) =>
+          request.setRequestHeader(key, value),
+        );
         request.upload.onprogress = (event) => {
           if (event.lengthComputable && onProgress) onProgress(event.loaded / event.total);
         };
@@ -175,6 +223,7 @@ export function uploadGeologicalFile(
           let body: GeologicalError & {
             dataset?: GeologicalDataset;
             inspect?: InspectReport;
+            validation?: ValidationReport;
           } = {};
           try {
             body = JSON.parse(request.responseText || "{}");
@@ -182,7 +231,15 @@ export function uploadGeologicalFile(
             body = {};
           }
           if (request.status < 200 || request.status >= 300) {
-            reject(new Error(body.error?.message || "Upload failed"));
+            reject(
+              new Error(
+                geologicalHttpErrorMessage(
+                  request.status,
+                  body,
+                  "Upload failed",
+                ),
+              ),
+            );
             return;
           }
           resolve(body as { dataset: GeologicalDataset; inspect: InspectReport });
@@ -213,6 +270,27 @@ export async function setGeologicalActivation(
   return geoPost<{ dataset: GeologicalDataset }>(`/datasets/${geoId}/activation`, body);
 }
 
+export async function processGeologicalTmi(
+  geoId: string,
+  body: { resolution: number; nodata?: number },
+) {
+  return geoPost<{
+    dataset: GeologicalDataset;
+    processing: Record<string, unknown>;
+    feature_compatibility?: Record<string, unknown>;
+  }>(`/datasets/${geoId}/process`, body);
+}
+
+export async function setGeologicalCompatibility(
+  geoId: string,
+  body: { decision: string; notes?: string },
+) {
+  return geoPost<{
+    dataset: GeologicalDataset;
+    feature_compatibility?: Record<string, unknown>;
+  }>(`/datasets/${geoId}/compatibility`, body);
+}
+
 export async function queryGeologicalCoverage(body: {
   aoi_bbox: number[];
   aoi_crs?: string;
@@ -221,4 +299,43 @@ export async function queryGeologicalCoverage(body: {
   require_activated?: boolean;
 }) {
   return geoPost<{ coverage: Record<string, unknown> }>("/coverage", body);
+}
+
+/** Authenticated original-bytes download (requires manage_geological). */
+export async function downloadGeologicalOriginal(
+  geoId: string,
+  filenameHint?: string,
+): Promise<void> {
+  const headers = await geologicalAuthHeaders();
+  let response: Response;
+  try {
+    response = await fetch(
+      `${apiUrl}/api/v1/geological/datasets/${geoId}/original`,
+      { headers },
+    );
+  } catch {
+    throw connectionError();
+  }
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as GeologicalError;
+    throw new Error(
+      geologicalHttpErrorMessage(response.status, body, "Could not download original file"),
+    );
+  }
+  const blob = await response.blob();
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const match = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(disposition);
+  const filename =
+    (match ? decodeURIComponent(match[1].replace(/"/g, "")) : null) ||
+    filenameHint ||
+    `${geoId}-original.bin`;
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(objectUrl);
 }

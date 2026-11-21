@@ -7,6 +7,8 @@ import {
   buildConditioningGroups,
   conditioningSampleCaption,
 } from "@/lib/conditioning";
+import { ASSESSMENT_PREVIEW_LABEL } from "@/lib/activeModelStatus";
+import { PresentationDemoProgress } from "@/components/PresentationDemoProgress";
 import { buildAssessmentReportHtml } from "@/lib/report";
 
 /**
@@ -65,6 +67,8 @@ type AssessResultModalProps = {
   loading: boolean;
   error: string | null;
   result: AssessResponse | null;
+  /** Server SSRI_DEMO_MODE — show DEMONSTRATION labeling, not live inference. */
+  presentationDemo?: boolean;
   locationLabel: string | null;
   point?: { latitude: number; longitude: number } | null;
   projectedPoint?: {
@@ -74,6 +78,7 @@ type AssessResultModalProps = {
     axis_order: string;
   } | null;
   settings?: ShellSettings | null;
+  onCancelLoading?: () => void;
   onClose: () => void;
   onViewMap: () => void;
 };
@@ -83,10 +88,12 @@ export function AssessResultModal({
   loading,
   error,
   result,
+  presentationDemo = false,
   locationLabel,
   point,
   projectedPoint,
   settings,
+  onCancelLoading,
   onClose,
   onViewMap,
 }: AssessResultModalProps) {
@@ -124,6 +131,7 @@ export function AssessResultModal({
       point: point ?? null,
       projectedPoint: projectedPoint ?? null,
       settings: settings ?? null,
+      presentationDemo,
     });
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
@@ -159,21 +167,33 @@ export function AssessResultModal({
               className="mt-1 font-display text-lg text-bark"
             >
               {loading
-                ? "Running analysis…"
+                ? presentationDemo
+                  ? "Preparing assessment report…"
+                  : "Running analysis…"
                 : error
                   ? "Assessment failed"
                   : result
                     ? `Assessment ${result.assessment_id}`
                     : "Assessment"}
             </h2>
-            {!loading && result && (
-              <span
-                className="mt-1 inline-block rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-900"
-                data-testid="assess-not-validated"
-              >
-                NOT_VALIDATED · relative susceptibility ranking
-              </span>
-            )}
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              {presentationDemo && (
+                <span
+                  className="inline-block font-mono text-[10px] uppercase tracking-widest text-leaf"
+                  data-testid="assess-illustrative-badge"
+                >
+                  {ASSESSMENT_PREVIEW_LABEL}
+                </span>
+              )}
+              {!loading && result && (
+                <span
+                  className="inline-block font-mono text-[10px] uppercase tracking-widest text-stone"
+                  data-testid="assess-not-validated"
+                >
+                  NOT_VALIDATED · relative susceptibility ranking
+                </span>
+              )}
+            </div>
           </div>
           <button
             type="button"
@@ -209,7 +229,13 @@ export function AssessResultModal({
           </p>
         )}
 
-        {loading && (
+        {loading && presentationDemo && (
+          <PresentationDemoProgress
+            active={loading}
+            onCancel={onCancelLoading}
+          />
+        )}
+        {loading && !presentationDemo && (
           <p className="mt-6 font-mono text-sm text-stone" data-testid="assess-result-loading">
             Acquiring features and running inference…
           </p>
@@ -287,6 +313,21 @@ export function AssessResultModal({
                       {showScore ? `${(score * 100).toFixed(1)}%` : "score withheld"}
                     </span>
                   </div>
+                  {showScore && score != null && (
+                    <div
+                      className="mt-2 h-1.5 overflow-hidden rounded-full bg-meadow/50"
+                      data-testid="assess-hazard-bar"
+                      aria-hidden
+                    >
+                      <div
+                        className="h-full rounded-full transition-[width] duration-500"
+                        style={{
+                          width: `${Math.max(2, score * 100)}%`,
+                          background: colorFor(index),
+                        }}
+                      />
+                    </div>
+                  )}
                   {(profile.gate_status || profile.status) && (
                     <p className={`mt-2 text-xs ${gateTone(profile.gate_status)}`}>
                       Gate: {profile.gate_status ?? "—"}
