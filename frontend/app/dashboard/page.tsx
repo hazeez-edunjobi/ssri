@@ -31,6 +31,7 @@ import {
   pointInRegion,
 } from "@/lib/coordinates";
 import { AssessResultModal } from "@/components/AssessResultModal";
+import { ProductCapabilities } from "@/components/product/ProductCapabilities";
 import { LandPhoto } from "@/components/theme/LandPhoto";
 import { RequireSession, useRequiredSession } from "@/components/auth/RequireSession";
 import { buildConditioningGroups } from "@/lib/conditioning";
@@ -41,14 +42,14 @@ import {
   gravityVisibilityLabel,
 } from "@/lib/gravityLayer";
 import { TRAINING_HREF } from "@/lib/navigation";
+import {
+  PRODUCT_HAZARD_IDS,
+  mergeHazardNames,
+} from "@/lib/productCapabilities";
 import { getSupabase } from "@/lib/supabase";
 
-/**
- * Placeholder used only until `/release-shell/status` resolves (or if it is
- * unreachable). The authoritative hazard list always comes from the backend
- * registry; this mirrors the current registry so the form is never empty.
- */
-const FALLBACK_HAZARDS = ["subsidence", "landslide", "sinkhole"] as const;
+/** Canonical Stage 2.5 hazards mirrored until the backend registry responds. */
+const FALLBACK_HAZARDS = PRODUCT_HAZARD_IDS;
 
 const GRAVITY_SOURCE = "ssri-gravity";
 const GRAVITY_LAYER = "ssri-gravity-fill";
@@ -82,6 +83,9 @@ function AssessmentWorkspace() {
     ...FALLBACK_HAZARDS,
   ]);
   const [checkpoint, setCheckpoint] = useState("");
+  const [activeModelId, setActiveModelId] = useState<string | null>(null);
+  const [activeModelLabel, setActiveModelLabel] = useState<string | null>(null);
+  const [checkpointAvailable, setCheckpointAvailable] = useState(false);
   const [featuresPath, setFeaturesPath] = useState("");
   const [produceGeotiff, setProduceGeotiff] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -216,24 +220,38 @@ function AssessmentWorkspace() {
       } catch {
         if (!cancelled) setApiStatus("down");
       }
-      // Prefilling the active checkpoint must not depend on readiness: a
-      // transient /ready outage would otherwise leave the field empty even
-      // when a promoted model exists.
+      // Resolve promoted model metadata for status UI. Ordinary assessments omit
+      // filesystem paths and let /assess resolve the registry server-side.
       try {
         const active = await getActiveTrainedModel();
-        if (!cancelled && active.checkpoint_path) {
-          setCheckpoint(active.checkpoint_path);
+        if (!cancelled) {
+          const available = Boolean(
+            active.checkpoint_available ?? active.checkpoint_path,
+          );
+          setCheckpointAvailable(available);
+          setActiveModelId(active.model_id ?? active.active?.model_id ?? null);
+          setActiveModelLabel(
+            active.active
+              ? `${active.active.name} (${active.active.model_id})`
+              : null,
+          );
+          // Keep advanced operator field empty by default so clients never send
+          // internal paths. Operators may paste a path under advanced options.
         }
       } catch {
-        // Active model is optional; leave checkpoint empty.
+        if (!cancelled) {
+          setCheckpointAvailable(false);
+          setActiveModelId(null);
+          setActiveModelLabel(null);
+        }
       }
       try {
         const status = await getShellStatusFull();
         const registry: ShellHazard[] = status.settings?.hazards ?? [];
-        const names = registry
-          .filter((h) => h.enabled_by_default)
-          .map((h) => h.name);
-        if (!cancelled && names.length > 0) {
+        const names = mergeHazardNames(
+          registry.filter((h) => h.enabled_by_default).map((h) => h.name),
+        );
+        if (!cancelled) {
           setHazards(names);
           setSelectedHazards(names);
         }
@@ -623,6 +641,14 @@ function AssessmentWorkspace() {
       );
       return;
     }
+    if (!checkpoint.trim() && !checkpointAvailable) {
+      setError(
+        "No valid production checkpoint is configured. Ask an operator to promote " +
+          "a trained Stage 2.5 (13-channel) model, then retry. Ordinary assessments " +
+          "do not require a server filesystem path.",
+      );
+      return;
+    }
     setLoading(true);
     setError(null);
     setResult(null);
@@ -635,7 +661,10 @@ function AssessmentWorkspace() {
         point: mode === "point" ? point ?? undefined : undefined,
         polygon_geojson: mode === "polygon" ? polygon ?? undefined : undefined,
         features: featuresPath || undefined,
-        checkpoint: checkpoint || undefined,
+        // Ordinary clients omit checkpoint so the API resolves the promoted model.
+        checkpoint: checkpoint.trim() || undefined,
+        model_id:
+          !checkpoint.trim() && activeModelId ? activeModelId : undefined,
         hazards: selectedHazards,
         mc_samples: 20,
         produce_geotiff: produceGeotiff,
@@ -651,6 +680,8 @@ function AssessmentWorkspace() {
     point,
     polygon,
     checkpoint,
+    checkpointAvailable,
+    activeModelId,
     featuresPath,
     selectedHazards,
     produceGeotiff,
@@ -918,6 +949,29 @@ function AssessmentWorkspace() {
             </div>
           )}
 
+          <div
+            className="mt-4 rounded-lg border border-meadow bg-mist px-3 py-2"
+            data-testid="active-model-status"
+          >
+            <p className="text-[11px] uppercase tracking-widest text-stone">
+              Production model
+            </p>
+            {checkpointAvailable && activeModelLabel ? (
+              <p className="mt-1 text-xs text-bark" data-testid="active-model-label">
+                Using promoted registry model: {activeModelLabel}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-amber-900" data-testid="active-model-missing">
+                No promoted Stage 2.5 checkpoint is configured. Assessments cannot run
+                until an operator promotes a trained model.
+              </p>
+            )}
+            <p className="mt-1 text-[10px] text-stone">
+              Live inference uses the 13-channel Stage 2.5 contract. Schema-v2
+              (16-channel) stacks are not used for live map assessment.
+            </p>
+          </div>
+
           <details
             className="mt-4 rounded-lg border border-meadow bg-mist px-3 py-2"
             data-testid="advanced-operator-options"
@@ -926,8 +980,9 @@ function AssessmentWorkspace() {
               Advanced operator options
             </summary>
             <p className="mt-2 text-[10px] leading-snug text-stone">
-              Server filesystem paths for operators and tests. Ordinary assessments use
-              the promoted model automatically and do not need these fields. Prefer{" "}
+              Server filesystem paths for operators and tests only. Ordinary assessments
+              resolve the promoted registry model on the server and do not send internal
+              paths. Prefer{" "}
               <Link href="/training/operator" className="underline">
                 operator training
               </Link>{" "}
@@ -935,12 +990,12 @@ function AssessmentWorkspace() {
               offline workflows.
             </p>
             <label className="mt-3 block text-[11px] text-stone">
-              Checkpoint path (server-visible)
+              Checkpoint path override (operators)
               <input
                 value={checkpoint}
                 onChange={(e) => setCheckpoint(e.target.value)}
                 className="mt-1 w-full rounded border border-meadow bg-chalk px-2 py-1.5 font-mono text-xs text-bark"
-                placeholder="/data/models/best.pt"
+                placeholder="Leave empty to use the promoted model"
                 data-testid="checkpoint-path"
               />
             </label>
@@ -966,6 +1021,7 @@ function AssessmentWorkspace() {
                   key={hazard}
                   type="button"
                   onClick={() => toggleHazard(hazard)}
+                  data-testid={`hazard-option-${hazard}`}
                   className={`rounded border px-2 py-1 text-[11px] ${
                     selectedHazards.includes(hazard)
                       ? "border-leaf text-moss"
@@ -976,16 +1032,47 @@ function AssessmentWorkspace() {
                 </button>
               ))}
             </div>
-            {shellSettings && (
-              <p className="mt-1 text-[10px] text-stone" data-testid="channel-schema-hint">
-                Channel schema: {shellSettings.default_channel_schema}
-                {shellSettings.channel_schemas?.[shellSettings.default_channel_schema]
-                  ? ` (${shellSettings.channel_schemas[shellSettings.default_channel_schema].channel_count} channels)`
-                  : ""}
-                {" · "}
-                {hazards.length} hazards from the backend registry
-              </p>
-            )}
+            <p className="mt-1 text-[10px] text-stone" data-testid="hazard-visibility-note">
+              All three Stage 2.5 hazards are listed: subsidence, landslide, and
+              sinkhole.
+              {shellSettings
+                ? ` Channel schema: ${shellSettings.default_channel_schema}${
+                    shellSettings.channel_schemas?.[
+                      shellSettings.default_channel_schema
+                    ]
+                      ? ` (${shellSettings.channel_schemas[shellSettings.default_channel_schema].channel_count} channels)`
+                      : ""
+                  }.`
+                : ""}
+            </p>
+          </div>
+
+          <div className="mt-4" data-testid="geological-conditioning-panel">
+            <p className="text-[11px] uppercase tracking-widest text-stone">
+              Geological conditioning
+            </p>
+            <ul className="mt-2 space-y-1 text-[11px] text-stone">
+              <li data-testid="geo-cap-overburden">
+                Overburden thickness — offline conditioning supported; live inference
+                integration pending
+              </li>
+              <li data-testid="geo-cap-lineament-density">
+                Lineament density — available for geological data management; live
+                inference integration pending
+              </li>
+              <li data-testid="geo-cap-lineament-distance">
+                Distance to lineaments — available for geological data management; live
+                inference integration pending
+              </li>
+            </ul>
+            <p className="mt-2 text-[10px] text-stone">
+              These are not hazards. They do not currently change live map assessment
+              scores (13-channel Stage 2.5). Manage datasets at{" "}
+              <Link href="/geological" className="underline">
+                /geological
+              </Link>
+              .
+            </p>
           </div>
 
           <label className="mt-3 flex items-center gap-2 text-[11px] text-stone">
@@ -1011,6 +1098,8 @@ function AssessmentWorkspace() {
             used in inference when present in a schema-v2 offline stack. Scores remain
             NOT_VALIDATED.
           </p>
+
+          <ProductCapabilities variant="panel" className="mt-4" />
         </div>
 
         {error && !modalOpen && (

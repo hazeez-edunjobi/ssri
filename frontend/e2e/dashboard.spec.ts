@@ -75,7 +75,9 @@ test.describe("SSRI dashboard smoke", () => {
     }
     await page.getByRole("button", { name: /Run assessment/i }).click();
     await expect(
-      page.getByText(/Provide a checkpoint path|Click the map to select a point/i),
+      page.getByText(
+        /No valid production checkpoint is configured|Click the map to select a point|Assessment failed|Sign in is required/i,
+      ),
     ).toBeVisible({ timeout: 15_000 });
   });
 

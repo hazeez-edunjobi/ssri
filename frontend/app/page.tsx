@@ -6,6 +6,7 @@ import { CorePlatform } from "@/components/landing/CorePlatform";
 import { EverydayUses } from "@/components/landing/EverydayUses";
 import { CapabilityGrid } from "@/components/landing/CapabilityGrid";
 import { BuiltForWork } from "@/components/landing/BuiltForWork";
+import { ProductCapabilities } from "@/components/product/ProductCapabilities";
 
 export default function Home() {
   return (
@@ -14,6 +15,9 @@ export default function Home() {
         <Hero />
         <Reveal>
           <PlatformSurfaces />
+        </Reveal>
+        <Reveal>
+          <ProductCapabilities variant="section" />
         </Reveal>
         <Reveal>
           <CorePlatform />

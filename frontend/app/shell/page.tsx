@@ -100,7 +100,7 @@ export default function ReleaseShellPage() {
       getActiveTrainedModel(),
     ]);
     setModels(ms.models);
-    setActivePath(active.checkpoint_path);
+    setActivePath(active.checkpoint_path ?? "");
   }, []);
 
   useEffect(() => {

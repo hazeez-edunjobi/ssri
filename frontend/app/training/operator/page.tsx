@@ -69,7 +69,7 @@ export default function TrainingPage() {
     ]);
     setDatasets(ds.datasets);
     setModels(ms.models);
-    setActivePath(active.checkpoint_path);
+    setActivePath(active.checkpoint_path ?? "");
   }, []);
 
   useEffect(() => {

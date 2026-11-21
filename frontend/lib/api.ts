@@ -2,6 +2,9 @@
  * SSRI API client — targets the authoritative model FastAPI service.
  */
 import { apiUrl } from "./env";
+import { buildAssessRequestBody } from "./assessRequest";
+
+export { buildAssessRequestBody } from "./assessRequest";
 
 export type HealthResponse = { status: string; service?: string };
 export type ReadyResponse = {
@@ -12,7 +15,13 @@ export type ReadyResponse = {
 
 export type AssessRequest = {
   request_id?: string;
+  /**
+   * Optional operator override (server filesystem path). Ordinary client
+   * assessments omit this and let the API resolve the promoted registry model.
+   */
   checkpoint?: string;
+  /** Optional registered training-model id; resolved server-side. */
+  model_id?: string;
   features?: string;
   point?: { latitude: number; longitude: number };
   polygon_geojson?: GeoJsonPolygon;
@@ -282,9 +291,19 @@ export async function submitAssess(
   const response = await fetch(`${apiUrl}/api/v1/assess`, {
     method: "POST",
     headers: await authHeaders(apiKey),
-    body: JSON.stringify(payload),
+    body: JSON.stringify(buildAssessRequestBody(payload)),
   });
-  if (!response.ok) throw new Error(await parseError(response, "Assessment failed"));
+  if (!response.ok) {
+    const message = await parseError(response, "Assessment failed");
+    if (/checkpoint/i.test(message) && /not (found|configured|available)|no valid/i.test(message)) {
+      throw new Error(
+        message.includes("No valid production checkpoint")
+          ? message
+          : `${message} Promote a trained Stage 2.5 model, then retry.`,
+      );
+    }
+    throw new Error(message);
+  }
   const body = (await response.json()) as AssessResponse & {
     status?: string;
     message?: string;
@@ -293,7 +312,7 @@ export async function submitAssess(
   if (body && body.status === "no_trained_model") {
     throw new Error(
       body.message ||
-        "No trained model checkpoint was provided. Upload a labelled dataset, train, then select a checkpoint before running an assessment.",
+        "No trained model checkpoint is configured. Upload a labelled dataset, train, then promote a checkpoint before running an assessment.",
     );
   }
   return body;
@@ -548,9 +567,17 @@ export async function listTrainedModels(
   return response.json();
 }
 
+export type ActiveTrainedModelResponse = {
+  active: TrainedModel | null;
+  /** Present for operators/tests; ordinary clients should not send this path. */
+  checkpoint_path: string | null;
+  checkpoint_available?: boolean;
+  model_id?: string | null;
+};
+
 export async function getActiveTrainedModel(
   apiKey?: string,
-): Promise<{ active: TrainedModel | null; checkpoint_path: string | null }> {
+): Promise<ActiveTrainedModelResponse> {
   const response = await fetch(`${apiUrl}/api/v1/training/models/active`, {
     headers: await authHeaders(apiKey),
   });
