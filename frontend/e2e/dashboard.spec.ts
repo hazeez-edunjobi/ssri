@@ -13,6 +13,16 @@ async function openAssessmentOrSkip(page: Page) {
   }
 }
 
+/** Unlock Run assessment when the promoted model is missing (operator path only). */
+async function unlockAssessWithOperatorCheckpoint(page: Page) {
+  const run = page.getByTestId("run-assessment");
+  if (await run.isEnabled()) return;
+  const advanced = page.getByTestId("advanced-operator-options");
+  await advanced.locator("summary").click();
+  await page.getByTestId("checkpoint-path").fill("/tmp/operator-test-checkpoint.pt");
+  await expect(run).toBeEnabled({ timeout: 5_000 });
+}
+
 test.describe("SSRI dashboard smoke", () => {
   test("API readiness is reachable", async ({ request }) => {
     const response = await request.get(`${api}/api/v1/ready`);
@@ -33,6 +43,7 @@ test.describe("SSRI dashboard smoke", () => {
     await openAssessmentOrSkip(page);
     await page.goto(dashboard, { waitUntil: "networkidle" });
     await expect(page.getByTestId("ssri-map")).toBeVisible({ timeout: 30_000 });
+    await unlockAssessWithOperatorCheckpoint(page);
     await page.getByRole("button", { name: /Run assessment/i }).click();
     await expect(
       page.getByText("Click the map or enter coordinates to select a point."),
@@ -44,6 +55,7 @@ test.describe("SSRI dashboard smoke", () => {
     await page.goto(dashboard, { waitUntil: "networkidle" });
     await page.getByRole("button", { name: /Polygon/i }).click();
     await expect(page.getByTestId("ssri-map")).toBeVisible({ timeout: 30_000 });
+    await unlockAssessWithOperatorCheckpoint(page);
     await page.getByRole("button", { name: /Run assessment/i }).click();
     await expect(
       page.getByText("Draw a polygon on the map (3+ clicks)."),
@@ -73,12 +85,23 @@ test.describe("SSRI dashboard smoke", () => {
     if (box) {
       await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     }
-    await page.getByRole("button", { name: /Run assessment/i }).click();
-    await expect(
-      page.getByText(
-        /No valid production checkpoint is configured|Click the map to select a point|Assessment failed|Sign in is required/i,
-      ),
-    ).toBeVisible({ timeout: 15_000 });
+    const run = page.getByTestId("run-assessment");
+    const status = page.getByTestId("active-model-status");
+    await expect(status).toBeVisible({ timeout: 30_000 });
+    const kind = await status.getAttribute("data-model-status");
+    if (kind === "available") {
+      // Promoted model present: assess may proceed or fail on acquisition/auth.
+      await run.click();
+      await expect(
+        page.getByText(/Assessment failed|Sign in is required|Assessing/i),
+      ).toBeVisible({ timeout: 15_000 });
+      return;
+    }
+    await expect(run).toBeDisabled();
+    await expect(page.getByTestId("assess-model-blocked-hint")).toBeVisible();
+    await expect(page.getByTestId("assess-model-blocked-hint")).toContainText(
+      /promoted Stage 2\.5 model|Sign in is required|permission|Retry the status check/i,
+    );
   });
 
   test("manual coordinate entry locates and validates", async ({ page }) => {

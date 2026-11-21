@@ -2,9 +2,16 @@
  * SSRI API client — targets the authoritative model FastAPI service.
  */
 import { apiUrl } from "./env";
+import {
+  activeModelFromHttpStatus,
+  activeModelFromNetworkError,
+  activeModelFromResponse,
+  type ActiveModelView,
+} from "./activeModelStatus";
 import { buildAssessRequestBody } from "./assessRequest";
 
 export { buildAssessRequestBody } from "./assessRequest";
+export type { ActiveModelView } from "./activeModelStatus";
 
 export type HealthResponse = { status: string; service?: string };
 export type ReadyResponse = {
@@ -583,6 +590,30 @@ export async function getActiveTrainedModel(
   });
   if (!response.ok) throw new Error(await parseError(response, "Could not read the active model"));
   return response.json();
+}
+
+/**
+ * Load promoted-model status for the dashboard without collapsing auth/network
+ * failures into an empty-registry reading. Always uses current authHeaders().
+ */
+export async function loadActiveModelStatus(
+  apiKey?: string,
+): Promise<ActiveModelView> {
+  try {
+    const response = await fetch(`${apiUrl}/api/v1/training/models/active`, {
+      headers: await authHeaders(apiKey),
+    });
+    if (response.status === 401 || response.status === 403) {
+      return activeModelFromHttpStatus(response.status);
+    }
+    if (!response.ok) {
+      return activeModelFromHttpStatus(response.status);
+    }
+    const body = (await response.json()) as ActiveTrainedModelResponse;
+    return activeModelFromResponse(body);
+  } catch {
+    return activeModelFromNetworkError();
+  }
 }
 
 export async function activateTrainedModel(

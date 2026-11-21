@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Gauge, MapPin, Hexagon, Radio } from "lucide-react";
@@ -14,11 +14,11 @@ import {
   type ShellHazard,
   type ShellSettings,
   fetchCheckpointGeography,
-  getActiveTrainedModel,
   getGravityLayer,
   getHealth,
   getReady,
   getShellStatusFull,
+  loadActiveModelStatus,
   submitAssess,
 } from "@/lib/api";
 import { apiUrl } from "@/lib/env";
@@ -36,6 +36,14 @@ import { LandPhoto } from "@/components/theme/LandPhoto";
 import { RequireSession, useRequiredSession } from "@/components/auth/RequireSession";
 import { buildConditioningGroups } from "@/lib/conditioning";
 import { apiHealthLabel } from "@/lib/apiHealthStatus";
+import {
+  assessmentButtonDisabled,
+  hasAssessmentModelAccess,
+  loadingActiveModel,
+  modelStatusAssessHint,
+  modelStatusPanelMessage,
+  type ActiveModelView,
+} from "@/lib/activeModelStatus";
 import {
   formatGravityUnavailableMessage,
   gravityLoadState,
@@ -83,9 +91,10 @@ function AssessmentWorkspace() {
     ...FALLBACK_HAZARDS,
   ]);
   const [checkpoint, setCheckpoint] = useState("");
-  const [activeModelId, setActiveModelId] = useState<string | null>(null);
-  const [activeModelLabel, setActiveModelLabel] = useState<string | null>(null);
-  const [checkpointAvailable, setCheckpointAvailable] = useState(false);
+  const [modelStatus, setModelStatus] = useState<ActiveModelView>(() =>
+    loadingActiveModel(),
+  );
+  const [modelStatusRefreshing, setModelStatusRefreshing] = useState(false);
   const [featuresPath, setFeaturesPath] = useState("");
   const [produceGeotiff, setProduceGeotiff] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -205,6 +214,24 @@ function AssessmentWorkspace() {
     modeRef.current = mode;
   }, [mode]);
 
+  const refreshActiveModel = useCallback(async (opts?: { quiet?: boolean }) => {
+    if (!opts?.quiet) {
+      setModelStatusRefreshing(true);
+    }
+    try {
+      // Always resolve authHeaders() inside loadActiveModelStatus so a restored
+      // session is used rather than a mount-time token snapshot.
+      const next = await loadActiveModelStatus();
+      startTransition(() => {
+        setModelStatus(next);
+      });
+    } finally {
+      if (!opts?.quiet) {
+        setModelStatusRefreshing(false);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -220,30 +247,9 @@ function AssessmentWorkspace() {
       } catch {
         if (!cancelled) setApiStatus("down");
       }
-      // Resolve promoted model metadata for status UI. Ordinary assessments omit
-      // filesystem paths and let /assess resolve the registry server-side.
-      try {
-        const active = await getActiveTrainedModel();
-        if (!cancelled) {
-          const available = Boolean(
-            active.checkpoint_available ?? active.checkpoint_path,
-          );
-          setCheckpointAvailable(available);
-          setActiveModelId(active.model_id ?? active.active?.model_id ?? null);
-          setActiveModelLabel(
-            active.active
-              ? `${active.active.name} (${active.active.model_id})`
-              : null,
-          );
-          // Keep advanced operator field empty by default so clients never send
-          // internal paths. Operators may paste a path under advanced options.
-        }
-      } catch {
-        if (!cancelled) {
-          setCheckpointAvailable(false);
-          setActiveModelId(null);
-          setActiveModelLabel(null);
-        }
+      // Session is already required by RequireSession; fetch with current credentials.
+      if (!cancelled) {
+        await refreshActiveModel({ quiet: true });
       }
       try {
         const status = await getShellStatusFull();
@@ -264,7 +270,37 @@ function AssessmentWorkspace() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshActiveModel]);
+
+  // Re-check when the signed-in identity changes (session restoration).
+  useEffect(() => {
+    if (!email) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) void refreshActiveModel({ quiet: true });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [email, refreshActiveModel]);
+
+  // Refresh when returning to the tab after an operator promote (no polling).
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshActiveModel({ quiet: true });
+      }
+    };
+    const onPageShow = () => {
+      void refreshActiveModel({ quiet: true });
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, [refreshActiveModel]);
 
   useEffect(() => {
     let map: import("maplibre-gl").Map | undefined;
@@ -641,11 +677,12 @@ function AssessmentWorkspace() {
       );
       return;
     }
-    if (!checkpoint.trim() && !checkpointAvailable) {
+    if (!hasAssessmentModelAccess(modelStatus, checkpoint)) {
       setError(
-        "No valid production checkpoint is configured. Ask an operator to promote " +
-          "a trained Stage 2.5 (13-channel) model, then retry. Ordinary assessments " +
-          "do not require a server filesystem path.",
+        modelStatusAssessHint(modelStatus) ??
+          "No valid production checkpoint is configured. Ask an operator to promote " +
+            "a trained Stage 2.5 (13-channel) model, then retry. Ordinary assessments " +
+            "do not require a server filesystem path.",
       );
       return;
     }
@@ -664,7 +701,9 @@ function AssessmentWorkspace() {
         // Ordinary clients omit checkpoint so the API resolves the promoted model.
         checkpoint: checkpoint.trim() || undefined,
         model_id:
-          !checkpoint.trim() && activeModelId ? activeModelId : undefined,
+          !checkpoint.trim() && modelStatus.modelId
+            ? modelStatus.modelId
+            : undefined,
         hazards: selectedHazards,
         mc_samples: 20,
         produce_geotiff: produceGeotiff,
@@ -680,8 +719,7 @@ function AssessmentWorkspace() {
     point,
     polygon,
     checkpoint,
-    checkpointAvailable,
-    activeModelId,
+    modelStatus,
     featuresPath,
     selectedHazards,
     produceGeotiff,
@@ -952,20 +990,38 @@ function AssessmentWorkspace() {
           <div
             className="mt-4 rounded-lg border border-meadow bg-mist px-3 py-2"
             data-testid="active-model-status"
+            data-model-status={modelStatus.kind}
           >
-            <p className="text-[11px] uppercase tracking-widest text-stone">
-              Production model
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-[11px] uppercase tracking-widest text-stone">
+                Production model
+              </p>
+              <button
+                type="button"
+                data-testid="refresh-active-model"
+                className="shrink-0 text-[10px] text-moss underline disabled:opacity-40"
+                disabled={modelStatusRefreshing}
+                onClick={() => {
+                  void refreshActiveModel();
+                }}
+              >
+                {modelStatusRefreshing ? "Refreshing…" : "Refresh status"}
+              </button>
+            </div>
+            <p
+              className={`mt-1 text-xs ${
+                modelStatus.kind === "available" ? "text-bark" : "text-amber-900"
+              }`}
+              data-testid={
+                modelStatus.kind === "available"
+                  ? "active-model-label"
+                  : modelStatus.kind === "missing"
+                    ? "active-model-missing"
+                    : `active-model-${modelStatus.kind}`
+              }
+            >
+              {modelStatusPanelMessage(modelStatus)}
             </p>
-            {checkpointAvailable && activeModelLabel ? (
-              <p className="mt-1 text-xs text-bark" data-testid="active-model-label">
-                Using promoted registry model: {activeModelLabel}
-              </p>
-            ) : (
-              <p className="mt-1 text-xs text-amber-900" data-testid="active-model-missing">
-                No promoted Stage 2.5 checkpoint is configured. Assessments cannot run
-                until an operator promotes a trained model.
-              </p>
-            )}
             <p className="mt-1 text-[10px] text-stone">
               Live inference uses the 13-channel Stage 2.5 contract. Schema-v2
               (16-channel) stacks are not used for live map assessment.
@@ -1087,11 +1143,27 @@ function AssessmentWorkspace() {
           <button
             type="button"
             onClick={onAssess}
-            disabled={loading || selectedHazards.length === 0}
+            data-testid="run-assessment"
+            disabled={assessmentButtonDisabled({
+              loading,
+              selectedHazardCount: selectedHazards.length,
+              status: modelStatus,
+              checkpoint,
+            })}
             className="mt-4 w-full rounded-lg bg-leaf px-4 py-2 text-sm font-medium text-chalk disabled:opacity-40"
           >
             {loading ? "Assessing…" : "Run assessment"}
           </button>
+          {!hasAssessmentModelAccess(modelStatus, checkpoint) &&
+            modelStatusAssessHint(modelStatus) && (
+              <p
+                className="mt-2 text-[11px] text-amber-900"
+                data-testid="assess-model-blocked-hint"
+                role="status"
+              >
+                {modelStatusAssessHint(modelStatus)}
+              </p>
+            )}
           <p className="mt-2 text-[11px] text-stone">
             Live map assessments use the Stage 2.5 v1 (13-channel) stack. Lineaments and
             overburden appear in results as available/unavailable analytics; they are only
