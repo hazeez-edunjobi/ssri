@@ -23,7 +23,7 @@ from ssri_model.api.demo_assessment import build_demo_assessment_response
 from ssri_model.api.dependencies import (
     get_api_config,
     get_service_config,
-    require_run_inference_rate_limited,
+    require_run_assess_rate_limited,
 )
 from ssri_model.api.domain_similarity import resolve_domain_similarity
 from ssri_model.api.geojson import point_bbox, validate_polygon_geojson
@@ -192,7 +192,7 @@ def assess_endpoint(
     body: AssessRequestBody,
     api_config: APIConfig = Depends(get_api_config),
     service_config: ServiceConfig = Depends(get_service_config),
-    principal: AuthenticatedPrincipal = Depends(require_run_inference_rate_limited),
+    principal: AuthenticatedPrincipal = Depends(require_run_assess_rate_limited),
 ) -> AssessResponseBody:
     request_id = sanitize_request_id(body.request_id)
     output_root = Path(service_config.output_root)

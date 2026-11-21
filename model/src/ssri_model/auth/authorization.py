@@ -16,21 +16,34 @@ _ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
             Permission.READ_METADATA,
         }
     ),
+    # Signed-in product users: live assessment only — not catalogue mutation,
+    # training mutation, batch jobs, or key administration.
+    Role.USER: frozenset(
+        {
+            Permission.READ_STATUS,
+            Permission.READ_METADATA,
+            Permission.RUN_ASSESS,
+        }
+    ),
     Role.OPERATOR: frozenset(
         {
             Permission.READ_STATUS,
             Permission.READ_METADATA,
+            Permission.RUN_ASSESS,
             Permission.RUN_INFERENCE,
             Permission.RUN_BATCH,
+            Permission.MANAGE_GEOLOGICAL,
         }
     ),
     Role.ADMIN: frozenset(
         {
             Permission.READ_STATUS,
             Permission.READ_METADATA,
+            Permission.RUN_ASSESS,
             Permission.RUN_INFERENCE,
             Permission.RUN_BATCH,
             Permission.MANAGE_AUTH,
+            Permission.MANAGE_GEOLOGICAL,
         }
     ),
 }

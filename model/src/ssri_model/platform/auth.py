@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 
 import httpx
 
 from ssri_model.platform.store import PlatformError
+
+# Compact JWT shape check only — cryptographic validation is performed by
+# Supabase Auth (/auth/v1/user), not by decoding claims locally.
+_JWT_SHAPE = re.compile(r"^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$")
 
 
 @dataclass(frozen=True)
@@ -33,19 +38,40 @@ def supabase_configured() -> bool:
     return bool(supabase_url() and supabase_anon_key())
 
 
+def looks_like_jwt(token: str) -> bool:
+    """Return True when the bearer looks like a compact JWT (not an SSRI API key)."""
+    normalized = (token or "").strip()
+    if not normalized or normalized.startswith("ssri_"):
+        return False
+    return bool(_JWT_SHAPE.match(normalized))
+
+
 def verify_supabase_access_token(token: str) -> PlatformIdentity:
-    """Confirm the bearer token with Supabase Auth. Does not trust client-supplied user ids."""
+    """Confirm the bearer token with Supabase Auth for this project.
+
+    Cryptographic validation (signature, expiry, project binding) is performed by
+    Supabase Auth when calling ``GET {SUPABASE_URL}/auth/v1/user`` with the
+    project's anon key. This function does **not** trust client-decoded JWT
+    claims and never logs the access token.
+    """
     if not supabase_configured():
         raise PlatformError(
             "Supabase authentication is not configured on this server.",
             code="PLATFORM_NOT_CONFIGURED",
             status=503,
         )
+    normalized = (token or "").strip()
+    if not looks_like_jwt(normalized):
+        raise PlatformError(
+            "Your session is invalid or has expired. Sign in again.",
+            code="UNAUTHENTICATED",
+            status=401,
+        )
     try:
         response = httpx.get(
             f"{supabase_url()}/auth/v1/user",
             headers={
-                "Authorization": f"Bearer {token}",
+                "Authorization": f"Bearer {normalized}",
                 "apikey": supabase_anon_key(),
             },
             timeout=15.0,
@@ -66,7 +92,7 @@ def verify_supabase_access_token(token: str) -> PlatformIdentity:
     user_id = str(payload.get("id") or "")
     email = str(payload.get("email") or "")
     meta = payload.get("user_metadata") or {}
-    display_name = str(meta.get("display_name") or email.split("@")[0])
+    display_name = str(meta.get("display_name") or (email.split("@")[0] if email else ""))
     if not user_id:
         raise PlatformError(
             "Your session is invalid or has expired. Sign in again.",

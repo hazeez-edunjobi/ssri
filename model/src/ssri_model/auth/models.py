@@ -9,6 +9,7 @@ from typing import Any, Mapping
 
 class Role(str, Enum):
     VIEWER = "viewer"
+    USER = "user"
     OPERATOR = "operator"
     ADMIN = "admin"
 
@@ -16,9 +17,11 @@ class Role(str, Enum):
 class Permission(str, Enum):
     READ_STATUS = "read_status"
     READ_METADATA = "read_metadata"
+    RUN_ASSESS = "run_assess"
     RUN_INFERENCE = "run_inference"
     RUN_BATCH = "run_batch"
     MANAGE_AUTH = "manage_auth"
+    MANAGE_GEOLOGICAL = "manage_geological"
 
 
 @dataclass(frozen=True)

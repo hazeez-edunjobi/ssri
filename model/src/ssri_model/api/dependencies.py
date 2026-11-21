@@ -18,7 +18,7 @@ from ssri_model.auth.authorization import has_permission
 from ssri_model.auth.config import AuthConfig
 from ssri_model.auth.credentials import KeyStore
 from ssri_model.auth.dependencies import (
-    authenticate_api_key,
+    authenticate_bearer_token,
     development_principal,
     extract_bearer_token,
 )
@@ -387,10 +387,12 @@ def get_current_principal(
         raise AuthenticationError("Authentication is required.")
     try:
         token = extract_bearer_token(credentials)
-        principal = authenticate_api_key(
+        platform_tokens = getattr(request.app.state, "platform_tokens", None)
+        principal = authenticate_bearer_token(
             auth_config=auth_config,
             key_store=state.key_store,
             token=token,
+            platform_tokens=platform_tokens,
         )
         log_authentication_event(
             request_id=request.headers.get("X-Request-ID"),
@@ -428,11 +430,13 @@ def require_permission_dependency(
     return _dependency
 
 
+require_run_assess = require_permission_dependency(Permission.RUN_ASSESS)
 require_run_inference = require_permission_dependency(Permission.RUN_INFERENCE)
 require_run_batch = require_permission_dependency(Permission.RUN_BATCH)
 require_read_metadata = require_permission_dependency(Permission.READ_METADATA)
 require_read_status = require_permission_dependency(Permission.READ_STATUS)
 require_manage_auth = require_permission_dependency(Permission.MANAGE_AUTH)
+require_manage_geological = require_permission_dependency(Permission.MANAGE_GEOLOGICAL)
 
 
 def _enforce_rate_limit(request: Request, principal: AuthenticatedPrincipal, bucket: str) -> None:
@@ -447,6 +451,14 @@ def _enforce_rate_limit(request: Request, principal: AuthenticatedPrincipal, buc
         "status": state.status_rate_limiter,
     }[bucket]
     enforce_rate_limit(limiter, principal.key_id)
+
+
+def require_run_assess_rate_limited(
+    request: Request,
+    principal: AuthenticatedPrincipal = Depends(require_run_assess),
+) -> AuthenticatedPrincipal:
+    _enforce_rate_limit(request, principal, "inference")
+    return principal
 
 
 def require_run_inference_rate_limited(

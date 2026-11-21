@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import shutil
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 from ssri_model.geological.coverage import match_aoi

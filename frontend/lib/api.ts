@@ -166,6 +166,28 @@ async function parseError(response: Response, context?: string): Promise<string>
       ? `${context}: the server returned an unreadable error (${fallback}). Please retry.`
       : `Request failed (${fallback}). Please retry.`;
   }
+  if (response.status === 401) {
+    const code =
+      body && typeof body === "object"
+        ? ((body as { error?: { code?: string } }).error?.code ?? null)
+        : null;
+    if (code === "AUTHENTICATION_REQUIRED") {
+      const authMessage =
+        "Sign in is required. Refresh after signing in, then try again. " +
+        "Assessment uses your signed-in session (or an operator API key), not a public endpoint.";
+      return context ? `${context}: ${authMessage}` : authMessage;
+    }
+    if (code === "INVALID_CREDENTIALS") {
+      const authMessage =
+        "Your credentials were rejected. Sign in again, or use a valid operator API key.";
+      return context ? `${context}: ${authMessage}` : authMessage;
+    }
+  }
+  if (response.status === 403) {
+    const authMessage =
+      "Your account does not have permission for this action.";
+    return context ? `${context}: ${authMessage}` : authMessage;
+  }
   const message = extractErrorMessage(body);
   if (message) {
     return context ? `${context}: ${message}` : message;
@@ -206,16 +228,36 @@ function extractErrorMessage(body: unknown): string | null {
   return null;
 }
 
-function authHeaders(apiKey?: string): Record<string, string> {
+/**
+ * Attach credentials for Stage 2.5 / assess / training API routes.
+ * Prefer an explicit API key, then NEXT_PUBLIC_SSRI_API_KEY, then the
+ * signed-in Supabase session (same contract as platform/geological clients).
+ * Never embeds admin/service-role secrets.
+ */
+async function authHeaders(apiKey?: string): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  const key =
+  const envKey =
     apiKey ||
     (typeof process !== "undefined"
       ? process.env.NEXT_PUBLIC_SSRI_API_KEY
       : undefined);
-  if (key) headers.Authorization = `Bearer ${key}`;
+  if (envKey && envKey.trim()) {
+    headers.Authorization = `Bearer ${envKey.trim()}`;
+    return headers;
+  }
+  try {
+    const { getSupabase } = await import("./supabase");
+    const supabase = getSupabase();
+    if (supabase) {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // Leave unauthenticated; backend returns AUTHENTICATION_REQUIRED.
+  }
   return headers;
 }
 
@@ -239,7 +281,7 @@ export async function submitAssess(
 ): Promise<AssessResponse> {
   const response = await fetch(`${apiUrl}/api/v1/assess`, {
     method: "POST",
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
     body: JSON.stringify(payload),
   });
   if (!response.ok) throw new Error(await parseError(response, "Assessment failed"));
@@ -292,7 +334,7 @@ export async function getGravityLayer(
 ): Promise<GravityLayerResponse> {
   const response = await fetch(
     `${apiUrl}/api/v1/layers/gravity?max_cells=${maxCells}`,
-    { headers: authHeaders(apiKey) },
+    { headers: await authHeaders(apiKey) },
   );
   if (!response.ok)
     throw new Error(await parseError(response, "Could not load the gravity layer"));
@@ -385,7 +427,7 @@ export async function getTrainingRequirements(
   apiKey?: string,
 ): Promise<TrainingRequirements> {
   const response = await fetch(`${apiUrl}/api/v1/training/requirements`, {
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
   });
   if (!response.ok) throw new Error(await parseError(response, "Could not load training requirements"));
   return response.json();
@@ -404,7 +446,7 @@ export async function createTrainingDataset(
 ): Promise<{ dataset: TrainingDataset }> {
   const response = await fetch(`${apiUrl}/api/v1/training/datasets`, {
     method: "POST",
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
     body: JSON.stringify(body),
   });
   if (!response.ok) throw new Error(await parseError(response, "Could not create the dataset"));
@@ -415,7 +457,7 @@ export async function listTrainingDatasets(
   apiKey?: string,
 ): Promise<{ datasets: TrainingDataset[] }> {
   const response = await fetch(`${apiUrl}/api/v1/training/datasets`, {
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
   });
   if (!response.ok) throw new Error(await parseError(response, "Could not list datasets"));
   return response.json();
@@ -432,13 +474,7 @@ export async function uploadTrainingDatasetZip(
 }> {
   const form = new FormData();
   form.append("file", file);
-  const headers: Record<string, string> = {};
-  const key =
-    apiKey ||
-    (typeof process !== "undefined"
-      ? process.env.NEXT_PUBLIC_SSRI_API_KEY
-      : undefined);
-  if (key) headers.Authorization = `Bearer ${key}`;
+  const headers = await formAuthHeaders(apiKey);
   const response = await fetch(
     `${apiUrl}/api/v1/training/datasets/${datasetId}/upload`,
     { method: "POST", headers, body: form },
@@ -457,7 +493,7 @@ export async function validateTrainingDataset(
 }> {
   const response = await fetch(
     `${apiUrl}/api/v1/training/datasets/${datasetId}/validate`,
-    { method: "POST", headers: authHeaders(apiKey) },
+    { method: "POST", headers: await authHeaders(apiKey) },
   );
   if (!response.ok) throw new Error(await parseError(response, "Validation failed"));
   return response.json();
@@ -484,7 +520,7 @@ export async function startTrainingJob(
 }> {
   const response = await fetch(`${apiUrl}/api/v1/training/jobs`, {
     method: "POST",
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
     body: JSON.stringify(body),
   });
   if (!response.ok) throw new Error(await parseError(response, "Could not start training"));
@@ -496,7 +532,7 @@ export async function getTrainingJob(
   apiKey?: string,
 ): Promise<TrainingJobStatus> {
   const response = await fetch(`${apiUrl}/api/v1/training/jobs/${jobId}`, {
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
   });
   if (!response.ok) throw new Error(await parseError(response, "Could not read the training job"));
   return response.json();
@@ -506,7 +542,7 @@ export async function listTrainedModels(
   apiKey?: string,
 ): Promise<{ models: TrainedModel[] }> {
   const response = await fetch(`${apiUrl}/api/v1/training/models`, {
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
   });
   if (!response.ok) throw new Error(await parseError(response, "Could not list trained models"));
   return response.json();
@@ -516,7 +552,7 @@ export async function getActiveTrainedModel(
   apiKey?: string,
 ): Promise<{ active: TrainedModel | null; checkpoint_path: string | null }> {
   const response = await fetch(`${apiUrl}/api/v1/training/models/active`, {
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
   });
   if (!response.ok) throw new Error(await parseError(response, "Could not read the active model"));
   return response.json();
@@ -528,7 +564,7 @@ export async function activateTrainedModel(
 ): Promise<{ active: TrainedModel; checkpoint_path: string; message: string }> {
   const response = await fetch(`${apiUrl}/api/v1/training/models/activate`, {
     method: "POST",
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
     body: JSON.stringify({ model_id: modelId }),
   });
   if (!response.ok) throw new Error(await parseError(response, "Could not activate the model"));
@@ -562,14 +598,9 @@ export type ShellJobStatus = {
   error_message?: string | null;
 };
 
-function formAuthHeaders(apiKey?: string): Record<string, string> {
-  const headers: Record<string, string> = {};
-  const key =
-    apiKey ||
-    (typeof process !== "undefined"
-      ? process.env.NEXT_PUBLIC_SSRI_API_KEY
-      : undefined);
-  if (key) headers.Authorization = `Bearer ${key}`;
+async function formAuthHeaders(apiKey?: string): Promise<Record<string, string>> {
+  const headers = await authHeaders(apiKey);
+  delete headers["Content-Type"];
   return headers;
 }
 
@@ -581,7 +612,7 @@ export async function getShellStatus(
   scientific_validation_status: string;
 }> {
   const response = await fetch(`${apiUrl}/api/v1/release-shell/status`, {
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
   });
   if (!response.ok)
     throw new Error(await parseError(response, "Could not read the release-shell status"));
@@ -596,11 +627,11 @@ export async function uploadShellDatasetZip(
 ): Promise<{ dataset_id: string; uploaded: boolean; bytes: number }> {
   const form = new FormData();
   form.append("file", file);
+  const headers = await formAuthHeaders(apiKey);
   // XHR so large uploads can report progress (fetch has no upload progress).
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/upload`);
-    const headers = formAuthHeaders(apiKey);
     Object.entries(headers).forEach(([key, value]) => {
       if (value) xhr.setRequestHeader(key, value);
     });
@@ -640,7 +671,7 @@ export async function validateShellDataset(
 ): Promise<{ validation: ShellValidation }> {
   const response = await fetch(
     `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/validate`,
-    { method: "POST", headers: authHeaders(apiKey) },
+    { method: "POST", headers: await authHeaders(apiKey) },
   );
   if (!response.ok)
     throw new Error(await parseError(response, "Validation failed"));
@@ -661,7 +692,7 @@ export async function startShellTrainingJob(
 ): Promise<{ job_id: string; run_id: string; message: string; data_hash?: string }> {
   const response = await fetch(`${apiUrl}/api/v1/release-shell/jobs`, {
     method: "POST",
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
     body: JSON.stringify(body),
   });
   if (!response.ok)
@@ -674,7 +705,7 @@ export async function getShellJob(
   apiKey?: string,
 ): Promise<ShellJobStatus> {
   const response = await fetch(`${apiUrl}/api/v1/jobs/${jobId}`, {
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
   });
   if (!response.ok)
     throw new Error(await parseError(response, "Could not read the training job"));
@@ -687,7 +718,7 @@ export async function getShellEvaluation(
 ): Promise<Record<string, unknown>> {
   const response = await fetch(
     `${apiUrl}/api/v1/release-shell/models/${modelId}/evaluation`,
-    { headers: authHeaders(apiKey) },
+    { headers: await authHeaders(apiKey) },
   );
   if (!response.ok)
     throw new Error(await parseError(response, "Could not read the evaluation"));
@@ -732,7 +763,7 @@ export type ShellStatus = {
 
 export async function getShellStatusFull(apiKey?: string): Promise<ShellStatus> {
   const response = await fetch(`${apiUrl}/api/v1/release-shell/status`, {
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
   });
   if (!response.ok)
     throw new Error(await parseError(response, "Could not read the release-shell status"));
@@ -783,7 +814,7 @@ export async function fetchCheckpointGeography(
 ): Promise<{ geography: CheckpointGeography }> {
   const response = await fetch(`${apiUrl}/api/v1/release-shell/geography`, {
     method: "POST",
-    headers: authHeaders(apiKey),
+    headers: await authHeaders(apiKey),
     body: JSON.stringify(point ? { checkpoint, point } : { checkpoint }),
   });
   if (!response.ok)
@@ -825,7 +856,7 @@ export async function validateShellLayer(
   if (units) form.append("units", units);
   const response = await fetch(`${apiUrl}/api/v1/release-shell/layers/validate`, {
     method: "POST",
-    headers: formAuthHeaders(apiKey),
+    headers: await formAuthHeaders(apiKey),
     body: form,
   });
   if (!response.ok)
@@ -846,7 +877,7 @@ export async function applyShellLineaments(
   form.append("window_m", String(windowM));
   const response = await fetch(
     `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/lineaments/apply`,
-    { method: "POST", headers: formAuthHeaders(apiKey), body: form },
+    { method: "POST", headers: await formAuthHeaders(apiKey), body: form },
   );
   if (!response.ok)
     throw new Error(await parseError(response, "Could not apply lineaments to the dataset"));
@@ -874,7 +905,7 @@ export async function applyShellOverburden(
   form.append("units", options.units || "m");
   const response = await fetch(
     `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/overburden/apply`,
-    { method: "POST", headers: formAuthHeaders(apiKey), body: form },
+    { method: "POST", headers: await formAuthHeaders(apiKey), body: form },
   );
   if (!response.ok)
     throw new Error(await parseError(response, "Could not apply overburden to the dataset"));
@@ -891,7 +922,7 @@ export async function uploadShellLabelInventory(
   form.append("crs", crs);
   const response = await fetch(`${apiUrl}/api/v1/release-shell/labels/inventory`, {
     method: "POST",
-    headers: formAuthHeaders(apiKey),
+    headers: await formAuthHeaders(apiKey),
     body: form,
   });
   if (!response.ok)
@@ -910,7 +941,7 @@ export async function applyShellLabels(
   form.append("crs", crs);
   const response = await fetch(
     `${apiUrl}/api/v1/release-shell/datasets/${datasetId}/labels/apply`,
-    { method: "POST", headers: formAuthHeaders(apiKey), body: form },
+    { method: "POST", headers: await formAuthHeaders(apiKey), body: form },
   );
   if (!response.ok)
     throw new Error(await parseError(response, "Could not apply labels to the dataset"));
@@ -925,7 +956,7 @@ export async function inspectShellLineaments(
   form.append("file", file);
   const response = await fetch(`${apiUrl}/api/v1/release-shell/lineaments/inspect`, {
     method: "POST",
-    headers: formAuthHeaders(apiKey),
+    headers: await formAuthHeaders(apiKey),
     body: form,
   });
   if (!response.ok)

@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
-from ssri_model.api.dependencies import get_service_config, require_read_status, require_run_inference
+from ssri_model.api.dependencies import (
+    get_service_config,
+    require_manage_geological,
+    require_read_status,
+)
 from ssri_model.auth.models import AuthenticatedPrincipal
 from ssri_model.geological.apply import apply_geological_to_offline_dataset
 from ssri_model.geological.service import GeologicalService
@@ -91,7 +95,7 @@ class ApplyBody(BaseModel):
 def create_dataset(
     body: CreateBody,
     service_config: ServiceConfig = Depends(get_service_config),
-    principal: AuthenticatedPrincipal = Depends(require_run_inference),
+    principal: AuthenticatedPrincipal = Depends(require_manage_geological),
 ) -> Any:
     try:
         record = _service(service_config).create(
@@ -166,7 +170,7 @@ async def upload_dataset(
     geo_id: str,
     file: UploadFile = File(...),
     service_config: ServiceConfig = Depends(get_service_config),
-    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
 ) -> Any:
     raw = await file.read()
     filename = file.filename or "upload.bin"
@@ -191,7 +195,7 @@ def declare_metadata(
     geo_id: str,
     body: DeclareBody,
     service_config: ServiceConfig = Depends(get_service_config),
-    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
 ) -> Any:
     payload = body.model_dump(exclude_unset=True)
     try:
@@ -205,7 +209,7 @@ def declare_metadata(
 def validate_dataset(
     geo_id: str,
     service_config: ServiceConfig = Depends(get_service_config),
-    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
 ) -> Any:
     try:
         record, report = _service(service_config).validate(geo_id)
@@ -223,7 +227,7 @@ def set_activation(
     geo_id: str,
     body: ActivationBody,
     service_config: ServiceConfig = Depends(get_service_config),
-    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
 ) -> Any:
     try:
         record = _service(service_config).set_activation(
@@ -240,7 +244,7 @@ def set_activation(
 def download_original(
     geo_id: str,
     service_config: ServiceConfig = Depends(get_service_config),
-    _principal: AuthenticatedPrincipal = Depends(require_read_status),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
 ) -> Any:
     storage = _storage(service_config)
     try:
@@ -288,7 +292,7 @@ def coverage_query(
 def apply_offline(
     body: ApplyBody,
     service_config: ServiceConfig = Depends(get_service_config),
-    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
 ) -> Any:
     """Apply catalogue layers onto a registered offline Stage 2.5 dataset (not live assess)."""
     training = TrainingStorage(service_config.output_root)
