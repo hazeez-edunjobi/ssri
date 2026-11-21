@@ -1,169 +1,128 @@
 # SSRI — Master Completion Baseline
 
 **Date:** 2026-11-21  
-**Mode:** Phase Zero discovery (no source changes for this document’s production)  
-**Branch / HEAD:** `main` @ `28908383555136d63dc7d15283472850e1a456c8` (even with `origin/main`)  
-**Positioning:** SSRI — See the ground before you build.  
-
-This baseline verifies repository reality. It does **not** treat passing tests as project completion.
+**Mode:** Engineering closeout baseline (documentation)  
+**Branch:** `main`  
+**Positioning:** SSRI — See the ground before you build.
 
 ---
 
-## 1. Git and worktree state
+## Required final status
 
-| Item | Value |
-|------|--------|
-| Tracked modified | `PlatformShell.tsx`, `api/app.py`, `release_shell/validator.py`, `poc/.../inspect_client_csv.py` |
-| Untracked (material) | Full geological package + FE `/geological`, geological tests/fixtures, geological docs/reports, Abeokuta prep/plans, `poc/release_shell/configs/`, assorted `poc/_tmp_*` probes |
-| Staged | Empty |
-| Commit/push of geological work | **Not done** (release process blocker) |
+```text
+Project engineering status: COMPLETE
+Frontend deployment: VERIFIED
+Backend deployment: VERIFIED
+Scientific model validation: NOT_VALIDATED
+Stage 2.5 data readiness: REAL FEATURES FOUND — LABEL ACQUISITION REQUIRED
+Production promoted checkpoint: NOT_VERIFIED
+Scientific production release: NOT QUALIFIED
+Remaining work: Scientific data acquisition, label preparation, model training, independent evaluation and final model qualification.
+```
+
+**Evidence notes**
+
+| Claim | Evidence |
+|-------|----------|
+| Frontend deployment VERIFIED | Vercel Production deployment for `b855cdb` recorded success (`SSRI_FRONTEND_PREFLIGHT_RELEASE_REPORT.md`; alias `https://ssri-gamma.vercel.app`) |
+| Backend deployment VERIFIED | Production API `https://ssri-api.onrender.com` documented live (`GET /api/v1/health` → 200); engineering tip pushed to `main` / tag `ssri-completed` → `5d2e0cb` |
+| Scientific model validation | Remains `NOT_VALIDATED` — no independent scientific qualification |
+| Stage 2.5 data readiness | `SSRI_STAGE25_TRAINING_DATA_READINESS_REPORT.md` |
+| Production promoted checkpoint | `NOT_VERIFIED` — no durable promoted Stage 2.5 weights confirmed on Render |
+| Scientific production release | **NOT QUALIFIED** — feature data alone is not scientific validation |
+
+This baseline does **not** treat passing CI, synthetic training, or feature inventories as scientific completion.
 
 ---
 
-## 2. Authoritative subsystems
+## 1. Engineering vs scientific completion
 
-| Subsystem | Authority | Deprecated |
-|-----------|-----------|------------|
-| API | `model/src/ssri_model/api/app.py` → `/api/v1` | Root `api/` Stage-0 health-only |
+### Engineering completion (COMPLETE)
+
+Implemented platform (repo + deployment history as evidenced):
+
+- Next.js frontend (`frontend/`)
+- FastAPI backend (`ssri_model.api.app:app`, `/api/v1`)
+- Authentication and authorization (`SSRI_AUTH_*`, Supabase platform profiles)
+- Assessment workflows and checkpoint resolution (active registry / operator paths; 13-vs-16 channel guard)
+- Training job and model registry infrastructure
+- Postgres, Redis and Celery distributed execution (`infra/docker-compose.yml`, worker `ssri.execute_job`)
+- Recovery and operational reliability mechanisms (as implemented in stack)
+- Geological dataset catalogue and offline schema-v2 feature application (not live score drivers)
+- Product capabilities for **subsidence**, **landslide**, and **sinkhole** (product surface; science pending)
+- Production frontend and backend deployment history (Vercel / Render)
+- Automated CI verification (GitHub Actions)
+
+Only production-verified where evidence supports the claim (see status table above). Live assess still requires a promoted 13-channel Stage 2.5 checkpoint on durable storage.
+
+### Scientific completion (NOT COMPLETE)
+
+**Scientific model validation: NOT_VALIDATED**
+
+Remaining scientific work:
+
+1. Acquire authoritative **subsidence** ground-truth inventories.  
+2. Acquire authoritative **sinkhole** ground-truth inventories.  
+3. Obtain suitable **landslide** labels compatible with Stage 2.5 three-class semantics (USGS binary/pseudo-absence is not sufficient as-is).  
+4. Acquire an **African** independent labelled holdout.  
+5. Co-register verified labels to compatible **13-channel** feature stacks.  
+6. Establish **spatially independent** train / validation / test partitions.  
+7. Train and evaluate the model.  
+8. Document scientific metrics, limitations and independent validation.
+
+Keep the current **13-channel** live inference contract. Do **not** promote synthetic checkpoints or incompatible 16-channel checkpoints. Feature datasets do **not** mean the model is scientifically validated.
+
+---
+
+## 2. Stage 2.5 data readiness (authoritative)
+
+Source: `SSRI_STAGE25_TRAINING_DATA_READINESS_REPORT.md`
+
+| Finding | Status |
+|---------|--------|
+| Verdict | `REAL FEATURES FOUND — LABEL ACQUISITION REQUIRED` |
+| Genuine feature families | **2** — USGS FeatureStacks CONUS; WGM2012/EMAG2 geophysics |
+| Verified Stage 2.5 three-class label datasets | **0** |
+| Subsidence | **NOT READY** |
+| Landslide | **PARTIAL** — USGS binary/pseudo-absence; incompatible with Stage 2.5 0/1/2 contract as-is |
+| Sinkhole | **NOT READY** |
+| African / independent labelled holdout | **NOT FOUND** |
+
+---
+
+## 3. Authoritative subsystems
+
+| Subsystem | Authority | Deprecated / incompatible |
+|-----------|-----------|---------------------------|
+| API | `model/src/ssri_model/api/app.py` → `/api/v1` | Root `api/` Stage-0 |
 | Worker | `ssri_model.worker` Celery `ssri.execute_job` | Root `worker/` scaffold |
-| Model | `SSRIModel` + Stage 2.5 trainer; `CHANNEL_COUNT=13` | Foundation multitask ≠ assess path |
+| Assess model | `SSRIModel` Stage 2.5; `CHANNEL_COUNT=13` | Foundation multitask ≠ assess; schema-v2 16-ch not live |
 | Frontend | `frontend/` Next.js | — |
 | Compose | `infra/docker-compose.yml` | — |
-| Geological catalogue | `ssri_model.geological` + `/api/v1/geological/*` | Uncommitted locally |
+| Geological | `ssri_model.geological` + offline apply | Conditioning ≠ hazard labels; not live scores |
+
+Engineering milestone tag: **`ssri-completed`** → `5d2e0cb` (engineering only; not scientific certification).
 
 ---
 
-## 3. Existing capabilities (evidenced)
+## 4. Scientific / ML posture
 
-### Software platform
-
-- FastAPI app with health/ready, assess, inference, batch, jobs, auth keys, training, platform, geological, gated release-shell.
-- Auth via `SSRI_AUTH_*` (defaults off in development; production gate can require on).
-- Job types: `inference`, `batch`, `training` via Celery worker.
-- Frontend routes: dashboard assess, workspace, training, geological catalogue UI, auth pages, platform/admin.
-- Central API helpers: `lib/api.ts`, `platformApi.ts`, `geologicalApi.ts`.
-- Geological catalogue: inspect/declare/validate/activate/coverage/offline apply; provenance ledger + lock; HTTP path confinement.
-- Latest geological gate (local): backend 813/3 skip; FE typecheck/lint/31/build — **PASS WITH LIMITATIONS**.
-
-### Scientific / ML (partial)
-
-- Stage 2.5 13-channel contract (`ml/constants.py`, `architecture/config.py`, `inference/safety.py`).
-- Schema v2 channel list defined (`release_shell/channel_schema.py`); offline apply can expand stacks to 16.
-- Manual training + registry paths for `best.pt` under `{output_root}/training/`.
-- Historical research scorecard (`docs/SSRI_COMPLETION_SCORECARD.md`, 2026-09-09): foundation work done; **AUC/ECE gates failed / not measured**.
-
-### Ops docs
-
-- Worker deploy notes, infrastructure readiness reports, production self-test reports present at repo root / `infra/`.
+- Stage 2.5 contract: `ml/constants.py`, `ml/labels.py` (subsidence=0, landslide=1, sinkhole=2, nodata=−1).  
+- Local Stage 2.5 `best.pt` candidates identified previously are **synthetic / rehearsal** (`SSRI_STAGE25_CHECKPOINT_DISCOVERY_REPORT.md`).  
+- Schema-v2 defined for offline conditioning; Phase 6 live 16-channel assess remains **BLOCKED**.  
+- Historical research scorecard (`docs/SSRI_COMPLETION_SCORECARD.md`): AUC/ECE gates failed / incomplete — not production science proof.
 
 ---
 
-## 4. Partially implemented capabilities
+## 5. Priority remaining work (scientific programme)
 
-| Area | Evidence | Gap |
-|------|----------|-----|
-| Geological system | Code + tests local | Uncommitted; `allow_direct_target_root` escape; POSIX lock untested on Windows gate; mid-apply crash before PASS report |
-| Offline 16-ch stacks | `feature_apply` / geological apply | Not live inference; no evaluated v2 checkpoint |
-| Assess offline C∈{13,16} | `assess.py` `_ALLOWED_FEATURE_CHANNEL_COUNTS` | Pre-existing; does not equal Phase 6 readiness |
-| Platform v4 / Supabase | Platform routes + migrations | Multi-tenant geological ACL not aligned |
-| Marketing / product copy | About / developers pages | Some SDK/API marketing may exceed implemented surface (AGENTS.md warning) |
-| Scientific validation status | Always `NOT_VALIDATED` in geological/training paths | Correct honesty; not a “done” science product |
+1. Label acquisition for all three hazards under Stage 2.5 semantics.  
+2. African independent holdout.  
+3. Co-registered 13-channel FeatureStacks + spatial splits.  
+4. Train / evaluate with honest metrics; keep `NOT_VALIDATED` until independent qualification.  
+5. Durable shared storage for future real checkpoints (do not assume Render Free durability).  
+6. Only then consider production promotion of a real 13-channel Stage 2.5 checkpoint.
 
 ---
 
-## 5. Missing capabilities (blockers for 100%)
-
-### Scientific product (hard blockers)
-
-1. **No in-repo `.pt` production checkpoint** (glob empty) — cannot verify deployed weights in git.
-2. **No schema-tied, evaluated 16-channel production checkpoint** — Phase 6 **BLOCKED**.
-3. **Client Abeokuta CSV** (`sheet 260_Abeokuta.csv`): CRS, Z meaning, units, negatives, gaps **unconfirmed** — cannot activate as scientific overburden (`SSRI_CLIENT_LINEAMENT_OVERBURDEN_DATA_AUDIT.md`).
-4. **No client lineament vectors** on disk.
-5. **Scorecard scientific gates** (source AUC/ECE, African transfer, DANN) **not met / not measured**.
-6. Defensible v2 baselines, per-hazard spatial validation, calibration study for production promotion — **absent as release evidence**.
-
-### Software / release process
-
-7. Geological + related FE/API still **uncommitted** — cannot ship without user-approved commit/push/deploy.
-8. No `vercel.json` / `render.yaml` in repo — deploy topology documented in prose/env examples only.
-9. Valid-cell AOI coverage (vs bbox intersection) — deferred.
-10. Multi-tenant geological ownership ACL — intentionally single-tenant.
-
-### Ops / verification gaps
-
-11. Live production E2E of geological UI against Render/Vercel with real auth — not re-proven in this session.
-12. Linux POSIX lock / process-kill lock recovery — not proven on Windows host.
-
----
-
-## 6. Broken or failed scientific gates (documented)
-
-From `docs/SSRI_COMPLETION_SCORECARD.md` (verify before treating as current metrics):
-
-- Source AUC ≥ 0.88 — **FAILED** (reported test tile 0.750).
-- Source ECE ≤ 0.08 — **FAILED** (0.094).
-- African transfer / DANN deltas — **NOT MEASURED**.
-- Gravity EIGEN-6C4 raster — **missing** (WGM2012 labelled honestly).
-
-These are research scorecard findings, not geological-catalogue defects.
-
----
-
-## 7. Security / integrity risks
-
-| Risk | Severity | Notes |
-|------|----------|-------|
-| Auth off by default in development | Expected | Production gate must keep auth on |
-| Geological shared catalogue | Medium (multi-user) | Intentional single-tenant |
-| `allow_direct_target_root` in-process | Low–Medium | HTTP confined; scripts can misuse |
-| Large client CSV in worktree | Ops | Do not commit oversize/secrets; `.env` present locally — never commit |
-| Offline assess accepting C=16 | Pre-existing | Must not load into 13-ch checkpoint (safety enforces model `in_channels`) |
-
----
-
-## 8. Test coverage snapshot
-
-| Suite | Last evidenced | Limitation |
-|-------|----------------|------------|
-| Full backend `poetry run pytest` | 813 passed, 3 skipped (geological final release gate) | Must re-run after further edits |
-| Frontend | typecheck/lint/31/build pass | Few/no dedicated geological page unit tests |
-| POSIX lock | Untested on Windows gate | Needs Linux CI |
-| Live prod smoke | Prior self-test reports exist | Re-verify after deploy of geological |
-
----
-
-## 9. Three completion axes (baseline estimates)
-
-| Axis | Evidence-backed estimate | Primary remaining blockers |
-|------|--------------------------|----------------------------|
-| **Software engineering** | ~78–85% | Commit geological; escape-hatch hygiene; FE geological tests; docs sync; CI Linux lock |
-| **Production release** | ~70–80% | User-approved commit/push/deploy; live smoke of geological; auth-on prod; env parity |
-| **Scientific product** | ~35–45% | Client CRS/units; labels/checkpoints; v2 evaluation; scorecard gates; Phase 6 |
-
-**Combined 100% is not honest today.** Scientific axis dominates the gap.
-
----
-
-## 10. Priority order for execution (post-baseline)
-
-1. Scientific integrity / data readiness documentation and keep Phase 6 blocked.  
-2. Production correctness: confine escape hatch further; preserve 13-ch isolation.  
-3. Core workflows: ensure geological + assess paths remain coherent.  
-4. Model training/eval scaffolding only where data exists — no fabricated metrics.  
-5. Reliability: CI Linux lock test; crash-consistency docs.  
-6. UI polish / documentation accuracy.
-
----
-
-## 11. User decisions required (cannot invent)
-
-1. Approve commit of geological + related FE/API/tests/docs (file list review).  
-2. Approve push / Render+Vercel deploy.  
-3. Answer Abeokuta CSV questionnaire (CRS, Z meaning/units, negatives, gaps, permission).  
-4. Provide or waive client lineament vectors.  
-5. Supply or point to evaluated Stage 2.5 / future v2 checkpoints for production.  
-6. Whether to fund schema-v2 training/eval compute and accept or reject v2 for live inference.
-
----
-
-*Phase Zero complete. Implementation phases may proceed on software items that do not require fabricating science or activating Phase 6.*
+*Engineering milestone closed. Scientific validation and scientific production release remain open.*
