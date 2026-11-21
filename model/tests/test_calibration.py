@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from ssri_model.evaluation.calibration import (
     binary_confusion_at_threshold,

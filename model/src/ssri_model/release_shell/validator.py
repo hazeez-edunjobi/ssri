@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -31,10 +31,8 @@ from ssri_model.release_shell.flags import (
 from ssri_model.release_shell.spatial_split import (
     LOCAL_EVIDENCE_LIMITATION,
     TileGeo,
-    block5,
     block_id,
     haversine_km,
-    is_local_block_size,
     resolve_block_size_deg,
     split_by_blocks,
 )
@@ -142,7 +140,6 @@ def validate_release_shell_dataset(dataset_root: Path | str) -> dict[str, Any]:
     # Schema / channels / shapes
     channel_fail = 0
     shape_fail = 0
-    dtype_notes: list[str] = []
     crs_missing = 0
     coords_missing = 0
     tiles: list[TileGeo] = []

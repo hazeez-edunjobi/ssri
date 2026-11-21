@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 import rasterio
 
-from ssri_model.ml.constants import CHANNEL_COUNT, CHANNEL_NAMES, LABEL_NODATA
+from ssri_model.ml.constants import LABEL_NODATA
 from ssri_model.ml.labels import label_class_names
 from ssri_model.release_shell.channel_schema import schema_from_manifest
 from ssri_model.training.safety import check_split_leakage

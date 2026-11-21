@@ -28,7 +28,6 @@ def _grid_csv(*, channels: list[str], label: str | None, skip: tuple[int, int] |
         for x_index in range(WIDTH):
             if skip == (x_index, y_index):
                 continue
-            gap = 250 if x_index == 3 else x_gap
             # Keep regular spacing unless x_gap is the irregular sentinel handled below.
             x_value = -115500 + x_index * x_gap
             if x_gap < 0 and x_index > 0:
@@ -84,7 +83,6 @@ def test_xyz_reconstructs_regular_grid_and_channel_order(tmp_path) -> None:
     )
     assert manifest["channel_schema_version"] == "v1"
     assert len(manifest["channel_names"]) == 13
-    sample = next((tmp_path / "outputs").rglob("feature_stack.npy")) if False else None
     array = np.load(list(__import__("pathlib").Path(root).rglob("feature_stack.npy"))[0])
     assert array.shape[0] == 13
     assert array[0, 0, 0] == 1

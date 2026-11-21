@@ -11,6 +11,7 @@ import io
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from ssri_model.manual_training.exceptions import ManualTrainingError
@@ -201,7 +202,7 @@ EMPTY_LABEL_GRID_VALUE = LABEL_NODATA
 
 
 def apply_labels_to_dataset(
-    dataset_root: "Path",
+    dataset_root: Path,
     inventory: LabelInventory,
 ) -> dict[str, Any]:
     """Write inventory labels onto every sample's ``label.tif`` (nearest cell).
@@ -209,8 +210,6 @@ def apply_labels_to_dataset(
     Cells without a snapped label keep their existing value (typically nodata).
     Never invents hazard classes. Returns join counts for the operator.
     """
-    from pathlib import Path
-
     import numpy as np
     import rasterio
 

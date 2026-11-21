@@ -369,7 +369,6 @@ def _sample_ee_rectangle_array(
 ) -> tuple[np.ndarray, BoundingBox]:
     """Sample one WGS84 rectangle via EE ``sampleRectangle`` (single request)."""
     import ee
-    from rasterio.transform import from_bounds
 
     west, south, east, north = bbox
     region = ee.Geometry.Rectangle(

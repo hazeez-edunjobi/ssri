@@ -276,7 +276,8 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         for sid in splits["train"]
         if (dataset_root / "samples" / sid / "feature_stack.npy").exists()
     )
-    probe = np.load(first)
+    # Fail early if the first train stack cannot be read.
+    np.load(first)
     # Use median-ish fixed size: 64x64 crop/pad for batching.
     target_hw = (args.spatial_size, args.spatial_size)
 

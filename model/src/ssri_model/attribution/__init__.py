@@ -7,8 +7,6 @@ not installed, callers should use :func:`gradient_feature_attribution` from
 
 from __future__ import annotations
 
-from typing import Any, Sequence
-
 import numpy as np
 import torch
 from torch import nn

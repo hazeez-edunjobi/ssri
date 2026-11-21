@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import os
-
 import torch
-import torch.nn.functional as F
 
 from ssri_model.evaluation.predictions import logits_to_probabilities
 from ssri_model.release_shell.probability import logits_to_class_probabilities

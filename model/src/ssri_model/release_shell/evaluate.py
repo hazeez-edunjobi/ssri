@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -259,7 +258,6 @@ def evaluate_checkpoint_on_held_out(
         ref = np.sort(svs) if len(svs) else np.sort(sts)
         slope_score_t = np.searchsorted(ref, sts, side="right") / max(len(ref), 1)
         maj = float(yv.mean()) if len(yv) else 0.5
-        maj_score = np.full_like(stm, maj, dtype=float)
 
         thr = _pick_thr(yv, svm) if len(yv) and len(set(yv.tolist())) > 1 else 0.5
         thr_slope = _pick_thr(yv, np.searchsorted(ref, svs, side="right") / max(len(ref), 1)) if len(yv) else 0.5

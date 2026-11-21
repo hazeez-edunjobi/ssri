@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import torch
 import torch.nn as nn

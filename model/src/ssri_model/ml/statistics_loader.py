@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-from ssri_model.ml.constants import CHANNEL_COUNT, CHANNEL_NAMES, FEATURE_NODATA
+from ssri_model.ml.constants import CHANNEL_NAMES, FEATURE_NODATA
 from ssri_model.ml.exceptions import StatisticsError
 
 

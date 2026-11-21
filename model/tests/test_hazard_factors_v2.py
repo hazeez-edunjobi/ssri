@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
-import numpy as np
 import pytest
 
 from ssri_model.manual_training.exceptions import ManualTrainingError
@@ -20,7 +18,7 @@ from ssri_model.release_shell.channel_schema import (
     assert_channels_match,
     schema_for_version,
 )
-from ssri_model.release_shell.gates import STATUS_EVALUATED, STATUS_NO_SKILL, STATUS_NOT_AVAILABLE
+from ssri_model.release_shell.gates import STATUS_NO_SKILL, STATUS_NOT_AVAILABLE
 from ssri_model.release_shell.lineaments import derive_lineament_rasters, load_lineament_segments
 from ssri_model.release_shell.point_grid_csv import ingest_point_grid_csv
 from ssri_model.release_shell.spatial_split import (

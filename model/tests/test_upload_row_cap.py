@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import inspect
 import io
-import os
 import zipfile
 from pathlib import Path
 

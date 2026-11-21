@@ -9,9 +9,6 @@ from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
-
-# Repo-root .env holds Supabase keys. The API is often started from model/.
-load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 from fastapi.middleware.cors import CORSMiddleware
 
 from ssri_model.api.config import APIConfig
@@ -35,6 +32,10 @@ from ssri_model.api.routes import (
     training,
 )
 from ssri_model.release_shell import routes as release_shell_routes
+
+# Repo-root .env holds Supabase keys. The API is often started from model/.
+# Load after imports (no import-time env reads) and before create_app()/from_env().
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
 
 def _configure_cors(app: FastAPI, config: APIConfig) -> None:
