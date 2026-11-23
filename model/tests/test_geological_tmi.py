@@ -92,6 +92,82 @@ def test_validate_rejects_metres_as_degrees() -> None:
     assert report["can_process"] is False
 
 
+def test_abeokuta_authoritative_preset_and_real_csv_qc() -> None:
+    from ssri_model.geological.abeokuta_tmi import (
+        AUTHORITATIVE_ABEOKUTA_TMI,
+        apply_abeokuta_tmi_defaults,
+        looks_like_abeokuta_filename,
+    )
+    from ssri_model.geological.tmi import build_tmi_preview
+
+    assert looks_like_abeokuta_filename("sheet 260_Abeokuta.csv")
+    filled = apply_abeokuta_tmi_defaults({})
+    assert filled["crs"] == "EPSG:32632"
+    assert filled["working_crs"] == "EPSG:32631"
+    assert filled["x_column"] == "X"
+    assert filled["z_column"] == "Z"
+    assert filled["measurement_type"] == MEASUREMENT_TOTAL_MAGNETIC_INTENSITY
+    assert AUTHORITATIVE_ABEOKUTA_TMI["x_meaning"] == "easting"
+    assert AUTHORITATIVE_ABEOKUTA_TMI["display_crs"] == "EPSG:4326"
+
+    repo_csv = Path(__file__).resolve().parents[2] / "sheet 260_Abeokuta.csv"
+    if not repo_csv.is_file():
+        pytest.skip("Abeokuta CSV not present in workspace")
+    # Head sample alone may fail extent checks; include file corners.
+    lines = repo_csv.read_bytes().splitlines()
+    head = b"X,Y,Z\n" + b"\n".join(lines[1:200] + lines[-50:])
+    report = validate_tmi_point_survey(
+        head,
+        filename="sheet 260_Abeokuta.csv",
+        crs=AUTHORITATIVE_ABEOKUTA_TMI["crs"],
+        units=AUTHORITATIVE_ABEOKUTA_TMI["units"],
+        x_column="X",
+        y_column="Y",
+        z_column="Z",
+        working_crs=AUTHORITATIVE_ABEOKUTA_TMI["working_crs"],
+        provenance=filled["provenance"],
+    )
+    assert report["overall"] in {"PASS", "WARN"}
+    assert report["can_train"] is False
+    assert report["scientific_validation_status"] == "NOT_VALIDATED"
+    assert report["column_mapping"]["z_meaning"] == "total_magnetic_intensity"
+    assert report["column_mapping"]["x_meaning"] == "easting"
+    assert report["crs_verification"]["ok"] is True
+    assert report["tmi_statistics"]["count"] >= 1
+    preview = build_tmi_preview(
+        head,
+        crs="EPSG:32632",
+        x_column="X",
+        y_column="Y",
+        z_column="Z",
+        processing_crs="EPSG:32631",
+        display_crs="EPSG:4326",
+    )
+    assert preview["ok"] is True
+    assert preview["wgs84_map_eligible"] is True
+    assert preview["survey_local"] is not None
+    assert preview["geojson"] is not None
+
+
+def test_abeokuta_wgs84_fixture_passes_and_maps() -> None:
+    from ssri_model.geological.tmi import build_tmi_preview
+
+    raw = (FIXTURES / "tmi_client_xy_z.csv").read_bytes()
+    report = validate_tmi_point_survey(
+        raw,
+        filename="abeokuta_wgs84_fixture.csv",
+        crs="EPSG:4326",
+        x_column="X",
+        y_column="Y",
+        z_column="Z",
+    )
+    assert report["overall"] in {"PASS", "WARN"}
+    preview = build_tmi_preview(raw, crs="EPSG:4326")
+    assert preview["wgs84_map_eligible"] is True
+    assert preview["geojson"] is not None
+    assert preview["geojson"]["features"]
+
+
 def test_validate_invalid_lon_lat() -> None:
     csv = b"X,Y,Z\n190.0,7.0,100.0\n3.3,7.1,101.0\n3.4,7.2,102.0\n3.5,7.3,103.0\n"
     report = validate_tmi_point_survey(

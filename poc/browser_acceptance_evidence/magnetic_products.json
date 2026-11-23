@@ -1,0 +1,583 @@
+{
+  "geo_id": "geo_98a62076f85c",
+  "supported_operations": [
+    "tmi",
+    "rte",
+    "gaussian",
+    "analytic_signal",
+    "first_vertical_derivative",
+    "first_horizontal_derivative",
+    "tilt_derivative",
+    "radially_averaged_power_spectrum"
+  ],
+  "operation_catalog": [
+    {
+      "operation": "tmi",
+      "title": "Total Magnetic Intensity",
+      "summary": "Gridded TMI observations (nT). No magnetic transform.",
+      "units": "nT"
+    },
+    {
+      "operation": "rte",
+      "title": "Reduction to Magnetic Equator",
+      "summary": "Fourier-domain RTE to I=0° using publication inclination/declination. Amplitude clipping is an implementation stabilisation, not a paper parameter.",
+      "units": "nT (transformed)"
+    },
+    {
+      "operation": "gaussian",
+      "title": "Gaussian filter",
+      "summary": "Frequency-domain Gaussian with λ=2000 m, σ=0.5. Default low-pass; publication response type is ambiguous.",
+      "units": "nT"
+    },
+    {
+      "operation": "analytic_signal",
+      "title": "Analytic signal",
+      "summary": "AS = sqrt((∂T/∂x)²+(∂T/∂y)²+(∂T/∂z)²) with Fourier |k| vertical term.",
+      "units": "nT/m"
+    },
+    {
+      "operation": "first_vertical_derivative",
+      "title": "First vertical derivative",
+      "summary": "∂T/∂z ≈ IFFT(|k|·FFT(T)).",
+      "units": "nT/m"
+    },
+    {
+      "operation": "first_horizontal_derivative",
+      "title": "First horizontal derivative (THG)",
+      "summary": "Total horizontal gradient sqrt((∂T/∂x)²+(∂T/∂y)²).",
+      "units": "nT/m"
+    },
+    {
+      "operation": "tilt_derivative",
+      "title": "Tilt derivative",
+      "summary": "atan2(∂T/∂z, THG); stable at zero horizontal gradient.",
+      "units": "radians"
+    },
+    {
+      "operation": "radially_averaged_power_spectrum",
+      "title": "Radially averaged power spectrum",
+      "summary": "Annular average of normalised 2D power. No source-depth claim without explicit slope fitting.",
+      "units": "log10(power) vs wavelength"
+    }
+  ],
+  "products": [
+    {
+      "operation": "tmi",
+      "title": "Total Magnetic Intensity",
+      "summary": "Gridded TMI observations (nT). No magnetic transform.",
+      "units": "nT",
+      "geotiff_exists": true,
+      "preview_exists": true,
+      "raps_exists": false,
+      "geotiff_relpath": "working/derived/tmi_grid.tif",
+      "preview_relpath": "working/derived/tmi_preview.png",
+      "raps_relpath": null
+    },
+    {
+      "operation": "rte",
+      "title": "Reduction to Magnetic Equator",
+      "summary": "Fourier-domain RTE to I=0° using publication inclination/declination. Amplitude clipping is an implementation stabilisation, not a paper parameter.",
+      "units": "nT (transformed)",
+      "geotiff_exists": false,
+      "preview_exists": false,
+      "raps_exists": false,
+      "geotiff_relpath": null,
+      "preview_relpath": null,
+      "raps_relpath": null
+    },
+    {
+      "operation": "gaussian",
+      "title": "Gaussian filter",
+      "summary": "Frequency-domain Gaussian with λ=2000 m, σ=0.5. Default low-pass; publication response type is ambiguous.",
+      "units": "nT",
+      "geotiff_exists": false,
+      "preview_exists": false,
+      "raps_exists": false,
+      "geotiff_relpath": null,
+      "preview_relpath": null,
+      "raps_relpath": null
+    },
+    {
+      "operation": "analytic_signal",
+      "title": "Analytic signal",
+      "summary": "AS = sqrt((∂T/∂x)²+(∂T/∂y)²+(∂T/∂z)²) with Fourier |k| vertical term.",
+      "units": "nT/m",
+      "geotiff_exists": true,
+      "preview_exists": true,
+      "raps_exists": false,
+      "geotiff_relpath": "working/derived/analytic_signal.tif",
+      "preview_relpath": "working/derived/analytic_signal_preview.png",
+      "raps_relpath": null
+    },
+    {
+      "operation": "first_vertical_derivative",
+      "title": "First vertical derivative",
+      "summary": "∂T/∂z ≈ IFFT(|k|·FFT(T)).",
+      "units": "nT/m",
+      "geotiff_exists": false,
+      "preview_exists": false,
+      "raps_exists": false,
+      "geotiff_relpath": null,
+      "preview_relpath": null,
+      "raps_relpath": null
+    },
+    {
+      "operation": "first_horizontal_derivative",
+      "title": "First horizontal derivative (THG)",
+      "summary": "Total horizontal gradient sqrt((∂T/∂x)²+(∂T/∂y)²).",
+      "units": "nT/m",
+      "geotiff_exists": false,
+      "preview_exists": false,
+      "raps_exists": false,
+      "geotiff_relpath": null,
+      "preview_relpath": null,
+      "raps_relpath": null
+    },
+    {
+      "operation": "tilt_derivative",
+      "title": "Tilt derivative",
+      "summary": "atan2(∂T/∂z, THG); stable at zero horizontal gradient.",
+      "units": "radians",
+      "geotiff_exists": false,
+      "preview_exists": false,
+      "raps_exists": false,
+      "geotiff_relpath": null,
+      "preview_relpath": null,
+      "raps_relpath": null
+    },
+    {
+      "operation": "radially_averaged_power_spectrum",
+      "title": "Radially averaged power spectrum",
+      "summary": "Annular average of normalised 2D power. No source-depth claim without explicit slope fitting.",
+      "units": "log10(power) vs wavelength",
+      "geotiff_exists": false,
+      "preview_exists": false,
+      "raps_exists": false,
+      "geotiff_relpath": null,
+      "preview_relpath": null,
+      "raps_relpath": null
+    }
+  ],
+  "processing_history": [
+    {
+      "operation": "tmi",
+      "at": "2026-11-23T13:56:37.084999+00:00",
+      "algorithm": "ssri_model.geological.magnetic_processing",
+      "software_version": "1.1.0",
+      "input_artifact": "original/sheet_260_Abeokuta.csv",
+      "input_checksum_sha256": "a9a10bc5d72c38d6ec7374b1f42cdb9b08e6a110604a4942867d62e3db434ed1",
+      "output_artifacts": {
+        "geotiff": "working/derived/tmi_grid.tif",
+        "preview_png": "working/derived/tmi_preview.png",
+        "arrays_npz": "working/derived/tmi_grid_arrays.npz"
+      },
+      "output_checksums_sha256": {
+        "geotiff": "fb4b4c935861cc66157a250758b08cd2f88cbe6e76df58c91d5f16f9cb4fac0e",
+        "preview_png": "d2c05eeda8290f7717d0090c5658fcf3b82912843348487ffec195bbe903f1a2",
+        "grid_array": "57ba807db34cc9c68b1bee6482e075804cbaab1cc4b14e570ace2f1a3228313d",
+        "mask_array": "abbcf95f0e806d9bf833ab16e329009f71d6a2f997d033b8ca480110b92cb749"
+      },
+      "source_crs": "EPSG:32632",
+      "processing_crs": "EPSG:32631",
+      "grid_spacing_m": {
+        "dx": 100,
+        "dy": 100
+      },
+      "nodata_interpolation_policy": {
+        "missing_cells": "NoData",
+        "interpolation": "none_in_scatter_bin",
+        "collision_aggregation": "mean_of_observations"
+      },
+      "publication_parameters": {},
+      "implementation_choices": {},
+      "op_meta": {
+        "definition": "Gridded TMI observations",
+        "units": "nT",
+        "gridding": {
+          "method": "scatter_bin_mean_nodata_gaps",
+          "original_observation_count": 308153,
+          "expected_lattice_cells": 306362,
+          "observed_lattice_cell_count": 305067,
+          "empty_lattice_positions": 1295,
+          "cells_populated_by_direct_observations": 305067,
+          "cells_populated_by_interpolation": 0,
+          "cells_remaining_nodata": 1295,
+          "collision_cells_mean_aggregated": 3086,
+          "collision_policy": "mean_of_observations",
+          "interpolation_method": null,
+          "interpolation_assumptions": "scatter_bin: only cells with ≥1 reprojected observation are filled (mean if multiple). Empty cells stay NoData — not measured TMI. UTM 32N→31N warps the source lattice, so processing-CRS NoData ≠ source-CRS missing_lattice_cells.",
+          "resolution_x_m": 100,
+          "resolution_y_m": 100,
+          "width": 553,
+          "height": 554,
+          "xmin": 500000.04193541675,
+          "xmax": 555200.0419354168,
+          "ymin": 773748.4596274276,
+          "ymax": 829048.4596274276,
+          "origin": {
+            "xmin": 500000.04193541675,
+            "ymax": 829048.4596274276,
+            "convention": "northwest_cell_center_approx_via_from_origin"
+          },
+          "nodata": -9999,
+          "point_count": 308153,
+          "filled_cells": 305067,
+          "nodata_cells": 1295,
+          "spacing_estimate": {
+            "dx_m": 0.14251499995589256,
+            "dy_m": 0.145898999995552,
+            "unique_x": 308151,
+            "unique_y": 308152,
+            "regularity_ratio_x": 0.03325328573746552,
+            "regularity_ratio_y": 0.044478194132097575
+          },
+          "fft_regularity_ok": false,
+          "resampling_error_metrics": {
+            "status": "not_applicable_for_scatter_bin",
+            "note": "No independent ground-truth grid; collision mean differs from last-write-wins."
+          },
+          "resolution": 100
+        },
+        "transform": {
+          "source_crs": "EPSG:32632",
+          "target_crs": "EPSG:32631",
+          "method": "pyproj.Transformer always_xy=True",
+          "point_count": 308153,
+          "extent": [
+            500000.04193541675,
+            773750.46296238,
+            555219.1636198476,
+            829048.4596274276
+          ],
+          "original_xy_unmodified": true
+        },
+        "crs_verification_overall": "PASS"
+      },
+      "statistics": {
+        "count": 305067,
+        "min": -212.76046752929688,
+        "max": 221.46839904785156,
+        "mean": 58.74623107910156,
+        "stdev": 32.69378662109375,
+        "p01": -42.56333923339844,
+        "p50": 60.87430953979492,
+        "p99": 129.28578186035156
+      },
+      "scientific_validation_status": "NOT_VALIDATED",
+      "not_hazard_labels": true,
+      "gridding_reconciliation": {
+        "source_crs_lattice": {
+          "frame": "source_file_xy",
+          "spacing": 100,
+          "unique_x": 561,
+          "unique_y": 562,
+          "expected_lattice_cells": 315282,
+          "observed_unique_xy": 308153,
+          "empty_lattice_positions": 7129,
+          "original_observation_count": 308153,
+          "note": "Source-CRS lattice count matches inspect.missing_lattice_cells when unique_x×unique_y − unique_xy. This is independent of processing-CRS scatter-bin NoData."
+        },
+        "processing_crs_scatter_bin": {
+          "original_observation_count": 308153,
+          "expected_lattice_cells": 306362,
+          "observed_lattice_cell_count": 305067,
+          "empty_lattice_positions": 1295,
+          "cells_populated_by_direct_observations": 305067,
+          "cells_populated_by_interpolation": 0,
+          "cells_remaining_nodata": 1295,
+          "collision_cells_mean_aggregated": 3086,
+          "collision_policy": "mean_of_observations",
+          "method": "scatter_bin_mean_nodata_gaps",
+          "resolution_x_m": 100,
+          "resolution_y_m": 100,
+          "width": 553,
+          "height": 554,
+          "xmin": 500000.04193541675,
+          "ymin": 773748.4596274276,
+          "xmax": 555200.0419354168,
+          "ymax": 829048.4596274276
+        },
+        "reconciliation_note": "Inspect missing_lattice_cells=7129 counts empty positions on the source-CRS unique-X×unique-Y lattice. Processing-CRS scatter-bin NoData=1295 on a regular metre grid after EPSG:32632→32631. These differ because the UTM zone change warps the lattice (cell collisions + empty bins). Nearest-neighbour fill previously reported 0 NoData by interpolating every cell — that fabricated values for empty positions and is not the default."
+      },
+      "raw_source_unmodified": true
+    },
+    {
+      "operation": "analytic_signal",
+      "at": "2026-11-23T13:56:51.416609+00:00",
+      "algorithm": "ssri_model.geological.magnetic_processing",
+      "software_version": "1.1.0",
+      "input_artifact": "working/derived/tmi_grid_arrays.npz",
+      "input_checksum_sha256": "909b719d9225d6ef9ca409c60f27c747448487e47a2909d464e28f33a3264160",
+      "output_artifacts": {
+        "geotiff": "working/derived/analytic_signal.tif",
+        "preview_png": "working/derived/analytic_signal_preview.png"
+      },
+      "output_checksums_sha256": {
+        "geotiff": "c5e268d6f966dc32f36121cc5b70b765ce43388001a2f63cc9f8a8334a7ffb24",
+        "preview_png": "f636c8641f422a70783f52738a89df0716bfac89537325d881366482d4abffb5",
+        "array": "006b5b048ef828c0091882a287cd347e75d8ba3a4945e16ffeb073025b28b8b9"
+      },
+      "source_crs": "EPSG:32632",
+      "processing_crs": "EPSG:32631",
+      "grid_spacing_m": {
+        "dx": 100,
+        "dy": 100
+      },
+      "nodata_interpolation_policy": {
+        "input_nodata_propagated": true,
+        "fft_nodata_fill": "valid_mean_temporary",
+        "output_nodata_restored": true
+      },
+      "publication_parameters": {
+        "average_igrf_nT": 32576,
+        "gaussian_central_wavelength_m": 2000,
+        "declination_deg": 3.52,
+        "gaussian_std": 0.5,
+        "inclination_deg": 11.04
+      },
+      "implementation_choices": {
+        "fft_preparation": {
+          "nodata_fill": "valid_mean",
+          "nodata_fill_value": 58.74623013897246,
+          "nodata_cells_filled_for_fft": 1295,
+          "fft_padding": "none",
+          "windowing": "none",
+          "detrend": "none_in_prepare",
+          "implementation_choice": true,
+          "note": "NoData cells are temporarily replaced with the mean of valid cells for FFT stability, then masked back to NoData in the output. This is an implementation choice, not a publication parameter. No zero-padding is applied."
+        },
+        "fft_preparation_vertical": {
+          "nodata_fill": "valid_mean",
+          "nodata_fill_value": 58.74623013897246,
+          "nodata_cells_filled_for_fft": 1295,
+          "fft_padding": "none",
+          "windowing": "none",
+          "detrend": "none_in_prepare",
+          "implementation_choice": true,
+          "note": "NoData cells are temporarily replaced with the mean of valid cells for FFT stability, then masked back to NoData in the output. This is an implementation choice, not a publication parameter. No zero-padding is applied."
+        },
+        "rte_amplitude_clip_requested": 10
+      },
+      "op_meta": {
+        "operation": "analytic_signal",
+        "definition": "AS = sqrt((dT/dx)^2 + (dT/dy)^2 + (dT/dz)^2)",
+        "vertical_term_interpretation": "dT/dz approximated by Fourier multiplication with |k| on a 2D total-field grid (standard potential-field AS amplitude).",
+        "units": "nT_per_m",
+        "implementation_choices": {
+          "fft_preparation": {
+            "nodata_fill": "valid_mean",
+            "nodata_fill_value": 58.74623013897246,
+            "nodata_cells_filled_for_fft": 1295,
+            "fft_padding": "none",
+            "windowing": "none",
+            "detrend": "none_in_prepare",
+            "implementation_choice": true,
+            "note": "NoData cells are temporarily replaced with the mean of valid cells for FFT stability, then masked back to NoData in the output. This is an implementation choice, not a publication parameter. No zero-padding is applied."
+          },
+          "fft_preparation_vertical": {
+            "nodata_fill": "valid_mean",
+            "nodata_fill_value": 58.74623013897246,
+            "nodata_cells_filled_for_fft": 1295,
+            "fft_padding": "none",
+            "windowing": "none",
+            "detrend": "none_in_prepare",
+            "implementation_choice": true,
+            "note": "NoData cells are temporarily replaced with the mean of valid cells for FFT stability, then masked back to NoData in the output. This is an implementation choice, not a publication parameter. No zero-padding is applied."
+          }
+        },
+        "dx_m": 100,
+        "dy_m": 100,
+        "scientific_validation_status": "NOT_VALIDATED"
+      },
+      "statistics": {
+        "count": 305067,
+        "min": 0.00013274708180688322,
+        "max": 2.243499994277954,
+        "mean": 0.045747309923172,
+        "stdev": 0.08215244114398956,
+        "p01": 0.0018520969897508621,
+        "p50": 0.017070017755031586,
+        "p99": 0.37339621782302856,
+        "units": "nT_per_m"
+      },
+      "scientific_validation_status": "NOT_VALIDATED",
+      "not_hazard_labels": true,
+      "publication_comparison": {
+        "status": "NOT_VALIDATED",
+        "exact_map_reproduction": false,
+        "note": "Compare generated maps and statistics against the publication qualitatively. Do not claim exact reproduction without original processed grids or sufficiently detailed reference figures.",
+        "published_interpretation_themes": [
+          "Low magnetic zones associated with sedimentary formations",
+          "Intermediate magnetic zones associated with transition geology",
+          "High magnetic zones associated with basement complex",
+          "Predominantly NE-SW structural trends"
+        ],
+        "not_ground_truth_labels": true,
+        "not_hazard_labels": true
+      },
+      "raw_source_unmodified": true
+    }
+  ],
+  "gridding_reconciliation": {
+    "source_crs_lattice": {
+      "frame": "source_file_xy",
+      "spacing": 100,
+      "unique_x": 561,
+      "unique_y": 562,
+      "expected_lattice_cells": 315282,
+      "observed_unique_xy": 308153,
+      "empty_lattice_positions": 7129,
+      "original_observation_count": 308153,
+      "note": "Source-CRS lattice count matches inspect.missing_lattice_cells when unique_x×unique_y − unique_xy. This is independent of processing-CRS scatter-bin NoData."
+    },
+    "processing_crs_scatter_bin": {
+      "original_observation_count": 308153,
+      "expected_lattice_cells": 306362,
+      "observed_lattice_cell_count": 305067,
+      "empty_lattice_positions": 1295,
+      "cells_populated_by_direct_observations": 305067,
+      "cells_populated_by_interpolation": 0,
+      "cells_remaining_nodata": 1295,
+      "collision_cells_mean_aggregated": 3086,
+      "collision_policy": "mean_of_observations",
+      "method": "scatter_bin_mean_nodata_gaps",
+      "resolution_x_m": 100,
+      "resolution_y_m": 100,
+      "width": 553,
+      "height": 554,
+      "xmin": 500000.04193541675,
+      "ymin": 773748.4596274276,
+      "xmax": 555200.0419354168,
+      "ymax": 829048.4596274276
+    },
+    "reconciliation_note": "Inspect missing_lattice_cells=7129 counts empty positions on the source-CRS unique-X×unique-Y lattice. Processing-CRS scatter-bin NoData=1295 on a regular metre grid after EPSG:32632→32631. These differ because the UTM zone change warps the lattice (cell collisions + empty bins). Nearest-neighbour fill previously reported 0 NoData by interpolating every cell — that fabricated values for empty positions and is not the default."
+  },
+  "gridding_provenance": {
+    "method": "scatter_bin_mean_nodata_gaps",
+    "original_observation_count": 308153,
+    "expected_lattice_cells": 306362,
+    "observed_lattice_cell_count": 305067,
+    "empty_lattice_positions": 1295,
+    "cells_populated_by_direct_observations": 305067,
+    "cells_populated_by_interpolation": 0,
+    "cells_remaining_nodata": 1295,
+    "collision_cells_mean_aggregated": 3086,
+    "collision_policy": "mean_of_observations",
+    "interpolation_method": null,
+    "interpolation_assumptions": "scatter_bin: only cells with ≥1 reprojected observation are filled (mean if multiple). Empty cells stay NoData — not measured TMI. UTM 32N→31N warps the source lattice, so processing-CRS NoData ≠ source-CRS missing_lattice_cells.",
+    "resolution_x_m": 100,
+    "resolution_y_m": 100,
+    "width": 553,
+    "height": 554,
+    "xmin": 500000.04193541675,
+    "xmax": 555200.0419354168,
+    "ymin": 773748.4596274276,
+    "ymax": 829048.4596274276,
+    "origin": {
+      "xmin": 500000.04193541675,
+      "ymax": 829048.4596274276,
+      "convention": "northwest_cell_center_approx_via_from_origin"
+    },
+    "nodata": -9999,
+    "point_count": 308153,
+    "filled_cells": 305067,
+    "nodata_cells": 1295,
+    "spacing_estimate": {
+      "dx_m": 0.14251499995589256,
+      "dy_m": 0.145898999995552,
+      "unique_x": 308151,
+      "unique_y": 308152,
+      "regularity_ratio_x": 0.03325328573746552,
+      "regularity_ratio_y": 0.044478194132097575
+    },
+    "fft_regularity_ok": false,
+    "resampling_error_metrics": {
+      "status": "not_applicable_for_scatter_bin",
+      "note": "No independent ground-truth grid; collision mean differs from last-write-wins."
+    },
+    "resolution": 100
+  },
+  "inspect_missing_lattice_cells": 7129,
+  "inspect_expected_full_grid_cells": 315282,
+  "crs_roles": {
+    "source_crs": "EPSG:32632",
+    "processing_crs": "EPSG:32631",
+    "display_crs": "EPSG:4326",
+    "crs_declaration_history": [
+      {
+        "crs": "EPSG:4326",
+        "x_meaning": "longitude",
+        "y_meaning": "latitude",
+        "status": "superseded",
+        "note": "Earlier declaration treated CSV X/Y as WGS84 lon/lat. Publication and coordinate magnitudes show projected UTM easting/northing."
+      },
+      {
+        "crs": "EPSG:32632",
+        "x_meaning": "easting",
+        "y_meaning": "northing",
+        "status": "publication_source",
+        "at_role": "active_source_crs"
+      }
+    ]
+  },
+  "publication_magnetic_params": {
+    "inclination_deg": 11.04,
+    "declination_deg": 3.52,
+    "average_igrf_nT": 32576,
+    "gaussian_central_wavelength_m": 2000,
+    "gaussian_std": 0.5,
+    "source": "Qualitative Interpretation of High Resolution Aeromagnetic Data of Abeokuta Metropolis for Geological Characterisation"
+  },
+  "publication_comparison": {
+    "status": "NOT_VALIDATED",
+    "exact_map_reproduction": false,
+    "note": "Compare generated maps and statistics against the publication qualitatively. Do not claim exact reproduction without original processed grids or sufficiently detailed reference figures.",
+    "published_interpretation_themes": [
+      "Low magnetic zones associated with sedimentary formations",
+      "Intermediate magnetic zones associated with transition geology",
+      "High magnetic zones associated with basement complex",
+      "Predominantly NE-SW structural trends"
+    ],
+    "not_ground_truth_labels": true,
+    "not_hazard_labels": true
+  },
+  "raps": null,
+  "scientific_validation_status": "NOT_VALIDATED",
+  "tmi_statistics": {
+    "count": 308153,
+    "min": -212.760467529297,
+    "max": 221.468399047852,
+    "mean": 58.74412677305655,
+    "stdev": 32.70081668533223,
+    "p01": -42.6007041931152,
+    "p50": 60.8742637634277,
+    "p99": 129.275772094727,
+    "constant": false,
+    "outlier_count_iqr": 6623,
+    "units": "nT"
+  },
+  "spatial": {
+    "point_count": 308153,
+    "extent": [
+      -163800,
+      777400,
+      -107800,
+      833500
+    ],
+    "span_x": 56000,
+    "span_y": 56100,
+    "unique_x": 561,
+    "unique_y": 562,
+    "median_gap_x": 100,
+    "median_gap_y": 100,
+    "approx_density_per_extent_unit2": 0.00009808791698497581,
+    "lattice_fill_ratio": 0.9773884966474458,
+    "lattice_like": true,
+    "irregular_point_cloud": false,
+    "gridding_suitable": true,
+    "coverage_note": "regular_lattice_candidate"
+  },
+  "grid_spacing_x": 100,
+  "grid_spacing_y": 100,
+  "not_hazard_labels": true
+}

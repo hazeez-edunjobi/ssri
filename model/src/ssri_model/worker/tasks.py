@@ -13,7 +13,11 @@ from ssri_model.infrastructure.database.job_store import DatabaseJobStore
 from ssri_model.infrastructure.factory import build_infrastructure
 from ssri_model.infrastructure.observability import log_operational_event
 from ssri_model.infrastructure.redis.queue import RedisJobQueue
-from ssri_model.infrastructure.retry import attempts_remaining, is_retryable_failure
+from ssri_model.infrastructure.retry import (
+    attempts_remaining,
+    is_retryable_error_code,
+    is_retryable_failure,
+)
 from ssri_model.infrastructure.worker.heartbeat import HeartbeatController
 from ssri_model.infrastructure.worker.lifecycle import request_worker_shutdown, worker_shutdown_requested
 from ssri_model.jobs.exceptions import JobNotFoundError
@@ -210,6 +214,7 @@ def execute_job_record(job_id: str) -> None:
         if (
             final.status == JobStatus.FAILED
             and attempts_remaining(attempt=final.attempt, max_attempts=final.max_attempts)
+            and is_retryable_error_code(final.error_code)
         ):
             _requeue_for_retry(
                 store=store,

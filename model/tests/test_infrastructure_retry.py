@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 from ssri_model.auth.exceptions import AuthenticationError, AuthorizationError
-from ssri_model.infrastructure.retry import attempts_remaining, is_retryable_failure
+from ssri_model.inference.exceptions import InferenceInputError
+from ssri_model.infrastructure.retry import (
+    attempts_remaining,
+    is_retryable_error_code,
+    is_retryable_failure,
+)
 from ssri_model.jobs.exceptions import IdempotencyConflictError
 from ssri_model.service.exceptions import (
     InvalidServiceConfigError,
@@ -37,3 +42,13 @@ def test_transient_failures_retryable() -> None:
 def test_attempts_remaining_respects_max() -> None:
     assert attempts_remaining(attempt=1, max_attempts=3) is True
     assert attempts_remaining(attempt=3, max_attempts=3) is False
+
+
+def test_inference_input_errors_not_retryable() -> None:
+    assert is_retryable_failure(InferenceInputError("bad manifest")) is False
+
+
+def test_permanent_error_codes_not_requeued() -> None:
+    assert is_retryable_error_code("INFERENCE_INPUT_INVALID") is False
+    assert is_retryable_error_code("INFERENCE_FAILED") is True
+    assert is_retryable_error_code(None) is True

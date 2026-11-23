@@ -19,6 +19,17 @@ export function clientAllowsPresentationDemo(): boolean {
 }
 
 /**
+ * Local headed-acceptance session bypass must never ship in production builds.
+ */
+export function clientAllowsLocalAcceptanceSession(): boolean {
+  if (process.env.NODE_ENV === "production") {
+    return false;
+  }
+  const flag = process.env.NEXT_PUBLIC_SSRI_LOCAL_ACCEPTANCE_SESSION?.trim().toLowerCase();
+  return flag === "1" || flag === "true" || flag === "yes" || flag === "on";
+}
+
+/**
  * Combine server readiness with client production gates.
  * A misconfigured production API with demo_mode=true must not enable fake UI.
  */

@@ -32,6 +32,18 @@ import {
   pointInRegion,
 } from "@/lib/coordinates";
 import {
+  DEFAULT_PRODUCT_BOUNDS,
+  DEFAULT_PRODUCT_CENTER,
+  DEFAULT_PRODUCT_ZOOM,
+  MAP_MAX_ZOOM,
+  MAP_MIN_ZOOM,
+  boundsFromRing,
+  displayBboxFromDataset,
+  fitMapToWgs84Bounds,
+  unionBounds,
+} from "@/lib/mapViewport";
+import { listGeologicalDatasets } from "@/lib/geologicalApi";
+import {
   PRESENTATION_DEMO_DURATION_MS,
   waitForPresentationDemo,
   type DemoScenarioSummary,
@@ -77,6 +89,10 @@ const GRAVITY_OUTLINE = "ssri-gravity-outline";
 const REGION_SOURCE = "ssri-training-region";
 const REGION_FILL = "ssri-training-region-fill";
 const REGION_LINE = "ssri-training-region-outline";
+
+const FOOTPRINT_SOURCE = "ssri-dataset-footprints";
+const FOOTPRINT_FILL = "ssri-dataset-footprints-fill";
+const FOOTPRINT_LINE = "ssri-dataset-footprints-outline";
 
 type Mode = "point" | "polygon";
 
@@ -136,6 +152,8 @@ function AssessmentWorkspace() {
   );
   const [gravityError, setGravityError] = useState<string | null>(null);
   const [gravityLoaded, setGravityLoaded] = useState(false);
+  const [footprintVisible, setFootprintVisible] = useState(true);
+  const [footprintCount, setFootprintCount] = useState(0);
   const gravityState = gravityLoadState({
     loaded: gravityLoaded,
     error: gravityError,
@@ -449,9 +467,11 @@ function AssessmentWorkspace() {
         map = new maplibregl.Map({
           container: mapContainer.current,
           style: preferredStyle,
-          center: [3.38, 6.52],
-          zoom: 9,
-          attributionControl: false,
+          center: DEFAULT_PRODUCT_CENTER,
+          zoom: DEFAULT_PRODUCT_ZOOM,
+          minZoom: MAP_MIN_ZOOM,
+          maxZoom: MAP_MAX_ZOOM,
+          attributionControl: true,
         });
         mapRef.current = map;
         const markReady = () => {
@@ -498,6 +518,19 @@ function AssessmentWorkspace() {
         });
 
         map.once("load", async () => {
+          const activeMap = mapRef.current;
+          if (!activeMap || cancelled) return;
+          // Immediate SW-Nigeria product focus — avoid a world-scale empty view.
+          fitMapToWgs84Bounds(activeMap, DEFAULT_PRODUCT_BOUNDS, {
+            padding: 40,
+            maxZoom: 10,
+            duration: 0,
+          });
+
+          const footprintBoxes: Array<[number, number, number, number] | null> = [
+            DEFAULT_PRODUCT_BOUNDS,
+          ];
+
           try {
             const layer = await getGravityLayer();
             if (cancelled || !mapRef.current) return;
@@ -506,27 +539,8 @@ function AssessmentWorkspace() {
             setGravityLoaded(true);
             setGravityError(null);
             setGravityVisible(true);
-            // Fit to gravity extent when available.
             const coords = layer.features.flatMap((f) => f.geometry.coordinates[0]);
-            if (coords.length > 0) {
-              let minLng = coords[0][0];
-              let minLat = coords[0][1];
-              let maxLng = coords[0][0];
-              let maxLat = coords[0][1];
-              for (const [lng, lat] of coords) {
-                minLng = Math.min(minLng, lng);
-                minLat = Math.min(minLat, lat);
-                maxLng = Math.max(maxLng, lng);
-                maxLat = Math.max(maxLat, lat);
-              }
-              mapRef.current.fitBounds(
-                [
-                  [minLng, minLat],
-                  [maxLng, maxLat],
-                ],
-                { padding: 40, maxZoom: 11 },
-              );
-            }
+            footprintBoxes.push(boundsFromRing(coords as [number, number][]));
           } catch (err) {
             if (!cancelled) {
               setGravityLoaded(false);
@@ -536,6 +550,75 @@ function AssessmentWorkspace() {
                 err instanceof Error ? err.message : "Gravity layer failed to load",
               );
             }
+          }
+
+          // Catalogue footprints — only verified WGS84 boxes (never projected XY).
+          try {
+            const { datasets } = await listGeologicalDatasets({ limit: 50 });
+            if (cancelled || !mapRef.current) return;
+            const features = [];
+            for (const ds of datasets) {
+              const box = displayBboxFromDataset(ds);
+              if (!box) continue;
+              footprintBoxes.push(box);
+              const [west, south, east, north] = box;
+              features.push({
+                type: "Feature" as const,
+                properties: {
+                  geo_id: ds.geo_id,
+                  name: ds.display_name,
+                  crs: ds.crs,
+                },
+                geometry: {
+                  type: "Polygon" as const,
+                  coordinates: [
+                    [
+                      [west, south],
+                      [east, south],
+                      [east, north],
+                      [west, north],
+                      [west, south],
+                    ],
+                  ],
+                },
+              });
+            }
+            const fc = { type: "FeatureCollection" as const, features };
+            const mapNow = mapRef.current;
+            setFootprintCount(features.length);
+            if (mapNow.getSource(FOOTPRINT_SOURCE)) {
+              (
+                mapNow.getSource(FOOTPRINT_SOURCE) as import("maplibre-gl").GeoJSONSource
+              ).setData(fc);
+            } else if (features.length) {
+              mapNow.addSource(FOOTPRINT_SOURCE, { type: "geojson", data: fc });
+              mapNow.addLayer({
+                id: FOOTPRINT_FILL,
+                type: "fill",
+                source: FOOTPRINT_SOURCE,
+                paint: { "fill-color": "#2F6F4E", "fill-opacity": 0.12 },
+              });
+              mapNow.addLayer({
+                id: FOOTPRINT_LINE,
+                type: "line",
+                source: FOOTPRINT_SOURCE,
+                paint: {
+                  "line-color": "#2F6F4E",
+                  "line-width": 1.5,
+                  "line-dasharray": [1.5, 1.5],
+                },
+              });
+            }
+          } catch {
+            // Catalogue optional on assessment map.
+          }
+
+          const combined = unionBounds(footprintBoxes);
+          if (mapRef.current && combined) {
+            fitMapToWgs84Bounds(mapRef.current, combined, {
+              padding: 48,
+              maxZoom: 11,
+            });
           }
         });
       } catch {
@@ -563,6 +646,18 @@ function AssessmentWorkspace() {
       map.setLayoutProperty(GRAVITY_OUTLINE, "visibility", visibility);
     }
   }, [gravityVisible, gravityLoaded]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || footprintCount <= 0) return;
+    const visibility = footprintVisible ? "visible" : "none";
+    if (map.getLayer(FOOTPRINT_FILL)) {
+      map.setLayoutProperty(FOOTPRINT_FILL, "visibility", visibility);
+    }
+    if (map.getLayer(FOOTPRINT_LINE)) {
+      map.setLayoutProperty(FOOTPRINT_LINE, "visibility", visibility);
+    }
+  }, [footprintVisible, footprintCount, mapReady]);
 
   // Release shell only: read the checkpoint's declared CRS + training region.
   useEffect(() => {
@@ -662,6 +757,12 @@ function AssessmentWorkspace() {
     };
     if (map.isStyleLoaded()) draw();
     else map.once("load", draw);
+    // Include training region in the active viewport when available.
+    fitMapToWgs84Bounds(
+      map,
+      [extent.lon_min, extent.lat_min, extent.lon_max, extent.lat_max],
+      { padding: 56, maxZoom: 11 },
+    );
   }, [geography, mapLoaded]);
 
   const clearPolygon = useCallback(() => {
@@ -1004,6 +1105,31 @@ function AssessmentWorkspace() {
               <p className="text-[10px] leading-snug">{gravityMeta.scientific_limitation}</p>
             </div>
           ) : null}
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-meadow/60 pt-2">
+            <p className="text-[11px] uppercase tracking-widest text-stone">
+              Dataset footprints
+            </p>
+            <label className="flex items-center gap-2 font-mono text-[11px] text-bark">
+              <input
+                type="checkbox"
+                data-testid="footprint-visibility-toggle"
+                checked={footprintCount > 0 && footprintVisible}
+                onChange={(e) => setFootprintVisible(e.target.checked)}
+                disabled={footprintCount <= 0}
+              />
+              <span data-testid="footprint-visibility-label">
+                {footprintCount <= 0
+                  ? "No verified WGS84 footprints"
+                  : footprintVisible
+                    ? `${footprintCount} shown`
+                    : "Hidden"}
+              </span>
+            </label>
+          </div>
+          <p className="mt-1 text-[10px] leading-snug text-stone">
+            Footprints appear only after a verified CRS → WGS84 transform. Projected
+            easting/northing alone is never plotted at an invented location.
+          </p>
         </div>
 
         <div className="rounded-xl border border-meadow bg-chalk px-4 py-4">

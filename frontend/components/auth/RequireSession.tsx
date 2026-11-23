@@ -2,6 +2,10 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  LOCAL_ACCEPTANCE_EMAIL,
+  localAcceptanceSessionAllowed,
+} from "@/lib/localAcceptanceSession";
 import { getSupabase, supabaseConfig } from "@/lib/supabase";
 
 type SessionValue = { email: string | null };
@@ -23,8 +27,14 @@ export function RequireSession({
   const [email, setEmail] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const configured = supabaseConfig().configured;
+  const localAcceptance = localAcceptanceSessionAllowed();
 
   useEffect(() => {
+    if (localAcceptance) {
+      setEmail(LOCAL_ACCEPTANCE_EMAIL);
+      setReady(true);
+      return;
+    }
     const supabase = getSupabase();
     if (!supabase) {
       // Unconfigured environments render the "Sign-in is not configured"
@@ -39,7 +49,7 @@ export function RequireSession({
       setEmail(data.session.user.email ?? null);
       setReady(true);
     });
-  }, [nextPath, router]);
+  }, [nextPath, router, localAcceptance]);
 
   if (!configured) {
     return (

@@ -11,12 +11,15 @@
 /** Decimal places kept for the enter → plot → read-back round trip. */
 export const COORD_DECIMALS = 6;
 
-/** Soft guidance for the Lagos geophysics clip (~2.5–4.5°E, ~5.5–7.5°N). */
+/**
+ * Soft guidance for SW Nigeria product coverage
+ * (Lagos geophysics clip + Abeokuta Sheet 260 corridor).
+ */
 export const COVERAGE_HINT = {
   minLon: 2.5,
   maxLon: 4.5,
   minLat: 5.5,
-  maxLat: 7.5,
+  maxLat: 7.7,
 } as const;
 
 export type ParsedCoordinates =

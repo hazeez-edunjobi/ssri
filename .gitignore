@@ -91,3 +91,13 @@ poc/release_shell/outputs/frontend_rehearsal/
 # Local handover acceptance scratch
 model/_handover_tmp/
 
+# Local runtime outputs (assessments, geological originals/derived, checkpoints)
+data/outputs/
+
+# Local probe / acceptance scratch (keep small screenshots via explicit add if needed)
+poc/_tmp_*
+poc/browser_acceptance_evidence/*.csv
+poc/browser_acceptance_evidence/*.bin
+poc/browser_acceptance_evidence/derived_download.bin
+poc/browser_acceptance_evidence/bad_incomplete.csv
+

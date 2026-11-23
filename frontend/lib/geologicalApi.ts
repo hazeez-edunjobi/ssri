@@ -31,6 +31,8 @@ export type GeologicalDataset = {
   working_crs?: string | null;
   units: string | null;
   coverage_bbox?: number[] | null;
+  /** Verified WGS84 [west,south,east,north] for map overlays; null if unknown. */
+  display_bbox_wgs84?: number[] | null;
   grid_spacing_x?: number | null;
   grid_spacing_y?: number | null;
   grid_spacing_units?: string | null;
@@ -257,6 +259,65 @@ export async function declareGeologicalMetadata(
   return geoPost<{ dataset: GeologicalDataset }>(`/datasets/${geoId}/declare`, body);
 }
 
+export type AbeokutaTmiPreset = {
+  preset_id: string;
+  display_name: string;
+  measurement_type: string;
+  measurement_description: string;
+  crs: string;
+  source_crs?: string;
+  processing_crs?: string;
+  display_crs?: string;
+  working_crs?: string;
+  x_column: string;
+  y_column: string;
+  z_column: string;
+  x_meaning: string;
+  y_meaning: string;
+  z_meaning: string;
+  units: string;
+  geographic_coverage: string;
+  scientific_validation_status: string;
+  notes: string;
+  publication_magnetic_params?: Record<string, unknown>;
+  crs_roles?: Record<string, unknown>;
+};
+
+export async function getAbeokutaTmiPreset() {
+  return geoGet<{ preset: AbeokutaTmiPreset }>("/presets/abeokuta-tmi");
+}
+
+export type TmiPreview = {
+  ok: boolean;
+  wgs84_map_eligible?: boolean;
+  geojson?: {
+    type: "FeatureCollection";
+    features: Array<{
+      type: "Feature";
+      geometry: { type: "Point"; coordinates: [number, number] | number[] };
+      properties: Record<string, unknown> | null;
+    }>;
+    properties?: Record<string, unknown> | null;
+  } | null;
+  survey_local?: {
+    points: Array<{ x: number; y: number; z: number }>;
+    extent: { xmin: number; xmax: number; ymin: number; ymax: number };
+    tmi_statistics?: Record<string, unknown>;
+    coordinate_frame?: string;
+    note?: string;
+  } | null;
+  total_points?: number;
+  sampled_points?: number;
+  tmi_statistics?: Record<string, unknown>;
+  error?: string;
+};
+
+export async function previewGeologicalTmi(geoId: string, maxPoints = 5000) {
+  return geoGet<{ geo_id: string; preview: TmiPreview }>(
+    `/datasets/${geoId}/preview?max_points=${maxPoints}`,
+  );
+}
+
 export async function validateGeologicalDataset(geoId: string) {
   return geoPost<{ dataset: GeologicalDataset; validation: ValidationReport }>(
     `/datasets/${geoId}/validate`,
@@ -279,6 +340,85 @@ export async function processGeologicalTmi(
     processing: Record<string, unknown>;
     feature_compatibility?: Record<string, unknown>;
   }>(`/datasets/${geoId}/process`, body);
+}
+
+export type MagneticProducts = {
+  geo_id: string;
+  supported_operations: string[];
+  operation_catalog?: Array<{
+    operation: string;
+    title?: string;
+    summary?: string;
+    units?: string;
+  }>;
+  products: Array<{
+    operation: string;
+    title?: string;
+    summary?: string;
+    units?: string;
+    geotiff_exists?: boolean;
+    preview_exists?: boolean;
+    raps_exists?: boolean;
+    geotiff_relpath?: string | null;
+    preview_relpath?: string | null;
+    raps_relpath?: string | null;
+  }>;
+  processing_history?: unknown[];
+  gridding_reconciliation?: Record<string, unknown>;
+  gridding_provenance?: Record<string, unknown>;
+  inspect_missing_lattice_cells?: number | null;
+  inspect_expected_full_grid_cells?: number | null;
+  crs_roles?: {
+    source_crs?: string | null;
+    processing_crs?: string | null;
+    display_crs?: string | null;
+    crs_declaration_history?: unknown;
+  };
+  publication_magnetic_params?: Record<string, unknown>;
+  publication_comparison?: Record<string, unknown>;
+  raps?: {
+    wavelength_m?: Array<number | null>;
+    log10_power?: Array<number | null>;
+    wavenumber_rad_per_m?: number[];
+    wavenumber_cycles_per_m?: number[];
+    depth_interpretation?: Record<string, unknown>;
+  } | null;
+  scientific_validation_status?: string;
+  tmi_statistics?: Record<string, unknown>;
+  spatial?: Record<string, unknown>;
+  grid_spacing_x?: number | null;
+  grid_spacing_y?: number | null;
+  not_hazard_labels?: boolean;
+};
+
+export async function listGeologicalMagnetic(geoId: string) {
+  return geoGet<MagneticProducts>(`/datasets/${geoId}/magnetic`);
+}
+
+export async function runGeologicalMagnetic(
+  geoId: string,
+  body: {
+    operation: string;
+    resolution?: number;
+    nodata?: number;
+    inclination_deg?: number;
+    declination_deg?: number;
+    average_igrf_nT?: number;
+    gaussian_central_wavelength_m?: number;
+    gaussian_std?: number;
+    gaussian_mode?: string;
+    rte_amplitude_clip?: number;
+  },
+) {
+  return geoPost<{
+    dataset: GeologicalDataset;
+    magnetic: Record<string, unknown>;
+  }>(`/datasets/${geoId}/magnetic`, body);
+}
+
+/** Absolute URL for a derived preview/product under /geological/datasets/{id}/derived/. */
+export function geologicalDerivedUrl(geoId: string, filename: string): string {
+  return `${apiUrl}/api/v1/geological/datasets/${geoId}/derived/${encodeURIComponent(filename)}`;
 }
 
 export async function setGeologicalCompatibility(

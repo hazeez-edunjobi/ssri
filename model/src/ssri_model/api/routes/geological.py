@@ -77,6 +77,8 @@ class DeclareBody(BaseModel):
     processing_history: str | None = None
     source_organization: str | None = None
     geographic_coverage: str | None = None
+    # Apply owner-authoritative Abeokuta TMI column/CRS defaults without re-prompting.
+    apply_abeokuta_tmi_preset: bool = False
 
 
 class ActivationBody(BaseModel):
@@ -87,6 +89,33 @@ class ActivationBody(BaseModel):
 class ProcessTmiBody(BaseModel):
     resolution: float = Field(..., gt=0, description="Grid cell size in CRS units")
     nodata: float = -9999.0
+
+
+class MagneticOperationBody(BaseModel):
+    operation: str = Field(
+        ...,
+        description=(
+            "One of: tmi, rte, gaussian, analytic_signal, "
+            "first_vertical_derivative, first_horizontal_derivative, "
+            "tilt_derivative, radially_averaged_power_spectrum"
+        ),
+    )
+    resolution: float | None = Field(
+        default=None, description="Optional grid spacing (metres) if base grid missing"
+    )
+    nodata: float = -9999.0
+    inclination_deg: float | None = None
+    declination_deg: float | None = None
+    average_igrf_nT: float | None = None
+    gaussian_central_wavelength_m: float | None = None
+    gaussian_std: float | None = None
+    gaussian_mode: str | None = Field(
+        default=None, description="low_pass (default) or high_pass residual"
+    )
+    rte_amplitude_clip: float | None = Field(
+        default=None,
+        description="Implementation stabilisation clip (not a publication parameter)",
+    )
 
 
 class CompatibilityBody(BaseModel):
@@ -217,6 +246,20 @@ async def upload_dataset(
     }
 
 
+@router.get("/presets/abeokuta-tmi")
+def abeokuta_tmi_preset(
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
+) -> Any:
+    """Return publication-guided Abeokuta Sheet 260 TMI metadata.
+
+    X=easting, Y=northing, Z=TMI; source EPSG:32632; processing EPSG:32631;
+    display EPSG:4326.
+    """
+    from ssri_model.geological.abeokuta_tmi import AUTHORITATIVE_ABEOKUTA_TMI
+
+    return {"preset": AUTHORITATIVE_ABEOKUTA_TMI}
+
+
 @router.post("/datasets/{geo_id}/declare")
 def declare_metadata(
     geo_id: str,
@@ -230,6 +273,21 @@ def declare_metadata(
     except ManualTrainingError as exc:
         return _error(exc, status=404 if exc.code == "DATASET_NOT_FOUND" else 400)
     return {"dataset": record.to_dict()}
+
+
+@router.get("/datasets/{geo_id}/preview")
+def preview_dataset(
+    geo_id: str,
+    max_points: int = Query(default=5000, ge=100, le=20000),
+    service_config: ServiceConfig = Depends(get_service_config),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
+) -> Any:
+    """Sampled TMI preview: WGS84 GeoJSON when eligible, else survey-local scatter."""
+    try:
+        preview = _service(service_config).preview_tmi(geo_id, max_points=max_points)
+    except ManualTrainingError as exc:
+        return _error(exc, status=404 if exc.code == "DATASET_NOT_FOUND" else 400)
+    return {"geo_id": geo_id, "preview": preview}
 
 
 @router.post("/datasets/{geo_id}/validate")
@@ -268,6 +326,82 @@ def process_dataset(
         "processing": report,
         "feature_compatibility": record.feature_compatibility,
     }
+
+
+@router.get("/datasets/{geo_id}/magnetic")
+def list_magnetic(
+    geo_id: str,
+    service_config: ServiceConfig = Depends(get_service_config),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
+) -> Any:
+    """List magnetic processing products, history, and CRS roles."""
+    try:
+        return _service(service_config).list_magnetic_products(geo_id)
+    except ManualTrainingError as exc:
+        return _error(exc, status=404 if exc.code == "DATASET_NOT_FOUND" else 400)
+
+
+@router.post("/datasets/{geo_id}/magnetic")
+def run_magnetic(
+    geo_id: str,
+    body: MagneticOperationBody,
+    service_config: ServiceConfig = Depends(get_service_config),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
+) -> Any:
+    """Run one publication-guided magnetic operation (explicit parameters recorded)."""
+    param_keys = (
+        "inclination_deg",
+        "declination_deg",
+        "average_igrf_nT",
+        "gaussian_central_wavelength_m",
+        "gaussian_std",
+        "gaussian_mode",
+        "rte_amplitude_clip",
+    )
+    overrides = {
+        k: getattr(body, k) for k in param_keys if getattr(body, k) is not None
+    }
+    try:
+        record, report = _service(service_config).run_magnetic_operation(
+            geo_id,
+            operation=body.operation,
+            params=overrides,
+            resolution=body.resolution,
+            nodata=body.nodata,
+        )
+    except ManualTrainingError as exc:
+        return _error(exc)
+    return {"dataset": record.to_dict(), "magnetic": report}
+
+
+@router.get("/datasets/{geo_id}/derived/{filename}")
+def get_derived_file(
+    geo_id: str,
+    filename: str,
+    service_config: ServiceConfig = Depends(get_service_config),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
+) -> Any:
+    """Serve a derived magnetic product (GeoTIFF, PNG preview, or JSON)."""
+    safe = filename.replace("\\", "/").split("/")[-1]
+    if not safe or ".." in safe:
+        return _error(
+            ManualTrainingError("Invalid derived filename.", code="DERIVED_PATH"),
+            status=400,
+        )
+    path = _storage(service_config).dataset_dir(geo_id) / "working" / "derived" / safe
+    if not path.is_file():
+        return _error(
+            ManualTrainingError("Derived file not found.", code="DERIVED_NOT_FOUND"),
+            status=404,
+        )
+    media = "application/octet-stream"
+    if safe.endswith(".png"):
+        media = "image/png"
+    elif safe.endswith(".json"):
+        media = "application/json"
+    elif safe.endswith(".tif") or safe.endswith(".tiff"):
+        media = "image/tiff"
+    return FileResponse(path, media_type=media, filename=safe)
 
 
 @router.post("/datasets/{geo_id}/compatibility")

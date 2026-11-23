@@ -36,7 +36,19 @@ from ssri_model.release_shell import routes as release_shell_routes
 
 # Repo-root .env holds Supabase keys. The API is often started from model/.
 # Load after imports (no import-time env reads) and before create_app()/from_env().
-load_dotenv(Path(__file__).resolve().parents[4] / ".env")
+# Try several roots so Windows Poetry launches from model/ still find the file.
+_app_file = Path(__file__).resolve()
+for _candidate in (
+    _app_file.parents[4] / ".env",  # .../ssri/.env when installed as src layout
+    _app_file.parents[3] / ".env",
+    Path.cwd() / ".env",
+    Path.cwd().parent / ".env",
+):
+    if _candidate.is_file():
+        load_dotenv(_candidate)
+        break
+else:
+    load_dotenv()  # default search — never fail import if .env absent
 
 
 def _configure_cors(app: FastAPI, config: APIConfig) -> None:

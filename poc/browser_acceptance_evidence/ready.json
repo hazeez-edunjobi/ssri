@@ -1,0 +1,38 @@
+{
+  "status": "ready",
+  "service": "ssri-inference",
+  "infrastructure": {
+    "mode": "distributed",
+    "ready": true,
+    "components": [
+      {
+        "name": "configuration",
+        "status": "ok",
+        "detail": "ok"
+      },
+      {
+        "name": "postgresql",
+        "status": "ok",
+        "detail": "connected"
+      },
+      {
+        "name": "redis",
+        "status": "ok",
+        "detail": "connected"
+      },
+      {
+        "name": "queue",
+        "status": "ok",
+        "detail": "reachable"
+      }
+    ]
+  },
+  "demo_mode": false,
+  "model_registry": {
+    "active_model_id": "ssri-model-e7af3afcd0",
+    "checkpoint_available": true,
+    "scientific_validation_status": "NOT_VALIDATED",
+    "dataset_name": "SYNTHETIC-local-bootstrap",
+    "detail": "Promoted registry checkpoint is readable."
+  }
+}

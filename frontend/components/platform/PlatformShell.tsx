@@ -5,6 +5,10 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { BrandLockup } from "@/components/landing/BrandMark";
 import { LandPhoto } from "@/components/theme/LandPhoto";
+import {
+  LOCAL_ACCEPTANCE_EMAIL,
+  localAcceptanceSessionAllowed,
+} from "@/lib/localAcceptanceSession";
 import { getSupabase, supabaseConfig } from "@/lib/supabase";
 import type { UnsplashKey } from "@/lib/visuals";
 import { cn } from "@/lib/utils";
@@ -85,9 +89,15 @@ export function PlatformShell({
   const [ready, setReady] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const configured = supabaseConfig().configured;
+  const localAcceptance = localAcceptanceSessionAllowed();
   const banner = bannerFor(pathname || "/workspace");
 
   useEffect(() => {
+    if (localAcceptance) {
+      setEmail(LOCAL_ACCEPTANCE_EMAIL);
+      setReady(true);
+      return;
+    }
     const supabase = getSupabase();
     if (!supabase) {
       // Unconfigured environments render the "Sign-in is not configured"
@@ -102,7 +112,7 @@ export function PlatformShell({
       setEmail(data.session.user.email ?? null);
       setReady(true);
     });
-  }, [pathname, router]);
+  }, [pathname, router, localAcceptance]);
 
   if (!configured) {
     return (

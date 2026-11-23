@@ -30,8 +30,8 @@ export default function GeologicalListPage() {
   const [progress, setProgress] = useState(0);
   const [filterKind, setFilterKind] = useState<string>("");
   // Coverage probe
-  const [bboxText, setBboxText] = useState("0,0,200,200");
-  const [aoiCrs, setAoiCrs] = useState("EPSG:32631");
+  const [bboxText, setBboxText] = useState("2.9,6.9,3.6,7.6");
+  const [aoiCrs, setAoiCrs] = useState("EPSG:4326");
   const [coverage, setCoverage] = useState<Record<string, unknown> | null>(null);
 
   const reload = useCallback((nextOffset = 0, kind = filterKind) => {
@@ -99,7 +99,12 @@ export default function GeologicalListPage() {
       });
       const geoId = created.dataset.geo_id;
       await uploadGeologicalFile(geoId, file, setProgress);
-      setSuccess(`Uploaded as ${geoId}. Open it to declare CRS and measurement type.`);
+      setSuccess(
+        file.name.toLowerCase().includes("abeokuta") ||
+          file.name.toLowerCase().includes("260")
+          ? `Uploaded as ${geoId}. Open it and click “Apply Abeokuta TMI metadata” (X=easting, Y=northing, Z=TMI; source EPSG:32632 → processing EPSG:32631 → display EPSG:4326).`
+          : `Uploaded as ${geoId}. Open it to declare columns, source CRS, and measurement type before validation.`,
+      );
       setDisplayName("");
       setFile(null);
       setProgress(0);
@@ -145,6 +150,29 @@ export default function GeologicalListPage() {
         signed-in users cannot mutate the catalogue. Scientific status remains
         NOT_VALIDATED.
       </p>
+
+      <div className="mt-4 rounded-2xl border border-leaf/30 bg-mist/40 p-4 text-sm text-bark">
+        <p className="font-medium">Before you upload</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-stone">
+          <li>
+            Point-grid CSV needs X, Y and a measurement column (Z). Column meanings are
+            declared on the dataset detail page — they are not guessed.
+          </li>
+          <li>
+            You must set the <strong>source CRS</strong> (EPSG). SSRI never assumes
+            EPSG:4326. For Abeokuta Sheet 260 use the publication preset (source
+            EPSG:32632 → processing EPSG:32631 → display EPSG:4326).
+          </li>
+          <li>
+            Projected easting/northing values are not plotted on the world map until a
+            verified transform to WGS84 exists.
+          </li>
+          <li>
+            Validation outcomes: Ready / Ready with warnings / Blocked. Unsupported
+            analyses stay disabled.
+          </li>
+        </ul>
+      </div>
 
       <form
         onSubmit={onCreateAndUpload}
@@ -242,8 +270,11 @@ export default function GeologicalListPage() {
                   <span className="ml-2 text-xs text-stone">{ds.geo_id}</span>
                 </span>
                 <span className="text-xs text-stone">
-                  {ds.asset_kind} · {ds.measurement_type || "undeclared"} ·{" "}
-                  {ds.validation_status} · {ds.activation_status}
+                  {ds.asset_kind} · {ds.measurement_type || "undeclared"} · CRS{" "}
+                  {ds.crs || "undeclared"}
+                  {ds.working_crs ? ` → ${ds.working_crs}` : ""} ·{" "}
+                  {ds.validation_status} · map{" "}
+                  {ds.display_bbox_wgs84 ? "WGS84 footprint ready" : "no display footprint"}
                 </span>
               </Link>
             </li>

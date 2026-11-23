@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  clientAllowsLocalAcceptanceSession,
   clientAllowsPresentationDemo,
   demoMisconfigurationNotice,
   resolvePresentationDemoActive,
@@ -26,6 +27,23 @@ describe("productionIntegrity", () => {
         process.env.NEXT_PUBLIC_SSRI_ALLOW_PRESENTATION_DEMO = previous;
       }
       process.env.NODE_ENV = previousNode;
+    }
+  });
+
+  it("refuses local acceptance session bypass in production", () => {
+    const previousNode = process.env.NODE_ENV;
+    const previousFlag = process.env.NEXT_PUBLIC_SSRI_LOCAL_ACCEPTANCE_SESSION;
+    try {
+      process.env.NODE_ENV = "production";
+      process.env.NEXT_PUBLIC_SSRI_LOCAL_ACCEPTANCE_SESSION = "true";
+      assert.equal(clientAllowsLocalAcceptanceSession(), false);
+    } finally {
+      process.env.NODE_ENV = previousNode;
+      if (previousFlag === undefined) {
+        delete process.env.NEXT_PUBLIC_SSRI_LOCAL_ACCEPTANCE_SESSION;
+      } else {
+        process.env.NEXT_PUBLIC_SSRI_LOCAL_ACCEPTANCE_SESSION = previousFlag;
+      }
     }
   });
 

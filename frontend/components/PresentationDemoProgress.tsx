@@ -16,15 +16,18 @@ type Props = {
 
 /**
  * Simulated 15s presentation progress for Assessment Preview workflows.
+ * Only mounts the animated tracker while ``active`` so we never reset state
+ * synchronously inside an effect when inactive.
  */
 export function PresentationDemoProgress({ active, onCancel }: Props) {
+  if (!active) return null;
+  return <PresentationDemoProgressActive onCancel={onCancel} />;
+}
+
+function PresentationDemoProgressActive({ onCancel }: { onCancel?: () => void }) {
   const [elapsedMs, setElapsedMs] = useState(0);
 
   useEffect(() => {
-    if (!active) {
-      setElapsedMs(0);
-      return;
-    }
     const started = performance.now();
     let frame = 0;
     const tick = () => {
@@ -39,9 +42,7 @@ export function PresentationDemoProgress({ active, onCancel }: Props) {
     };
     frame = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(frame);
-  }, [active]);
-
-  if (!active) return null;
+  }, []);
 
   const stage = demoStageAt(elapsedMs);
   const percent = demoProgressPercent(elapsedMs);

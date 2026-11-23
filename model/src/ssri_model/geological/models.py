@@ -148,6 +148,11 @@ class GeologicalDatasetRecord:
         payload["has_original"] = bool(self.original_relpath)
         payload["has_working"] = bool(self.working_relpath)
         payload["has_derived"] = bool(self.derived_relpath)
+        # WGS84 map footprint only when verified / geographic — never invent.
+        display = (self.provenance or {}).get("display_bbox_wgs84")
+        payload["display_bbox_wgs84"] = (
+            list(display) if isinstance(display, list) and len(display) == 4 else None
+        )
         return payload
 
     def to_storage_dict(self) -> dict[str, Any]:

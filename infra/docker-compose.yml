@@ -8,6 +8,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-ssri}
       POSTGRES_USER: ${POSTGRES_USER:-ssri}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+    ports:
+      # Published for hybrid host Poetry API/worker + Compose Postgres.
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:

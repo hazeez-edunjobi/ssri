@@ -1,0 +1,59 @@
+{
+  "status": "PROVISIONAL_HYPOTHESES_ONLY",
+  "activation": "disabled",
+  "scientific_validation_status": "NOT_VALIDATED",
+  "do_not_use_for_production_inference": true,
+  "do_not_hardcode_into_live_assess": true,
+  "source": {
+    "original_path": "sheet 260_Abeokuta.csv",
+    "working_copy_path": "poc/release_shell/outputs/client_csv_inspect/260_abeokuta_COPY.csv",
+    "format": "csv",
+    "columns": ["X", "Y", "Z"]
+  },
+  "hypotheses": {
+    "z_meaning": {
+      "candidate": "overburden_related_depth_or_thickness",
+      "confirmed": false,
+      "allowed_declarations_once_confirmed": [
+        "overburden_thickness",
+        "depth_to_bedrock"
+      ],
+      "forbidden_until_confirmed": "Do not write Z into overburden_thickness or feed Stage 2.5 inference."
+    },
+    "xy_are_projected": {
+      "candidate": true,
+      "confirmed": false,
+      "evidence": "X negative large magnitudes; Y ~7.7e5–8.3e5; regular 100-unit lattice"
+    },
+    "crs": {
+      "candidate_epsg": "EPSG:32631",
+      "confirmed": false,
+      "note": "ASSUMED-FOR-PLANNING only. Prior unit-sanity script used this for a test label, not client truth."
+    },
+    "grid_spacing": {
+      "candidate_metres": 100,
+      "confirmed": false,
+      "observed_spacing_in_file_units": 100
+    }
+  },
+  "observed_facts": {
+    "data_rows": 308153,
+    "x_range": [-163800.0, -107800.0],
+    "y_range": [777400.0, 833500.0],
+    "z_range": [-212.760467529297, 221.468399047852],
+    "negative_z_count": 11250,
+    "missing_lattice_cells": 7129,
+    "duplicate_xy": 0,
+    "classic_nodata_sentinel_observed": false
+  },
+  "provisional_policies_if_activated_later": {
+    "missing_cells": "FEATURE_NODATA; never interpolate or zero-fill unless client explicitly requests and documents a method",
+    "negative_z_if_thickness": "treat as invalid/NoData or FAIL validation until client defines meaning",
+    "negative_z_if_depth": "allow only if client confirms negatives are physical; otherwise NoData",
+    "units": "require explicit metres (or conversion factor) before apply"
+  },
+  "lineaments": {
+    "client_file_found": false,
+    "strategy_until_supplied": "keep channels unavailable; accept GeoJSON via shell apply only after CRS declared"
+  }
+}

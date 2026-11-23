@@ -23,7 +23,7 @@ from ssri_model.ml.constants import CHANNEL_COUNT, CHANNEL_NAMES
 from ssri_model.release_shell.point_grid_csv import detect_delimiter
 
 SOFTWARE_ID = "ssri_model.geological.tmi"
-SOFTWARE_VERSION = "1.0.0"
+SOFTWARE_VERSION = "1.1.0"
 
 # Magnetics in Stage 2.5 is EMAG2 GeoTIFF at this index — not client survey TMI.
 _MAGNETICS_CHANNEL = "magnetics"
@@ -168,7 +168,23 @@ def parse_tmi_points(
 
 def _is_geographic_crs(crs: str) -> bool:
     key = (crs or "").strip().upper().replace(" ", "")
-    return key in {"EPSG:4326", "WGS84", "WGS84/EPSG:4326"} or "4326" in key
+    return key in {"EPSG:4326", "WGS84", "WGS84/EPSG:4326"} or (
+        "4326" in key and "326" not in key
+    )
+
+
+def _normalize_epsg(crs: str | None) -> str:
+    return (crs or "").strip().upper().replace(" ", "")
+
+
+def _is_utm32n(crs: str | None) -> bool:
+    key = _normalize_epsg(crs)
+    return key in {"EPSG:32632", "32632"} or key.endswith(":32632")
+
+
+def _is_utm31n(crs: str | None) -> bool:
+    key = _normalize_epsg(crs)
+    return key in {"EPSG:32631", "32631"} or key.endswith(":32631")
 
 
 def _tmi_stats(zs: list[float]) -> dict[str, Any]:
@@ -324,14 +340,24 @@ def validate_tmi_point_survey(
     y_column: str | int | None = None,
     z_column: str | int | None = None,
     provenance: dict[str, Any] | None = None,
+    working_crs: str | None = None,
 ) -> dict[str, Any]:
     """Validate client TMI CSV without requiring a regular lattice for PASS/WARN.
 
     Failed structural/coordinate checks set overall=FAIL and block processing.
     Irregular sampling yields WARN + gridding_suitable assessment — not FAIL.
+    Publication-guided Abeokuta Sheet 260 runs CRS verification
+    (EPSG:32632 → 32631 → 4326) when the source CRS is UTM 32N.
     """
     checks: list[dict[str, Any]] = []
     prov = dict(provenance or {})
+    processing_crs = (
+        (working_crs or "").strip()
+        or str(prov.get("processing_crs") or "").strip()
+        or None
+    )
+    display_crs = str(prov.get("display_crs") or "").strip() or "EPSG:4326"
+    abeokuta_pipeline = _is_utm32n(crs) or bool(prov.get("abeokuta_tmi_preset_id"))
 
     try:
         assert_column_mapping_consistent(
@@ -404,32 +430,52 @@ def validate_tmi_point_survey(
     crs_kind = (
         "geographic WGS84 family"
         if geo
-        else "projected or other — coordinates must match this CRS; do not treat lon/lat as metres"
+        else (
+            "UTM Zone 32N source (publication-guided Abeokuta)"
+            if _is_utm32n(crs)
+            else "projected or other — coordinates must match this CRS; do not treat lon/lat as metres"
+        )
     )
     checks.append(
         {
             "name": "crs",
             "status": "PASS" if (crs or "").strip() else "FAIL",
-            "message": f"Declared CRS '{crs}' ({crs_kind}).",
-            "detail": {"geographic_wgs84_family": geo},
+            "message": f"Declared source CRS '{crs}' ({crs_kind}).",
+            "detail": {
+                "geographic_wgs84_family": geo,
+                "source_crs": crs,
+                "processing_crs": processing_crs,
+                "display_crs": display_crs,
+            },
         }
     )
 
+    crs_verification: dict[str, Any] | None = None
     invalid_geo = 0
     if geo and xs:
         for x, y in zip(xs, ys):
             if not (-180.0 <= x <= 180.0 and -90.0 <= y <= 90.0):
                 invalid_geo += 1
         # Suspected metres mistaken for degrees
-        if xs and (abs(statistics.fmean(xs)) > 180 or abs(statistics.fmean(ys)) > 90):
+        if abs(statistics.fmean(xs)) > 180 or abs(statistics.fmean(ys)) > 90:
             checks.append(
                 {
                     "name": "coordinate_units",
                     "status": "FAIL",
                     "message": (
-                        "Declared geographic CRS but coordinate magnitudes look "
-                        "like projected metres. Do not interpret lon/lat as metres."
+                        "Declared EPSG:4326 / WGS84 (X=longitude, Y=latitude) but "
+                        "coordinate magnitudes look like projected survey units, not "
+                        "degrees. Original X/Y/Z values are preserved unchanged. "
+                        "For Abeokuta Sheet 260 apply the publication-guided preset "
+                        "(source EPSG:32632, processing EPSG:32631, display EPSG:4326)."
                     ),
+                    "detail": {
+                        "declared_crs": crs,
+                        "x_mean": statistics.fmean(xs),
+                        "y_mean": statistics.fmean(ys),
+                        "expected_x_range": [-180.0, 180.0],
+                        "expected_y_range": [-90.0, 90.0],
+                    },
                 }
             )
         checks.append(
@@ -441,6 +487,36 @@ def validate_tmi_point_survey(
                     if invalid_geo
                     else "All points within geographic lon/lat ranges."
                 ),
+            }
+        )
+    elif abeokuta_pipeline and xs:
+        from ssri_model.geological.abeokuta_crs import verify_abeokuta_crs_pipeline
+
+        crs_verification = verify_abeokuta_crs_pipeline(
+            xs,
+            ys,
+            zs,
+            source_crs=crs if _is_utm32n(crs) else "EPSG:32632",
+            processing_crs=processing_crs or "EPSG:32631",
+            display_crs=display_crs or "EPSG:4326",
+        )
+        for c in crs_verification.get("checks") or []:
+            checks.append(c)
+        checks.append(
+            {
+                "name": "crs_roles",
+                "status": "PASS" if crs_verification.get("ok") else "FAIL",
+                "message": (
+                    f"CRS roles: source={crs_verification.get('source_crs')}, "
+                    f"processing={crs_verification.get('processing_crs')}, "
+                    f"display={crs_verification.get('display_crs')}."
+                ),
+                "detail": {
+                    "pipeline": crs_verification.get("pipeline"),
+                    "source_extent": crs_verification.get("source_extent"),
+                    "processing_extent": crs_verification.get("processing_extent"),
+                    "display_extent": crs_verification.get("display_extent"),
+                },
             }
         )
     elif xs:
@@ -554,6 +630,15 @@ def validate_tmi_point_survey(
         crs=crs, units=units, spatial=spatial, tmi_stats=tmi_stats
     )
 
+    from ssri_model.geological.abeokuta_tmi import authoritative_schema_block
+
+    if abeokuta_pipeline or _is_utm32n(crs):
+        x_meaning, y_meaning = "easting", "northing"
+    elif geo:
+        x_meaning, y_meaning = "longitude", "latitude"
+    else:
+        x_meaning, y_meaning = "easting_or_x", "northing_or_y"
+
     return {
         "overall": overall,
         "can_train": False,
@@ -566,13 +651,24 @@ def validate_tmi_point_survey(
         "tmi_statistics": tmi_stats,
         "spatial": spatial,
         "coverage_bbox": spatial.get("extent"),
+        "crs_roles": {
+            "source_crs": crs,
+            "processing_crs": processing_crs
+            or (prov.get("processing_crs") if abeokuta_pipeline else None),
+            "display_crs": display_crs if abeokuta_pipeline or geo else None,
+        },
+        "crs_verification": crs_verification,
         "column_mapping": {
             "x_column": x_column,
             "y_column": y_column,
             "z_column": z_column,
+            "x_meaning": x_meaning,
+            "y_meaning": y_meaning,
+            "z_meaning": "total_magnetic_intensity",
             "applied": True,
             "indices": parsed.get("column_indices"),
         },
+        "authoritative_schema": authoritative_schema_block(),
         "original_coordinates_preserved": True,
         "feature_compatibility": compatibility,
         "lifecycle": "validated" if overall != "FAIL" else "validation_failed",
@@ -580,6 +676,7 @@ def validate_tmi_point_survey(
             "TMI is not a hazard label and does not unblock Stage 2.5 three-class training.",
             "Client TMI is not interchangeable with EMAG2 magnetics channel.",
             "Raw source bytes are never overwritten by processing.",
+            "Magnetic anomaly maps are not confirmed faults, sinkholes, or landslides.",
         ],
     }
 
@@ -728,3 +825,171 @@ def process_tmi_to_grid(
         __import__("json").dumps(report, indent=2), encoding="utf-8"
     )
     return report
+
+
+def build_tmi_preview(
+    content: bytes,
+    *,
+    crs: str,
+    x_column: str | int | None = None,
+    y_column: str | int | None = None,
+    z_column: str | int | None = None,
+    max_points: int = 5000,
+    processing_crs: str | None = None,
+    display_crs: str | None = None,
+) -> dict[str, Any]:
+    """Build map/preview payloads without mutating the original CSV.
+
+    * Geographic CRS with valid lon/lat → WGS84 GeoJSON for MapLibre.
+    * Abeokuta UTM 32N with verified transform → WGS84 GeoJSON from
+      EPSG:32632→4326 (original easting/northing preserved in survey_local).
+    * Otherwise → survey-local scatter only.
+    """
+    parsed = parse_tmi_points(
+        content, x_column=x_column, y_column=y_column, z_column=z_column
+    )
+    if not parsed.get("ok") or not parsed["xs"]:
+        return {
+            "ok": False,
+            "error": parsed.get("error") or "No points available for preview.",
+            "geojson": None,
+            "survey_local": None,
+            "wgs84_map_eligible": False,
+        }
+
+    xs: list[float] = parsed["xs"]
+    ys: list[float] = parsed["ys"]
+    zs: list[float] = parsed["zs"]
+    n = len(xs)
+    step = max(1, n // max(1, max_points))
+    idxs = list(range(0, n, step))[:max_points]
+
+    geo = _is_geographic_crs(crs)
+    in_range = all(-180.0 <= xs[i] <= 180.0 and -90.0 <= ys[i] <= 90.0 for i in idxs)
+    mean_x = statistics.fmean(xs)
+    mean_y = statistics.fmean(ys)
+    looks_projected = abs(mean_x) > 180 or abs(mean_y) > 90
+    wgs84_ok = bool(geo and in_range and not looks_projected)
+    crs_verification = None
+    display_lons: list[float] | None = None
+    display_lats: list[float] | None = None
+
+    if _is_utm32n(crs):
+        from ssri_model.geological.abeokuta_crs import (
+            transform_xy,
+            verify_abeokuta_crs_pipeline,
+        )
+
+        crs_verification = verify_abeokuta_crs_pipeline(
+            xs,
+            ys,
+            zs,
+            source_crs=crs,
+            processing_crs=processing_crs or "EPSG:32631",
+            display_crs=display_crs or "EPSG:4326",
+        )
+        if crs_verification.get("ok"):
+            sample_x = [xs[i] for i in idxs]
+            sample_y = [ys[i] for i in idxs]
+            lon_a, lat_a = transform_xy(
+                sample_x,
+                sample_y,
+                source_crs=crs_verification["source_crs"],
+                target_crs=crs_verification["display_crs"],
+            )
+            display_lons = lon_a.tolist()
+            display_lats = lat_a.tolist()
+            wgs84_ok = True
+
+    features = []
+    if wgs84_ok and display_lons is not None and display_lats is not None:
+        for j, i in enumerate(idxs):
+            features.append(
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [display_lons[j], display_lats[j]],
+                    },
+                    "properties": {
+                        "tmi": zs[i],
+                        "i": i,
+                        "source_easting": xs[i],
+                        "source_northing": ys[i],
+                    },
+                }
+            )
+    elif wgs84_ok:
+        for i in idxs:
+            features.append(
+                {
+                    "type": "Feature",
+                    "geometry": {"type": "Point", "coordinates": [xs[i], ys[i]]},
+                    "properties": {"tmi": zs[i], "i": i},
+                }
+            )
+
+    geojson = {
+        "type": "FeatureCollection",
+        "features": features,
+        "properties": {
+            "crs": "EPSG:4326" if wgs84_ok else crs,
+            "source_crs": crs,
+            "processing_crs": processing_crs,
+            "display_crs": display_crs or ("EPSG:4326" if wgs84_ok else None),
+            "sampled_points": len(features),
+            "total_points": n,
+            "sample_stride": step,
+            "z_meaning": "total_magnetic_intensity",
+            "scientific_validation_status": "NOT_VALIDATED",
+            "wgs84_map_eligible": wgs84_ok,
+        },
+    }
+
+    survey_local = {
+        "points": [{"x": xs[i], "y": ys[i], "z": zs[i]} for i in idxs],
+        "extent": {
+            "xmin": min(xs),
+            "xmax": max(xs),
+            "ymin": min(ys),
+            "ymax": max(ys),
+        },
+        "tmi_statistics": _tmi_stats(zs),
+        "coordinate_frame": (
+            "wgs84_lon_lat"
+            if wgs84_ok and geo
+            else (
+                "source_utm32n_easting_northing"
+                if _is_utm32n(crs)
+                else "survey_file_xy"
+            )
+        ),
+        "crs_roles": {
+            "source_crs": crs,
+            "processing_crs": processing_crs,
+            "display_crs": display_crs or ("EPSG:4326" if wgs84_ok else None),
+        },
+        "note": (
+            "WGS84 MapLibre overlay from verified CRS transform; original X/Y preserved."
+            if wgs84_ok and not geo
+            else (
+                "WGS84 MapLibre overlay permitted."
+                if wgs84_ok
+                else (
+                    "Coordinates are shown in file X/Y units for local survey preview only."
+                )
+            )
+        ),
+    }
+
+    return {
+        "ok": True,
+        "wgs84_map_eligible": wgs84_ok,
+        "geojson": geojson if wgs84_ok else None,
+        "survey_local": survey_local,
+        "crs_verification": crs_verification,
+        "total_points": n,
+        "sampled_points": len(idxs),
+        "tmi_statistics": _tmi_stats(zs),
+        "scientific_validation_status": "NOT_VALIDATED",
+    }

@@ -48,11 +48,33 @@ def run_inference_job(
                 "provenance": provenance.to_dict(),
             },
         )
-    except Exception:
+    except Exception as exc:
+        from ssri_model.inference.exceptions import (
+            InferenceAlignmentError,
+            InferenceCheckpointError,
+            InferenceInputError,
+            InvalidInferenceConfigError,
+        )
+
+        if isinstance(exc, InferenceInputError):
+            code = "INFERENCE_INPUT_INVALID"
+            message = "Inference input or manifest is invalid."
+        elif isinstance(exc, InferenceCheckpointError):
+            code = "INFERENCE_CHECKPOINT_INVALID"
+            message = "Inference checkpoint could not be used."
+        elif isinstance(exc, InvalidInferenceConfigError):
+            code = "INFERENCE_CONFIG_INVALID"
+            message = "Inference configuration is invalid."
+        elif isinstance(exc, InferenceAlignmentError):
+            code = "INFERENCE_INPUT_INVALID"
+            message = "Inference outputs could not be aligned to the input grid."
+        else:
+            code = "INFERENCE_FAILED"
+            message = "Inference job failed."
         job_service.mark_failed(
             job_id,
-            error_code="INFERENCE_FAILED",
-            error_message="Inference job failed.",
+            error_code=code,
+            error_message=message,
         )
 
 

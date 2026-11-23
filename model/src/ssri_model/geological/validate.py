@@ -126,6 +126,7 @@ def validate_declared_point_grid(
             y_column=y_column,
             z_column=value_column,
             provenance=provenance,
+            working_crs=working_crs,
         )
 
     # Map catalogue identity onto shell layer_name / measurement_type.
