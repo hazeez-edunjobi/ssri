@@ -34,9 +34,9 @@ DEFAULT_SOURCES = [
 
 
 def _require_torch_load(path: Path) -> dict:
-    import torch
+    from ssri_model.ml.safe_torch import load_torch_checkpoint
 
-    payload = torch.load(path, map_location="cpu", weights_only=False)
+    payload = load_torch_checkpoint(path, map_location="cpu")
     if not isinstance(payload, dict) or "model_state_dict" not in payload:
         raise SystemExit(f"Not a Stage 2.5 assess checkpoint (missing model_state_dict): {path}")
     cfg = payload.get("model_config") or {}

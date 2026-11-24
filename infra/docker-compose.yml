@@ -172,6 +172,9 @@ services:
       start_period: 90s
     restart: unless-stopped
 
+  # Lease recovery sweeper (optional). Staging overlay enables it always.
+  # Production: start with `--profile recovery` only after ops approval.
+  #   docker compose -f infra/docker-compose.yml --profile recovery up -d recovery
   recovery:
     build:
       context: ../model
@@ -186,6 +189,7 @@ services:
       SSRI_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-ssri}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-ssri}
       SSRI_REDIS_URL: redis://redis:6379/0
       SSRI_CELERY_BROKER_URL: redis://redis:6379/0
+      # Explicit enable for this service. Unset elsewhere defaults off except staging.
       SSRI_LEASE_RECOVERY_ENABLED: "true"
       SSRI_LEASE_RECOVERY_INTERVAL_SECONDS: ${SSRI_LEASE_RECOVERY_INTERVAL_SECONDS:-60}
     depends_on:

@@ -6,6 +6,10 @@ import { HowItWorks } from "@/components/landing/HowItWorks";
 import { BentoGrid } from "@/components/landing/BentoGrid";
 import { Card } from "@/components/ui/Card";
 import { IconOrbStatic } from "@/components/visuals/IconOrbStatic";
+import {
+  AVAILABLE_API_CAPABILITIES,
+  ROADMAP_API_ITEMS,
+} from "@/lib/marketingApiCopy";
 
 export const metadata: Metadata = {
   title: "Platform",
@@ -34,13 +38,6 @@ const stack = [
     title: "Map & API delivery",
     body: "See results on the dashboard or pull them into your own tools.",
   },
-];
-
-const apiEndpoints = [
-  "POST /v1/assessments — submit an area and receive a job ID",
-  "GET /v1/assessments/{id} — check status and get outputs",
-  "GET /v1/hazard?lat={lat}&lon={lon} — quick point risk query",
-  "GET /v1/layers/{id}/geotiff — download map layers",
 ];
 
 export default function PlatformPage() {
@@ -97,21 +94,37 @@ export default function PlatformPage() {
               For developers
             </h2>
             <p className="mt-3 max-w-xl text-[15px] text-stone">
-              Plug ground-risk checks into planning, GIS, or insurance tools with
-              the SSRI API.
+              Plug ground-risk checks into planning tools with the live REST assessment
+              route. Results remain research-ready and NOT_VALIDATED unless independently
+              validated.
             </p>
-            <ul className="mt-8 space-y-3 font-mono text-[13px]">
-              {apiEndpoints.map((endpoint) => (
+            <p className="mt-6 text-xs font-semibold uppercase tracking-widest text-stone">
+              Available now
+            </p>
+            <ul className="mt-3 space-y-3 font-mono text-[13px]" data-testid="platform-available-api">
+              {AVAILABLE_API_CAPABILITIES.map((item) => (
                 <li
-                  key={endpoint}
+                  key={item.route}
                   className="rounded-xl border border-meadow bg-mist px-4 py-3 text-stone"
                 >
-                  <span className="font-semibold text-moss">
-                    {endpoint.split(" — ")[0]}
+                  <span className="font-semibold text-moss">{item.route}</span>
+                  <span className="mt-1 block font-sans text-xs leading-relaxed">
+                    {item.summary}
                   </span>
-                  {endpoint.includes(" — ") && (
-                    <span> — {endpoint.split(" — ")[1]}</span>
-                  )}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-8 text-xs font-semibold uppercase tracking-widest text-stone">
+              Roadmap / not shipped
+            </p>
+            <ul className="mt-3 space-y-3 text-[13px]" data-testid="platform-roadmap-api">
+              {ROADMAP_API_ITEMS.map((item) => (
+                <li
+                  key={item.label}
+                  className="rounded-xl border border-dashed border-meadow bg-mist/60 px-4 py-3 text-stone"
+                >
+                  <span className="font-medium text-bark">{item.label}</span>
+                  <span className="mt-1 block text-xs leading-relaxed">{item.note}</span>
                 </li>
               ))}
             </ul>

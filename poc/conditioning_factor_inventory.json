@@ -1,0 +1,130 @@
+{
+  "scientific_validation_status": "NOT_VALIDATED",
+  "factors": [
+    {
+      "id": "elevation",
+      "name": "Elevation",
+      "implemented": true,
+      "in_stage25_channels": true,
+      "channel_hint": "dem / topography stack",
+      "used_in_inference": true,
+      "typical_source": "DEM acquisition for Stage 2.5 feature stacks",
+      "scientific_notes": "Terrain elevation; not overburden thickness."
+    },
+    {
+      "id": "slope",
+      "name": "Slope",
+      "implemented": true,
+      "in_stage25_channels": true,
+      "used_in_inference": true,
+      "typical_source": "Derived from DEM",
+      "scientific_notes": "Primary landslide conditioning factor."
+    },
+    {
+      "id": "terrain_derivatives",
+      "name": "Terrain derivatives",
+      "implemented": true,
+      "in_stage25_channels": true,
+      "used_in_inference": true,
+      "typical_source": "DEM derivatives (aspect, curvature, TWI, etc.)",
+      "scientific_notes": "See CHANNEL_NAMES / feature engineering docs."
+    },
+    {
+      "id": "magnetics_emag2",
+      "name": "Regional magnetics (EMAG2 Stage 2.5 channel)",
+      "implemented": true,
+      "in_stage25_channels": true,
+      "used_in_inference": true,
+      "typical_source": "EMAG2-derived Stage 2.5 magnetics channel",
+      "scientific_notes": "Distinct from client TMI catalogue sheets. Do not confuse with Abeokuta sheet-260 TMI processing products."
+    },
+    {
+      "id": "client_tmi",
+      "name": "Client / catalogue TMI (Abeokuta sheet 260)",
+      "implemented": true,
+      "in_stage25_channels": false,
+      "used_in_inference": false,
+      "typical_source": "Geological catalogue total_magnetic_intensity CSVs",
+      "scientific_notes": "Z is nT intensity, never elevation or overburden. Context + magnetic derivatives + candidate lineaments only."
+    },
+    {
+      "id": "lineament_density",
+      "name": "Lineament density",
+      "implemented": true,
+      "in_stage25_channels": false,
+      "used_in_inference": false,
+      "typical_source": "Uploaded vector lineaments or candidate magnetic lineament extraction",
+      "scientific_notes": "Candidates \u2260 confirmed faults. Schema-v2 offline stacks may include density; live 13-ch assess does not inject it."
+    },
+    {
+      "id": "lineament_distance",
+      "name": "Distance to lineaments",
+      "implemented": true,
+      "in_stage25_channels": false,
+      "used_in_inference": false,
+      "typical_source": "Same as lineament_density",
+      "scientific_notes": "Metres in working CRS; unavailable when no vectors cover AOI."
+    },
+    {
+      "id": "overburden_thickness",
+      "name": "Overburden thickness",
+      "implemented": true,
+      "in_stage25_channels": false,
+      "used_in_inference": false,
+      "typical_source": "Point-grid CSV with measurement_type=overburden_thickness",
+      "scientific_notes": "Never aliased from depth_to_bedrock or TMI Z. Abeokuta currently has no thickness inventory."
+    },
+    {
+      "id": "lithology",
+      "name": "Lithology",
+      "implemented": false,
+      "in_stage25_channels": false,
+      "used_in_inference": false,
+      "typical_source": null,
+      "scientific_notes": "Not implemented as a catalogue layer in SSRI yet."
+    },
+    {
+      "id": "geological_boundaries",
+      "name": "Geological boundaries",
+      "implemented": false,
+      "in_stage25_channels": false,
+      "used_in_inference": false,
+      "typical_source": null,
+      "scientific_notes": "Not implemented."
+    },
+    {
+      "id": "confirmed_faults_fractures",
+      "name": "Confirmed faults and fractures",
+      "implemented": false,
+      "in_stage25_channels": false,
+      "used_in_inference": false,
+      "typical_source": "Would require authoritative structural GIS",
+      "scientific_notes": "Magnetic candidate lineaments must not be labelled as confirmed faults."
+    },
+    {
+      "id": "soil_properties",
+      "name": "Soil properties",
+      "implemented": false,
+      "in_stage25_channels": false,
+      "used_in_inference": false,
+      "typical_source": null,
+      "scientific_notes": "Not implemented as a dedicated conditioning layer."
+    },
+    {
+      "id": "groundwater",
+      "name": "Groundwater conditions",
+      "implemented": false,
+      "in_stage25_channels": false,
+      "used_in_inference": false,
+      "typical_source": null,
+      "scientific_notes": "Not implemented."
+    }
+  ],
+  "summary": {
+    "implemented_count": 8,
+    "missing_count": 5,
+    "used_in_live_inference_count": 4,
+    "context_or_offline_only_count": 4
+  },
+  "live_assess_rule": "Live map assess uses the Stage 2.5 13-channel contract. Catalogue overlays remain used_in_inference=false unless a separately approved model integration exists."
+}

@@ -19,8 +19,9 @@ const LINKS = [
   { href: "/geological", label: "Geological" },
   { href: "/training", label: "Training" },
   { href: "/models", label: "Models" },
+  { href: "/assessments", label: "Assessments" },
   { href: "/activity", label: "Activity" },
-  { href: "/dashboard", label: "Assessment" },
+  { href: "/dashboard", label: "Assessment map" },
 ];
 
 const BANNERS: Array<{
@@ -58,6 +59,12 @@ const BANNERS: Array<{
     unsplash: "satellite",
     alt: "Satellite view of mountains and green valleys",
     caption: "Versions of the ground model",
+  },
+  {
+    prefix: "/assessments",
+    unsplash: "satellite",
+    alt: "Satellite view of terrain used for ground assessment",
+    caption: "Past map assessments",
   },
   {
     prefix: "/activity",

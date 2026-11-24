@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import os
 import secrets
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -771,3 +773,170 @@ def assess_endpoint(
         body=response,
     )
     return response
+
+
+def _history_coords(location_provenance: dict[str, Any] | None) -> tuple[float | None, float | None]:
+    """Read WGS84 coords from persisted location_provenance without inventing values."""
+    loc = location_provenance or {}
+    lat = loc.get("latitude")
+    lon = loc.get("longitude")
+    if lat is None or lon is None:
+        submitted = loc.get("submitted") if isinstance(loc.get("submitted"), dict) else {}
+        lat = submitted.get("latitude", lat)
+        lon = submitted.get("longitude", lon)
+    try:
+        return (
+            float(lat) if lat is not None else None,
+            float(lon) if lon is not None else None,
+        )
+    except (TypeError, ValueError):
+        return None, None
+
+
+def _history_summary_from_payload(
+    assessment_id: str,
+    data: dict[str, Any],
+    *,
+    modified_at: str,
+) -> dict[str, Any]:
+    loc = data.get("location_provenance") if isinstance(data.get("location_provenance"), dict) else {}
+    lat, lon = _history_coords(loc)
+    profiles = data.get("hazard_profiles") or []
+    hazards = []
+    for profile in profiles:
+        if not isinstance(profile, dict):
+            continue
+        hazards.append(
+            {
+                "hazard_type": profile.get("hazard_type"),
+                "point_estimate": profile.get("point_estimate"),
+                "confidence_tier": profile.get("confidence_tier"),
+            }
+        )
+    notes = data.get("notes") or []
+    return {
+        "assessment_id": assessment_id,
+        "persisted": True,
+        "modified_at": modified_at,
+        "model_version": data.get("model_version"),
+        "checkpoint_id": data.get("checkpoint_id"),
+        "latitude": lat,
+        "longitude": lon,
+        "aoi_source": loc.get("aoi_source") if isinstance(loc, dict) else None,
+        "hazards": hazards,
+        "scientific_notes_present": any("NOT_VALIDATED" in str(n) for n in notes),
+        "spatial_output_url": data.get("spatial_output_url"),
+        "domain_similarity_calibrated": data.get("domain_similarity_calibrated"),
+    }
+
+
+@router.get("/history")
+def list_assessment_history(
+    limit: int = 50,
+    offset: int = 0,
+    service_config: ServiceConfig = Depends(get_service_config),
+    principal: AuthenticatedPrincipal = Depends(require_run_assess_rate_limited),
+) -> dict[str, Any]:
+    """List persisted filesystem assessments (assess_response.json).
+
+    This is an operational archive index — not a scientific validation log.
+    """
+    del principal  # auth required; key_id not used for tenancy filtering yet
+    limit = max(1, min(int(limit), 200))
+    offset = max(0, int(offset))
+    root = Path(service_config.output_root) / "assessments"
+    items: list[dict[str, Any]] = []
+    total = 0
+    if root.is_dir():
+        dirs = sorted(
+            [p for p in root.iterdir() if p.is_dir() and p.name.startswith("assess-")],
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        total = len(dirs)
+        for assess_dir in dirs[offset : offset + limit]:
+            payload_path = assess_dir / "assess_response.json"
+            modified_at = datetime.fromtimestamp(
+                assess_dir.stat().st_mtime, tz=timezone.utc
+            ).isoformat()
+            entry: dict[str, Any] = {
+                "assessment_id": assess_dir.name,
+                "persisted": payload_path.is_file(),
+                "modified_at": modified_at,
+            }
+            if payload_path.is_file():
+                try:
+                    data = json.loads(payload_path.read_text(encoding="utf-8"))
+                    if isinstance(data, dict):
+                        entry = _history_summary_from_payload(
+                            assess_dir.name, data, modified_at=modified_at
+                        )
+                except Exception as exc:  # noqa: BLE001
+                    entry["parse_error"] = str(exc)
+            items.append(entry)
+    return {
+        "count": len(items),
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "has_more": (offset + limit) < total,
+        "assessments": items,
+        "retention": "filesystem under {output_root}/assessments/",
+        "note": (
+            "Operational history index only. Scores remain relative rankings; "
+            "scientific_validation_status stays NOT_VALIDATED unless independently validated."
+        ),
+    }
+
+
+@router.get("/history/{assessment_id}")
+def get_assessment_history_detail(
+    assessment_id: str,
+    service_config: ServiceConfig = Depends(get_service_config),
+    principal: AuthenticatedPrincipal = Depends(require_run_assess_rate_limited),
+) -> dict[str, Any]:
+    """Return one persisted assessment summary + available detail fields."""
+    del principal
+    # Assessment IDs are assess-<hex>; reject path traversal.
+    if (
+        not assessment_id
+        or ".." in assessment_id
+        or "/" in assessment_id
+        or "\\" in assessment_id
+        or not assessment_id.startswith("assess-")
+        or not all(ch.isalnum() or ch in "-_" for ch in assessment_id)
+    ):
+        raise InvalidServiceRequestError("Invalid assessment_id.")
+    assess_dir = Path(service_config.output_root) / "assessments" / assessment_id
+    payload_path = assess_dir / "assess_response.json"
+    if not payload_path.is_file():
+        raise InvalidServiceRequestError(f"Assessment '{assessment_id}' was not found.")
+    data = json.loads(payload_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise InvalidServiceRequestError("Assessment payload is not a JSON object.")
+    modified_at = datetime.fromtimestamp(
+        assess_dir.stat().st_mtime, tz=timezone.utc
+    ).isoformat()
+    summary = _history_summary_from_payload(
+        assessment_id, data, modified_at=modified_at
+    )
+    return {
+        "summary": summary,
+        "assessment": {
+            "assessment_id": data.get("assessment_id") or assessment_id,
+            "model_version": data.get("model_version"),
+            "checkpoint_id": data.get("checkpoint_id"),
+            "checkpoint_sha256": data.get("checkpoint_sha256"),
+            "hazard_profiles": data.get("hazard_profiles"),
+            "location_provenance": data.get("location_provenance"),
+            "notes": data.get("notes"),
+            "explanation": data.get("explanation"),
+            "spatial_output_url": data.get("spatial_output_url"),
+            "domain_similarity_calibrated": data.get("domain_similarity_calibrated"),
+            "conditioning_features": data.get("conditioning_features"),
+        },
+        "note": (
+            "Persisted assess response. Scores are relative rankings; status remains "
+            "NOT_VALIDATED unless independently validated."
+        ),
+    }

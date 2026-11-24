@@ -6,6 +6,8 @@
 # Enables:
 # - Lease recovery sweeper always on (not profile-gated)
 # - Published Postgres/Redis ports for host-side integration tests
+# - Staging API environment (subset of production_gate: no demo mode,
+#   no auth development mode, no wildcard CORS)
 
 services:
   postgres:

@@ -937,6 +937,47 @@ class GeologicalService:
                     ),
                 }
             )
+        lineament_dir = derived / "lineaments"
+        lineament_qc = None
+        if (lineament_dir / "lineament_extraction_qc.json").exists():
+            try:
+                lineament_qc = json.loads(
+                    (lineament_dir / "lineament_extraction_qc.json").read_text(encoding="utf-8")
+                )
+            except Exception:
+                lineament_qc = None
+        products.append(
+            {
+                "operation": "candidate_lineament_extraction",
+                "title": "Candidate magnetic lineaments",
+                "summary": (
+                    "Edge-enhanced TMI ridge extraction. Candidates are NOT confirmed "
+                    "faults or fractures. used_in_inference=false."
+                ),
+                "units": "vector + m/m² + m",
+                "geotiff_exists": (lineament_dir / "lineament_density.tif").exists(),
+                "preview_exists": (
+                    lineament_dir / "candidate_lineaments_preview.png"
+                ).exists(),
+                "geojson_exists": (lineament_dir / "candidate_lineaments.geojson").exists(),
+                "geotiff_relpath": (
+                    "working/derived/lineaments/lineament_density.tif"
+                    if (lineament_dir / "lineament_density.tif").exists()
+                    else None
+                ),
+                "preview_relpath": (
+                    "working/derived/lineaments/candidate_lineaments_preview.png"
+                    if (lineament_dir / "candidate_lineaments_preview.png").exists()
+                    else None
+                ),
+                "geojson_relpath": (
+                    "working/derived/lineaments/candidate_lineaments.geojson"
+                    if (lineament_dir / "candidate_lineaments.geojson").exists()
+                    else None
+                ),
+                "qc": lineament_qc,
+            }
+        )
         prov = dict(record.provenance or {})
         proc = dict(record.processing_report or {})
         inspect = dict(record.inspect_report or {})
@@ -951,6 +992,7 @@ class GeologicalService:
             "geo_id": geo_id,
             "supported_operations": list(SUPPORTED_OPERATIONS),
             "operation_catalog": operation_catalog(),
+            "candidate_lineaments": prov.get("candidate_lineaments"),
             "products": products,
             "processing_history": history,
             "gridding_reconciliation": proc.get("gridding_reconciliation"),
@@ -1168,6 +1210,181 @@ class GeologicalService:
                 "operation": op,
             }
         )
+        return record, report
+
+    def extract_candidate_lineaments(
+        self,
+        geo_id: str,
+        *,
+        percentile: float = 92.0,
+        min_length_cells: int = 4,
+        min_component_cells: int = 6,
+        density_window_m: float = 500.0,
+        use_residual_blend: bool = True,
+        ensure_derivatives: bool = True,
+        nodata: float = -9999.0,
+    ):
+        """Extract candidate magnetic lineaments from edge-enhanced TMI products.
+
+        Does not invent faults. Does not inject Stage 2.5 channels.
+        """
+        import json
+        from pathlib import Path
+
+        import numpy as np
+        import rasterio
+
+        from ssri_model.geological.magnetic_lineament_extraction import (
+            ExtractionParams,
+            SOFTWARE_ID,
+            SOFTWARE_VERSION,
+            run_candidate_lineament_extraction,
+            sha256_file,
+            write_extraction_outputs,
+        )
+        from ssri_model.geological.magnetic_processing import append_processing_history
+
+        record = self.storage.get(geo_id)
+        self._require_validated_tmi(record)
+        derived = self.storage.dataset_dir(geo_id) / "working" / "derived"
+        npz_path = derived / "tmi_grid_arrays.npz"
+        if not npz_path.exists():
+            self.process_tmi(geo_id, resolution=100.0, nodata=nodata)
+            record = self.storage.get(geo_id)
+
+        if ensure_derivatives:
+            for op in (
+                "first_horizontal_derivative",
+                "analytic_signal",
+                "gaussian",
+            ):
+                tif = derived / f"{op}.tif"
+                if not tif.exists():
+                    self.run_magnetic_operation(geo_id, operation=op, nodata=nodata)
+
+        data = np.load(npz_path)
+        grid = data["grid"]
+        mask = data["mask"].astype(bool)
+        dx = float(data["dx"][0])
+        dy = float(data["dy"][0])
+        xmin = float(data["xmin"][0])
+        ymax = float(data["ymax"][0])
+        nd = float(data["nodata"][0]) if "nodata" in data.files else float(nodata)
+
+        def _read_optional(name: str) -> np.ndarray | None:
+            path = derived / f"{name}.tif"
+            if not path.is_file():
+                return None
+            with rasterio.open(path) as src:
+                arr = src.read(1).astype(np.float64)
+                if src.nodata is not None:
+                    arr = np.where(arr == src.nodata, np.nan, arr)
+                return arr
+
+        thg = _read_optional("first_horizontal_derivative")
+        analytic = _read_optional("analytic_signal")
+        gaussian = _read_optional("gaussian")
+        if thg is None and analytic is None:
+            raise ManualTrainingError(
+                "Run first_horizontal_derivative or analytic_signal before extraction.",
+                code="LINEAMENT_INPUT",
+            )
+
+        params = ExtractionParams(
+            percentile=float(percentile),
+            min_length_cells=int(min_length_cells),
+            min_component_cells=int(min_component_cells),
+            density_window_m=float(density_window_m),
+            use_residual_blend=bool(use_residual_blend),
+        )
+        processing_crs = record.working_crs or "EPSG:32631"
+        try:
+            result = run_candidate_lineament_extraction(
+                thg=thg,
+                analytic=analytic,
+                tmi=grid,
+                gaussian=gaussian,
+                mask=mask,
+                xmin=xmin,
+                ymax=ymax,
+                dx=dx,
+                dy=dy,
+                processing_crs=processing_crs,
+                params=params,
+                nodata=nd,
+            )
+        except Exception as exc:
+            raise ManualTrainingError(
+                f"Candidate lineament extraction failed: {exc}",
+                code="LINEAMENT_EXTRACT_FAILED",
+            ) from exc
+
+        out_dir = derived / "lineaments"
+        qc = write_extraction_outputs(result, out_dir, nodata=nd)
+
+        # Also copy GeoJSON to working/lineaments.geojson so catalogue overlay
+        # sampling can use it IF the dataset is later activated as reporting_only
+        # AND an operator explicitly promotes candidate vectors — we keep a
+        # clearly labelled copy under derived/ and a sidecar marker.
+        working_copy = self.storage.dataset_dir(geo_id) / "working" / "candidate_lineaments.geojson"
+        working_copy.write_text(
+            json.dumps(result["geojson"], indent=2), encoding="utf-8"
+        )
+
+        entry = {
+            "operation": "candidate_lineament_extraction",
+            "at": _utc_now(),
+            "algorithm": SOFTWARE_ID,
+            "software_version": SOFTWARE_VERSION,
+            "scientific_validation_status": "NOT_VALIDATED",
+            "not_confirmed_faults_or_fractures": True,
+            "used_in_inference": False,
+            "params": params.to_dict(),
+            "statistics": result["statistics"],
+            "threshold": result["threshold"],
+            "enhancement": result["enhancement_meta"],
+            "output_artifacts": {
+                "qc": "working/derived/lineaments/lineament_extraction_qc.json",
+                "geojson": "working/derived/lineaments/candidate_lineaments.geojson",
+                "working_geojson": "working/candidate_lineaments.geojson",
+                "density": "working/derived/lineaments/lineament_density.tif",
+                "distance": "working/derived/lineaments/lineament_distance.tif",
+            },
+            "checksums_sha256": qc.get("checksums_sha256"),
+            "input_tmi_npz_sha256": sha256_file(Path(npz_path)),
+            "quality_limitations": qc.get("quality_limitations"),
+        }
+        history = append_processing_history(derived / "processing_history.json", entry)
+        base = dict(record.processing_report or {})
+        base["candidate_lineament_extraction"] = entry
+        base["processing_history"] = history
+        record.processing_report = base
+        prov = dict(record.provenance or {})
+        prov["candidate_lineaments"] = {
+            "path": "working/derived/lineaments/candidate_lineaments.geojson",
+            "scientific_class": "candidate_magnetic_lineament",
+            "scientific_validation_status": "NOT_VALIDATED",
+            "not_confirmed_faults_or_fractures": True,
+            "used_in_inference": False,
+            "n_lineaments": result["statistics"].get("n_lineaments"),
+            "extracted_at": entry["at"],
+        }
+        record.provenance = prov
+        self.storage.save(record)
+        self.storage.append_event(
+            {
+                "event": "candidate_lineament_extraction",
+                "geo_id": geo_id,
+                "at": _utc_now(),
+                "n_lineaments": result["statistics"].get("n_lineaments"),
+            }
+        )
+        report = {
+            "extraction": entry,
+            "qc": qc,
+            "statistics": result["statistics"],
+            "products": self.list_magnetic_products(geo_id),
+        }
         return record, report
 
     def set_compatibility_decision(

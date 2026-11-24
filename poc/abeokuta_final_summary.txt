@@ -1,0 +1,97 @@
+{
+  "assessment_id": "assess-7dfc19ea9b27c4b7",
+  "profiles": [
+    {
+      "h": "subsidence",
+      "p": 0.5817316770553589,
+      "tier": "Low",
+      "ci80": [
+        0.5817316770553589,
+        0.5817316770553589
+      ],
+      "ci95": [
+        0.5817316770553589,
+        0.5817316770553589
+      ]
+    },
+    {
+      "h": "landslide",
+      "p": 0.5270469784736633,
+      "tier": "Low",
+      "ci80": [
+        0.5270469784736633,
+        0.5270469784736633
+      ],
+      "ci95": [
+        0.5270469784736633,
+        0.5270469784736633
+      ]
+    },
+    {
+      "h": "sinkhole",
+      "p": 0.49196526408195496,
+      "tier": "Low",
+      "ci80": [
+        0.49196526408195496,
+        0.49196526408195496
+      ],
+      "ci95": [
+        0.49196526408195496,
+        0.49196526408195496
+      ]
+    }
+  ],
+  "schema": 13,
+  "overlay_used": false,
+  "layers": {
+    "overburden_thickness": {
+      "status": "unavailable",
+      "value": null,
+      "used": false,
+      "reason": "AOI intersects a Total Magnetic Intensity (TMI) catalogue footprint. TMI Z is not overburden thickness and was not substituted. No activated overburden_thickness dataset covers this AOI."
+    },
+    "lineament_density": {
+      "status": "unavailable",
+      "value": null,
+      "used": false,
+      "reason": "No activated lineament vector dataset covers this AOI. Magnetic NE\u2013SW structural themes (when present) are geological context only and are not converted into fabricated lineament geometries."
+    },
+    "lineament_distance": {
+      "status": "unavailable",
+      "value": null,
+      "used": false,
+      "reason": "No activated lineament vector dataset covers this AOI. Magnetic NE\u2013SW structural themes (when present) are geological context only and are not converted into fabricated lineament geometries."
+    }
+  },
+  "ctx": {
+    "geo_id": "geo_be00a34ad6f4",
+    "display_name": "Abeokuta TMI sheet 260",
+    "z_meaning": "total_magnetic_intensity",
+    "crs": "EPSG:32632",
+    "working_crs": "EPSG:32631",
+    "display_crs": "EPSG:4326",
+    "structural_orientation_theme": "Predominantly NE-SW structural trends",
+    "scientific_validation_status": "NOT_VALIDATED",
+    "not_overburden_thickness": true,
+    "not_confirmed_faults_or_fractures": true,
+    "not_hazard_labels": true
+  },
+  "notes": [
+    "Ranking confidence bands are software heuristics only; status remains NOT_VALIDATED. Scores are relative susceptibility rankings, not probabilities or risk estimates.",
+    "aoi_source=point",
+    "acquisition_bbox=(3.24, 7.24, 3.26, 7.26)",
+    "domain_similarity_calibrated=false",
+    "domain_similarity_reason=no_SSRI_DOMAIN_CENTROID_PATH",
+    "requested_by=development",
+    "request_id=abeokuta-final-local-completion",
+    "checkpoint_sha256=d912027e17ed532687f9d2a2c74fd3c18ca8c812ae49107d939ade19dde5d004",
+    "checkpoint_source=active_registry",
+    "is_fixture_checkpoint=false",
+    "location_provenance=submitted=7.25,3.25",
+    "model_grid_pixel=row37_col37",
+    "conditioning_overburden_thickness=unavailable",
+    "conditioning_lineament_density=unavailable",
+    "conditioning_lineament_distance=unavailable",
+    "geological_context_count=1"
+  ]
+}

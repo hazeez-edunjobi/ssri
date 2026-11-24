@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { RequireAdminAccess } from "@/components/auth/RequireAdminAccess";
 import { PlatformShell } from "@/components/platform/PlatformShell";
 import { platformGet } from "@/lib/platformApi";
 
@@ -10,7 +11,7 @@ type Overview = {
 };
 type UserRow = { id: string; email: string; created_at: string; datasets: number; training_runs: number };
 
-export default function AdminPage() {
+function AdminWorkspace() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -26,8 +27,13 @@ export default function AdminPage() {
 
   return (
     <PlatformShell admin>
-      <h1 className="font-display text-2xl">Admin</h1>
-      <p className="mt-2 text-sm text-stone">Platform counts come from stored records. Admin access is a profile role, not an email address.</p>
+      <h1 className="font-display text-2xl" data-testid="admin-page-heading">
+        Admin
+      </h1>
+      <p className="mt-2 text-sm text-stone">
+        Platform counts come from stored records. Admin access is a profile role, not an
+        email address. API admin checks remain authoritative.
+      </p>
       {error && <p className="mt-4 text-sm text-amber-900">{error}</p>}
       {overview && (
         <div className="mt-6 grid gap-4 md:grid-cols-4">
@@ -59,5 +65,13 @@ export default function AdminPage() {
         )}
       </section>
     </PlatformShell>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <RequireAdminAccess>
+      <AdminWorkspace />
+    </RequireAdminAccess>
   );
 }

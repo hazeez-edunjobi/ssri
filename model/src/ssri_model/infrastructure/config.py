@@ -117,8 +117,7 @@ class InfrastructureConfig:
             retry_jitter_seconds=float(os.getenv(f"{prefix}RETRY_JITTER_SECONDS", "1")),
             job_lease_seconds=int(os.getenv(f"{prefix}JOB_LEASE_SECONDS", "300")),
             worker_heartbeat_seconds=int(os.getenv(f"{prefix}WORKER_HEARTBEAT_SECONDS", "30")),
-            lease_recovery_enabled=os.getenv(f"{prefix}LEASE_RECOVERY_ENABLED", "false").lower()
-            in {"1", "true", "yes"},
+            lease_recovery_enabled=_lease_recovery_enabled_from_env(prefix),
             lease_recovery_interval_seconds=int(
                 os.getenv(f"{prefix}LEASE_RECOVERY_INTERVAL_SECONDS", "60")
             ),
@@ -126,6 +125,25 @@ class InfrastructureConfig:
                 os.getenv(f"{prefix}LEASE_RECOVERY_BATCH_SIZE", "50")
             ),
         )
+
+
+def _lease_recovery_enabled_from_env(prefix: str = "SSRI_") -> bool:
+    """Resolve lease recovery flag.
+
+    Staging defaults to enabled when the variable is unset (ops qualification).
+    Production and development remain off unless explicitly enabled — enabling
+    in production still requires the recovery Compose service / process and
+    explicit ops approval.
+    """
+    raw = os.getenv(f"{prefix}LEASE_RECOVERY_ENABLED")
+    if raw is not None and str(raw).strip() != "":
+        return str(raw).lower() in {"1", "true", "yes"}
+    api_env = (
+        os.getenv(f"{prefix}API_ENVIRONMENT")
+        or os.getenv("SSRI_API_ENVIRONMENT")
+        or "development"
+    ).lower()
+    return api_env == "staging"
 
 
 def _optional_str(value: object | None) -> str | None:

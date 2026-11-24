@@ -62,8 +62,10 @@ def write_sidecar(checkpoint_path: Path | str, meta: dict[str, Any]) -> Path:
 
 def embed_in_checkpoint(checkpoint_path: Path | str, meta: dict[str, Any]) -> None:
     """Add/replace release_shell key in an existing .pt checkpoint."""
+    from ssri_model.ml.safe_torch import load_torch_checkpoint
+
     path = Path(checkpoint_path)
-    payload = torch.load(path, map_location="cpu", weights_only=False)
+    payload = load_torch_checkpoint(path, map_location="cpu")
     if not isinstance(payload, dict):
         raise TypeError("Checkpoint payload must be a dict")
     payload[META_KEY] = meta
@@ -72,12 +74,14 @@ def embed_in_checkpoint(checkpoint_path: Path | str, meta: dict[str, Any]) -> No
 
 
 def load_shell_meta(checkpoint_path: Path | str) -> dict[str, Any] | None:
+    from ssri_model.ml.safe_torch import load_torch_checkpoint
+
     path = Path(checkpoint_path)
     sidecar = path.resolve().parent / SIDECAR_NAME
     if sidecar.exists():
         return json.loads(sidecar.read_text(encoding="utf-8"))
     try:
-        payload = torch.load(path, map_location="cpu", weights_only=False)
+        payload = load_torch_checkpoint(path, map_location="cpu")
     except Exception:  # noqa: BLE001
         return None
     if isinstance(payload, dict) and isinstance(payload.get(META_KEY), dict):

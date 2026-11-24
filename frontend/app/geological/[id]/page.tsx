@@ -9,6 +9,7 @@ import { COMMON_CRS_OPTIONS } from "@/lib/crsOptions";
 import {
   declareGeologicalMetadata,
   downloadGeologicalOriginal,
+  extractGeologicalLineaments,
   geologicalDerivedUrl,
   getAbeokutaTmiPreset,
   getGeologicalDataset,
@@ -356,6 +357,32 @@ export default function GeologicalDetailPage() {
       setNotice(`Magnetic operation '${magneticOp}' completed (NOT_VALIDATED).`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Magnetic operation failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onExtractLineaments() {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const body = await extractGeologicalLineaments(geoId, {
+        percentile: 92,
+        ensure_derivatives: true,
+      });
+      setDataset(body.dataset);
+      const mag = await listGeologicalMagnetic(geoId);
+      setMagnetic(mag);
+      const stats = (body.lineaments?.statistics || {}) as {
+        n_lineaments?: number;
+      };
+      setNotice(
+        `Candidate magnetic lineaments extracted (n=${stats.n_lineaments ?? "?"}). ` +
+          "NOT confirmed faults. NOT_VALIDATED. used_in_inference=false.",
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Lineament extraction failed");
     } finally {
       setBusy(false);
     }
@@ -1032,14 +1059,31 @@ export default function GeologicalDetailPage() {
               />
             </label>
           </div>
-          <button
-            type="button"
-            disabled={busy || dataset?.validation_status !== "validated"}
-            onClick={() => void onMagneticOp()}
-            className="mt-3 rounded-xl bg-leaf px-4 py-2 text-sm text-chalk disabled:opacity-50"
-          >
-            Run magnetic operation
-          </button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busy || dataset?.validation_status !== "validated"}
+              onClick={() => void onMagneticOp()}
+              className="rounded-xl bg-leaf px-4 py-2 text-sm text-chalk disabled:opacity-50"
+            >
+              Run magnetic operation
+            </button>
+            <button
+              type="button"
+              disabled={busy || dataset?.validation_status !== "validated"}
+              onClick={() => void onExtractLineaments()}
+              className="rounded-xl border border-bark/30 bg-chalk px-4 py-2 text-sm text-bark disabled:opacity-50"
+              data-testid="extract-candidate-lineaments"
+            >
+              Extract candidate magnetic lineaments
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-stone">
+            Candidate lineaments follow magnetic gradient ridges. They are{" "}
+            <strong>not</strong> confirmed faults or fractures, stay{" "}
+            <code>NOT_VALIDATED</code>, and are not injected into the 13-channel
+            inference model.
+          </p>
           {magnetic && (
             <div className="mt-4 space-y-4">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -1051,7 +1095,9 @@ export default function GeologicalDetailPage() {
                         ? "tmi_preview.png"
                         : p.operation === "radially_averaged_power_spectrum"
                           ? "raps_preview.png"
-                          : `${p.operation}_preview.png`;
+                          : p.operation === "candidate_lineament_extraction"
+                            ? "candidate_lineaments_preview.png"
+                            : `${p.operation}_preview.png`;
                     return (
                       <figure key={p.operation} className="text-sm">
                         <figcaption className="mb-1 text-xs text-stone">
@@ -1068,6 +1114,25 @@ export default function GeologicalDetailPage() {
                     );
                   })}
               </div>
+              {(magnetic as MagneticProducts & { candidate_lineaments?: Record<string, unknown> })
+                .candidate_lineaments && (
+                <div className="rounded-xl border border-dashed border-meadow bg-mist/60 p-3 text-xs text-stone">
+                  <p className="font-medium text-bark">Candidate lineament provenance</p>
+                  <pre className="mt-2 overflow-x-auto">
+                    {JSON.stringify(
+                      (magnetic as { candidate_lineaments?: unknown }).candidate_lineaments,
+                      null,
+                      2,
+                    )}
+                  </pre>
+                  <a
+                    className="mt-2 inline-block font-semibold text-moss"
+                    href={geologicalDerivedUrl(geoId, "candidate_lineaments.geojson")}
+                  >
+                    Download candidate_lineaments.geojson
+                  </a>
+                </div>
+              )}
               {magnetic.raps && (
                 <div>
                   <h3 className="text-sm font-medium">RAPS (no source-depth claim)</h3>

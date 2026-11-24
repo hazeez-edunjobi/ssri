@@ -118,6 +118,16 @@ class MagneticOperationBody(BaseModel):
     )
 
 
+class LineamentExtractBody(BaseModel):
+    percentile: float = Field(92.0, ge=50.0, le=99.9)
+    min_length_cells: int = Field(4, ge=2, le=50)
+    min_component_cells: int = Field(6, ge=3, le=200)
+    density_window_m: float = Field(500.0, gt=0)
+    use_residual_blend: bool = True
+    ensure_derivatives: bool = True
+    nodata: float = -9999.0
+
+
 class CompatibilityBody(BaseModel):
     decision: str
     notes: str = ""
@@ -328,6 +338,16 @@ def process_dataset(
     }
 
 
+@router.get("/conditioning-factors")
+def list_conditioning_factors(
+    _principal: AuthenticatedPrincipal = Depends(require_read_status),
+) -> Any:
+    """Honest inventory of geological conditioning factor availability."""
+    from ssri_model.geological.conditioning_inventory import conditioning_factor_inventory
+
+    return conditioning_factor_inventory()
+
+
 @router.get("/datasets/{geo_id}/magnetic")
 def list_magnetic(
     geo_id: str,
@@ -374,6 +394,39 @@ def run_magnetic(
     return {"dataset": record.to_dict(), "magnetic": report}
 
 
+@router.post("/datasets/{geo_id}/magnetic/lineaments")
+def extract_magnetic_lineaments(
+    geo_id: str,
+    body: LineamentExtractBody,
+    service_config: ServiceConfig = Depends(get_service_config),
+    _principal: AuthenticatedPrincipal = Depends(require_manage_geological),
+) -> Any:
+    """Extract candidate magnetic lineaments from edge-enhanced TMI products.
+
+    Candidates are NOT confirmed faults. used_in_inference remains false.
+    """
+    try:
+        record, report = _service(service_config).extract_candidate_lineaments(
+            geo_id,
+            percentile=body.percentile,
+            min_length_cells=body.min_length_cells,
+            min_component_cells=body.min_component_cells,
+            density_window_m=body.density_window_m,
+            use_residual_blend=body.use_residual_blend,
+            ensure_derivatives=body.ensure_derivatives,
+            nodata=body.nodata,
+        )
+    except ManualTrainingError as exc:
+        return _error(exc)
+    return {
+        "dataset": record.to_dict(),
+        "lineaments": report,
+        "scientific_validation_status": "NOT_VALIDATED",
+        "not_confirmed_faults_or_fractures": True,
+        "used_in_inference": False,
+    }
+
+
 @router.get("/datasets/{geo_id}/derived/{filename}")
 def get_derived_file(
     geo_id: str,
@@ -388,7 +441,13 @@ def get_derived_file(
             ManualTrainingError("Invalid derived filename.", code="DERIVED_PATH"),
             status=400,
         )
-    path = _storage(service_config).dataset_dir(geo_id) / "working" / "derived" / safe
+    base = _storage(service_config).dataset_dir(geo_id) / "working" / "derived"
+    path = base / safe
+    if not path.is_file():
+        # Allow lineament subdirectory artifacts without path traversal.
+        nested = base / "lineaments" / safe
+        if nested.is_file():
+            path = nested
     if not path.is_file():
         return _error(
             ManualTrainingError("Derived file not found.", code="DERIVED_NOT_FOUND"),
@@ -397,7 +456,7 @@ def get_derived_file(
     media = "application/octet-stream"
     if safe.endswith(".png"):
         media = "image/png"
-    elif safe.endswith(".json"):
+    elif safe.endswith(".json") or safe.endswith(".geojson"):
         media = "application/json"
     elif safe.endswith(".tif") or safe.endswith(".tiff"):
         media = "image/tiff"

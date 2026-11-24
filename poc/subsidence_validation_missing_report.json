@@ -1,0 +1,78 @@
+{
+  "software": "ssri_model.evaluation.subsidence_validation",
+  "software_version": "1.0.0",
+  "created_at": "2026-11-24T10:29:05.321982+00:00",
+  "hazard": "subsidence",
+  "scientific_validation_status": "NOT_VALIDATED",
+  "readiness": "BLOCKED_BY_MISSING_DATA",
+  "checkpoint_id": "ssri-model-e7af3afcd0",
+  "metrics_computed": false,
+  "reason": "No curated real-world subsidence ground-truth inventory is available for independent validation of the Stage 2.5 subsidence head. USGS landslide featurestacks mask/omit subsidence; UGLC Africa staging is empty; Lagos InSAR is documented/registry-only and not cached as label.tif; Abeokuta TMI and Lagos geophysics are features only.",
+  "searched_paths": [
+    "data/catalogs/usgs_landslide_v3/",
+    "data/datasets/usgs_landslide_featurestacks/",
+    "data/catalogs/uglc_africa/raw/",
+    "data/outputs/geological/datasets/",
+    "data/geophysics/",
+    "poc/release_shell/",
+    "model/tests/fixtures/geological/",
+    "data/outputs/validation/subsidence_ground_truth_schema.json"
+  ],
+  "inventory_notes": [
+    "USGS National Landslide Inventories on disk are landslide-only (CONUS); not Nigeria subsidence GT.",
+    "Lagos InSAR (Ohenhen & Shirzaei) appears in ingestion registry/docs as benchmark-only — not downloaded for Stage 2.5 labels.",
+    "Borehole/groundwater/field subsidence inventories: absent on disk."
+  ],
+  "ground_truth_schema": {
+    "schema": "ssri.subsidence_ground_truth.v1",
+    "description": "Inventory of observed subsidence positives and validated non-subsidence controls. Synthetic or model-derived scores must never be entered as observations.",
+    "required_columns": [
+      "longitude",
+      "latitude",
+      "label",
+      "source",
+      "observed_date"
+    ],
+    "label_values": {
+      "1": "Observed subsidence (field/survey/authoritative inventory)",
+      "0": "Validated non-subsidence control location"
+    },
+    "crs_default": "EPSG:4326",
+    "forbidden": [
+      "Model susceptibility scores presented as observations",
+      "Synthetic Stage 2.5 training labels as real-world ground truth",
+      "TMI or magnetic anomalies as subsidence occurrences"
+    ],
+    "minimum_for_metrics": {
+      "n_positives": 30,
+      "n_negatives": 30,
+      "spatially_independent_blocks": 3,
+      "note": "Below these floors, metrics may be reported only as exploratory with an explicit underpowered flag \u2014 never as scientific validation."
+    },
+    "authoritative_source_examples": [
+      {
+        "name": "National geological survey subsidence / sinkhole inventories",
+        "notes": "Prefer agency-published GIS with CRS and metadata"
+      },
+      {
+        "name": "Peer-reviewed InSAR deformation studies with validated hotspots",
+        "notes": "Deformation \u2260 confirmed subsidence hazard class without review"
+      },
+      {
+        "name": "Geotechnical / borehole campaigns with documented settlement",
+        "notes": "Licensing and spatial coverage must be recorded"
+      }
+    ]
+  },
+  "interpretation_rules": [
+    "Susceptibility scores are relative rankings, not calibrated probabilities.",
+    "An Abeokuta score near 58% must not be read as a 58% probability of subsidence.",
+    "Synthetic/bootstrap training labels are not scientific ground truth."
+  ],
+  "required_before_validation": [
+    "EPSG-declared observed subsidence positives with provenance",
+    "Validated non-subsidence controls in the same geographic domain",
+    "Spatially independent train/validation/test (or block) split",
+    "Documented licensing and collection methodology"
+  ]
+}

@@ -5,24 +5,31 @@ import { PageHeader } from "@/components/pages/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { IconOrbStatic } from "@/components/visuals/IconOrbStatic";
+import {
+  ASSESS_CURL_EXAMPLE,
+  AVAILABLE_API_CAPABILITIES,
+  LIVE_ASSESS_ROUTE,
+  ROADMAP_API_ITEMS,
+} from "@/lib/marketingApiCopy";
 
 export const metadata: Metadata = {
   title: "Developers",
-  description: "SSRI API documentation, SDK quickstarts, and OpenAPI reference.",
+  description:
+    "SSRI REST API notes for the live assessment route and related readiness endpoints.",
 };
 
 const quickstartSteps = [
   {
-    title: "Get an API key",
-    body: "Register in the developer portal and add SSRI_API_KEY to your environment.",
+    title: "Authenticate",
+    body: "Use a Stage 2.5 API key or a signed-in session token as Bearer auth against your API origin.",
   },
   {
-    title: "Submit a check",
-    body: "POST an area and date range to /v1/assessments to start a land-risk job.",
+    title: "Submit an assessment",
+    body: `Call ${LIVE_ASSESS_ROUTE} with a WGS84 point or polygon. Live map assessment uses the promoted 13-channel Stage 2.5 checkpoint.`,
   },
   {
-    title: "Collect results",
-    body: "GET /v1/assessments/{id} until complete, then download maps or arrays.",
+    title: "Read the response",
+    body: "Hazard rankings, confidence notes, and conditioning analytics return in the same response. Status remains NOT_VALIDATED unless independently validated.",
   },
 ];
 
@@ -33,7 +40,7 @@ export default function DevelopersPage() {
         <PageHeader
           eyebrow="Developers"
           title="Build with ground intelligence"
-          description="Add SSRI risk scores to your apps with a REST API, typed SDKs, and OpenAPI docs."
+          description="Use the live SSRI REST assessment API. SDKs and alternate public hazard URLs are roadmap items, not shipped packages."
           visual="developers"
         />
 
@@ -67,16 +74,16 @@ export default function DevelopersPage() {
               ))}
             </div>
 
-            <Card tone="electric" className="mt-8 p-6 font-mono text-[13px]">
-              <p className="text-stone"># Example: point hazard query</p>
-              <p className="mt-2 text-moss">
-                curl -H &quot;Authorization: Bearer $SSRI_API_KEY&quot; \
-              </p>
-              <p className="text-bark">
-                &quot;https://api.ssri.io/v1/hazard?lat=6.52&amp;lon=3.38&quot;
-              </p>
+            <Card
+              tone="electric"
+              className="mt-8 p-6 font-mono text-[13px]"
+              data-testid="developers-assess-example"
+            >
+              <p className="text-stone"># Live assessment (implemented)</p>
+              <pre className="mt-2 whitespace-pre-wrap text-bark">{ASSESS_CURL_EXAMPLE}</pre>
               <p className="mt-3 text-stone">
-                {`{ "subsidence": 0.12, "landslide": 0.34, "sinkhole": 0.08 }`}
+                Response includes subsidence, landslide, and sinkhole rankings plus
+                provenance notes. Not geological ground truth.
               </p>
             </Card>
           </div>
@@ -86,7 +93,7 @@ export default function DevelopersPage() {
         <Reveal>
         <section id="openapi" className="bg-land-wash px-4 py-20 sm:px-6">
           <div className="mx-auto grid max-w-[1200px] gap-6 md:grid-cols-2">
-            <Card className="p-8">
+            <Card className="p-8" data-testid="developers-available-api">
               <IconOrbStatic
                 name="code2"
                 size="sm"
@@ -94,19 +101,23 @@ export default function DevelopersPage() {
                 float={false}
               />
               <h2 className="mt-4 font-display text-2xl font-semibold text-bark">
-                SDKs
+                Available today
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-stone">
-                Official client libraries for Python and TypeScript with typed
-                models and helpers.
+                Implemented FastAPI routes under <code>/api/v1</code>. Prefer your
+                deployed API origin (local or hosted) — not fictional public hosts.
               </p>
-              <ul className="mt-4 space-y-2 font-mono text-[12px] text-stone">
-                <li>pip install ssri-python</li>
-                <li>npm install @ssri/sdk</li>
+              <ul className="mt-4 space-y-3 text-sm text-stone">
+                {AVAILABLE_API_CAPABILITIES.map((item) => (
+                  <li key={item.route}>
+                    <span className="font-mono text-moss">{item.route}</span>
+                    <span className="mt-1 block text-xs leading-relaxed">{item.summary}</span>
+                  </li>
+                ))}
               </ul>
             </Card>
 
-            <Card className="p-8">
+            <Card className="p-8" data-testid="developers-roadmap-api">
               <IconOrbStatic
                 name="bookOpen"
                 size="sm"
@@ -114,15 +125,23 @@ export default function DevelopersPage() {
                 float={false}
               />
               <h2 className="mt-4 font-display text-2xl font-semibold text-bark">
-                OpenAPI reference
+                Roadmap / not shipped
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-stone">
-                Full schemas for assessments, hazard queries, layer downloads,
-                and webhooks.
+                These items are not available as installable packages or live public
+                endpoints. Do not treat them as product capabilities yet.
               </p>
+              <ul className="mt-4 space-y-3 text-sm text-stone">
+                {ROADMAP_API_ITEMS.map((item) => (
+                  <li key={item.label}>
+                    <span className="font-medium text-bark">{item.label}</span>
+                    <span className="mt-1 block text-xs leading-relaxed">{item.note}</span>
+                  </li>
+                ))}
+              </ul>
               <div className="mt-6">
-                <Button variant="primary" icon href="/developers#openapi">
-                  View OpenAPI Spec
+                <Button variant="primary" icon href="/dashboard">
+                  Open assessment map
                 </Button>
               </div>
             </Card>

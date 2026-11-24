@@ -1,0 +1,87 @@
+{
+  "geo_id": "geo_be00a34ad6f4",
+  "statistics": {
+    "n_lineaments": 72,
+    "mean_azimuth_deg": 81.46972222222222,
+    "circular_mean_azimuth_deg": 80.99,
+    "dominant_bin_deg": [
+      90.0,
+      105.0
+    ],
+    "rose_bins_15deg": [
+      {
+        "bin_start_deg": 0.0,
+        "bin_end_deg": 15.0,
+        "count": 7
+      },
+      {
+        "bin_start_deg": 15.0,
+        "bin_end_deg": 30.0,
+        "count": 5
+      },
+      {
+        "bin_start_deg": 30.0,
+        "bin_end_deg": 45.0,
+        "count": 7
+      },
+      {
+        "bin_start_deg": 45.0,
+        "bin_end_deg": 60.0,
+        "count": 5
+      },
+      {
+        "bin_start_deg": 60.0,
+        "bin_end_deg": 75.0,
+        "count": 4
+      },
+      {
+        "bin_start_deg": 75.0,
+        "bin_end_deg": 90.0,
+        "count": 7
+      },
+      {
+        "bin_start_deg": 90.0,
+        "bin_end_deg": 105.0,
+        "count": 19
+      },
+      {
+        "bin_start_deg": 105.0,
+        "bin_end_deg": 120.0,
+        "count": 2
+      },
+      {
+        "bin_start_deg": 120.0,
+        "bin_end_deg": 135.0,
+        "count": 5
+      },
+      {
+        "bin_start_deg": 135.0,
+        "bin_end_deg": 150.0,
+        "count": 3
+      },
+      {
+        "bin_start_deg": 150.0,
+        "bin_end_deg": 165.0,
+        "count": 4
+      },
+      {
+        "bin_start_deg": 165.0,
+        "bin_end_deg": 180.0,
+        "count": 4
+      }
+    ],
+    "length_m": {
+      "count": 72,
+      "min": 500.0,
+      "max": 15773.263,
+      "mean": 2333.8564027777775,
+      "median": 1182.8425,
+      "total": 168037.661
+    },
+    "ne_sw_theme_note": "Publication-guided NE\u2013SW (~45\u00b0) theme is contextual interpretation. Compare rose bins qualitatively; do not claim confirmed fault mapping."
+  },
+  "qc_relpath": "C:/Users/LENOVO/Documents/MrBusoye/ssri/data/outputs/geological/datasets/geo_be00a34ad6f4/working/derived/lineaments/lineament_extraction_qc.json",
+  "scientific_validation_status": "NOT_VALIDATED",
+  "not_confirmed_faults_or_fractures": true,
+  "used_in_inference": false
+}

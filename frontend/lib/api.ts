@@ -368,6 +368,74 @@ export async function submitAssess(
   return body;
 }
 
+export type AssessmentHistoryHazard = {
+  hazard_type?: string | null;
+  point_estimate?: number | null;
+  confidence_tier?: string | null;
+};
+
+export type AssessmentHistoryItem = {
+  assessment_id: string;
+  persisted?: boolean;
+  modified_at?: string;
+  model_version?: string | null;
+  checkpoint_id?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  aoi_source?: string | null;
+  hazards?: AssessmentHistoryHazard[];
+  scientific_notes_present?: boolean;
+  spatial_output_url?: string | null;
+  domain_similarity_calibrated?: boolean | null;
+  parse_error?: string;
+};
+
+export type AssessmentHistoryResponse = {
+  count: number;
+  total?: number;
+  limit: number;
+  offset?: number;
+  has_more?: boolean;
+  assessments: AssessmentHistoryItem[];
+  retention?: string;
+  note?: string;
+};
+
+export type AssessmentHistoryDetailResponse = {
+  summary: AssessmentHistoryItem;
+  assessment: Record<string, unknown>;
+  note?: string;
+};
+
+export async function listAssessmentHistory(
+  options: { limit?: number; offset?: number; apiKey?: string } = {},
+): Promise<AssessmentHistoryResponse> {
+  const limit = options.limit ?? 25;
+  const offset = options.offset ?? 0;
+  const response = await fetch(
+    `${apiUrl}/api/v1/assess/history?limit=${limit}&offset=${offset}`,
+    { headers: await authHeaders(options.apiKey) },
+  );
+  if (!response.ok) {
+    throw new Error(await parseError(response, "Could not load assessment history"));
+  }
+  return response.json();
+}
+
+export async function getAssessmentHistoryDetail(
+  assessmentId: string,
+  apiKey?: string,
+): Promise<AssessmentHistoryDetailResponse> {
+  const response = await fetch(
+    `${apiUrl}/api/v1/assess/history/${encodeURIComponent(assessmentId)}`,
+    { headers: await authHeaders(apiKey) },
+  );
+  if (!response.ok) {
+    throw new Error(await parseError(response, "Could not load assessment detail"));
+  }
+  return response.json();
+}
+
 export type GeophysicsLayerMetadata = {
   layer_id: string;
   title: string;

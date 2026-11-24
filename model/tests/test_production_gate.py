@@ -24,6 +24,37 @@ def test_development_is_allowed_with_auth_disabled() -> None:
     assert result.ok is True
 
 
+def test_staging_rejects_demo_mode_and_dev_auth() -> None:
+    result = validate_production_environment(
+        {
+            "SSRI_API_ENVIRONMENT": "staging",
+            "SSRI_DEMO_MODE": "true",
+            "SSRI_AUTH_DEVELOPMENT_MODE": "true",
+            "SSRI_CORS_ORIGINS": "*",
+        }
+    )
+    assert result.ok is False
+    assert result.environment == "staging"
+    blob = " ".join(result.errors)
+    assert "SSRI_DEMO_MODE" in blob
+    assert "SSRI_AUTH_DEVELOPMENT_MODE" in blob
+    assert "Wildcard CORS" in blob
+
+
+def test_staging_allows_auth_off_without_demo() -> None:
+    result = validate_production_environment(
+        {
+            "SSRI_API_ENVIRONMENT": "staging",
+            "SSRI_AUTH_ENABLED": "false",
+            "SSRI_AUTH_DEVELOPMENT_MODE": "false",
+            "SSRI_DEMO_MODE": "false",
+            "SSRI_CORS_ORIGINS": "http://localhost:3000",
+        }
+    )
+    assert result.ok is True
+    assert result.environment == "staging"
+
+
 def test_production_rejects_disabled_auth() -> None:
     result = validate_production_environment(
         {

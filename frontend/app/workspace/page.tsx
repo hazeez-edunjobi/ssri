@@ -33,11 +33,12 @@ export default function WorkspacePage() {
       </h1>
       <p className="mt-2 text-sm text-stone">Your datasets, training runs, and model versions.</p>
       {error && <p className="mt-4 text-sm text-amber-900">{error}</p>}
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-6 grid gap-4 md:grid-cols-4">
         {[
           ["Datasets", me ? me.counts.datasets : "—", "/datasets"],
           ["Training runs", me ? me.counts.training_runs : "—", "/training"],
           ["Models", me ? me.counts.models : "—", "/models"],
+          ["Assessments", "History", "/assessments"],
         ].map(([label, value, href]) => (
           <Link key={label} href={String(href)} className="rounded-2xl border border-meadow bg-chalk p-5">
             <div className="text-xs text-stone">{label}</div>

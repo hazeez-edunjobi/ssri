@@ -27,6 +27,7 @@ import {
   type TrainedModel,
 } from "@/lib/api";
 import { DASHBOARD_HREF } from "@/lib/navigation";
+import { RequireOperatorAccess } from "@/components/auth/RequireOperatorAccess";
 
 type Step = "upload" | "validate" | "train" | "evaluate" | "select";
 
@@ -45,7 +46,7 @@ function statusTone(status: string): string {
   return "text-stone";
 }
 
-export default function ReleaseShellPage() {
+function ReleaseShellWorkspace() {
   const [step, setStep] = useState<Step>("upload");
   const [shellOn, setShellOn] = useState<boolean | null>(null);
   const [limitations, setLimitations] = useState<string[]>(LIMITATIONS_FALLBACK);
@@ -967,5 +968,13 @@ export default function ReleaseShellPage() {
         </aside>
       </div>
     </main>
+  );
+}
+
+export default function ReleaseShellPage() {
+  return (
+    <RequireOperatorAccess nextPath="/shell">
+      <ReleaseShellWorkspace />
+    </RequireOperatorAccess>
   );
 }

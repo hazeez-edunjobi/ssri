@@ -72,7 +72,8 @@ def _configure_cors(app: FastAPI, config: APIConfig) -> None:
         CORSMiddleware,
         allow_origins=origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "OPTIONS"],
+        # Include DELETE for platform dataset routes (browser preflight).
+        allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "Idempotency-Key"],
     )
 

@@ -416,6 +416,27 @@ export async function runGeologicalMagnetic(
   }>(`/datasets/${geoId}/magnetic`, body);
 }
 
+/** Candidate magnetic lineaments — NOT confirmed faults; used_in_inference=false. */
+export async function extractGeologicalLineaments(
+  geoId: string,
+  body: {
+    percentile?: number;
+    min_length_cells?: number;
+    min_component_cells?: number;
+    density_window_m?: number;
+    use_residual_blend?: boolean;
+    ensure_derivatives?: boolean;
+  } = {},
+) {
+  return geoPost<{
+    dataset: GeologicalDataset;
+    lineaments: Record<string, unknown>;
+    scientific_validation_status: string;
+    not_confirmed_faults_or_fractures: boolean;
+    used_in_inference: boolean;
+  }>(`/datasets/${geoId}/magnetic/lineaments`, body);
+}
+
 /** Absolute URL for a derived preview/product under /geological/datasets/{id}/derived/. */
 export function geologicalDerivedUrl(geoId: string, filename: string): string {
   return `${apiUrl}/api/v1/geological/datasets/${geoId}/derived/${encodeURIComponent(filename)}`;

@@ -1,4 +1,4 @@
-"""Production startup fail-closed validation."""
+"""Production and staging startup fail-closed validation."""
 
 from __future__ import annotations
 
@@ -10,25 +10,67 @@ from ssri_model.auth.exceptions import InvalidAuthConfigError
 
 
 class UnsafeProductionConfigError(RuntimeError):
-    """Raised when production configuration is unsafe."""
+    """Raised when production or staging configuration is unsafe."""
 
 
 @dataclass(frozen=True)
 class ProductionGateResult:
     ok: bool
     errors: tuple[str, ...]
+    environment: str = "development"
+
+
+def _environment_name(env: dict[str, str]) -> str:
+    return (
+        env.get("SSRI_API_ENVIRONMENT")
+        or env.get("SSRI_AUTH_ENVIRONMENT")
+        or "development"
+    ).lower()
+
+
+def validate_staging_environment(environ: dict[str, str] | None = None) -> ProductionGateResult:
+    """Subset of production gates for staging / ops qualification.
+
+    Staging must not silently run with demo mode, development auth, or wildcard CORS.
+    Full auth-enabled requirements remain production-only unless operators enable auth.
+    """
+    env = environ if environ is not None else dict(os.environ)
+    environment = _environment_name(env)
+    if environment != "staging":
+        return ProductionGateResult(ok=True, errors=(), environment=environment)
+
+    errors: list[str] = []
+    cors = env.get("SSRI_CORS_ORIGINS") or env.get("CORS_ORIGINS") or ""
+    origins = [item.strip() for item in cors.split(",") if item.strip()]
+    if "*" in origins:
+        errors.append("Wildcard CORS origins are not allowed in staging")
+
+    if env.get("SSRI_AUTH_DEVELOPMENT_MODE", "false").lower() in {"1", "true", "yes"}:
+        errors.append("SSRI_AUTH_DEVELOPMENT_MODE must be false in staging")
+
+    if env.get("SSRI_DEMO_MODE", "false").lower() in {"1", "true", "yes"}:
+        errors.append("SSRI_DEMO_MODE must be false in staging")
+
+    auth_enabled = env.get("SSRI_AUTH_ENABLED", "false").lower() in {"1", "true", "yes"}
+    if auth_enabled:
+        try:
+            AuthConfig.from_env()
+        except InvalidAuthConfigError as exc:
+            errors.append(str(exc))
+        if "SSRI_AUTH_KEY_STORE" in env and not env.get("SSRI_AUTH_KEY_STORE", "").strip():
+            errors.append("SSRI_AUTH_KEY_STORE is required when auth is enabled in staging")
+
+    return ProductionGateResult(ok=not errors, errors=tuple(errors), environment=environment)
 
 
 def validate_production_environment(environ: dict[str, str] | None = None) -> ProductionGateResult:
     """Validate production safety gates without starting servers."""
     env = environ if environ is not None else dict(os.environ)
-    environment = (
-        env.get("SSRI_API_ENVIRONMENT")
-        or env.get("SSRI_AUTH_ENVIRONMENT")
-        or "development"
-    ).lower()
+    environment = _environment_name(env)
+    if environment == "staging":
+        return validate_staging_environment(env)
     if environment != "production":
-        return ProductionGateResult(ok=True, errors=())
+        return ProductionGateResult(ok=True, errors=(), environment=environment)
 
     errors: list[str] = []
     auth_enabled = env.get("SSRI_AUTH_ENABLED", "false").lower() in {"1", "true", "yes"}
@@ -70,7 +112,10 @@ def validate_production_environment(environ: dict[str, str] | None = None) -> Pr
     if backend in {"s3", "minio", "r2"} and not (env.get("SSRI_OBJECT_STORAGE_BUCKET") or "").strip():
         errors.append("SSRI_OBJECT_STORAGE_BUCKET is required for S3-compatible backends")
 
-    return ProductionGateResult(ok=not errors, errors=tuple(errors))
+    if env.get("SSRI_DEMO_MODE", "false").lower() in {"1", "true", "yes"}:
+        errors.append("SSRI_DEMO_MODE must be false in production")
+
+    return ProductionGateResult(ok=not errors, errors=tuple(errors), environment=environment)
 
 
 def assert_production_safe(environ: dict[str, str] | None = None) -> None:

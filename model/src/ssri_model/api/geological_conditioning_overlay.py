@@ -22,6 +22,7 @@ from ssri_model.geological.models import (
     MEASUREMENT_OVERBURDEN_THICKNESS,
     MEASUREMENT_TOTAL_MAGNETIC_INTENSITY,
     canonicalize_measurement_type,
+    is_tmi_measurement,
 )
 from ssri_model.geological.magnetic_processing import publication_comparison_notes
 from ssri_model.release_shell.lineaments import (
@@ -390,7 +391,48 @@ def enrich_conditioning_with_geological_catalogue(
                     "source_geo_id": rec.geo_id,
                     "source_crs": rec.crs,
                     "not_confirmed_faults_or_fractures": True,
+                    "scientific_class": "uploaded_vector_lineament",
                 }
+
+        # Candidate magnetic lineaments derived from TMI (not confirmed faults).
+        if (
+            is_tmi_measurement(mt)
+            and lineament_hit is None
+            and (rec.provenance or {}).get("candidate_lineaments")
+        ):
+            working = storage.resolve_under(
+                rec.geo_id, "working/candidate_lineaments.geojson"
+            )
+            if working is None or not working.exists():
+                working = storage.resolve_under(
+                    rec.geo_id,
+                    "working/derived/lineaments/candidate_lineaments.geojson",
+                )
+            working_crs = rec.working_crs or (rec.provenance or {}).get("processing_crs")
+            if working and working.exists() and working_crs:
+                target = _transform_lonlat_to_crs(lon, lat, working_crs)
+                if target is not None:
+                    try:
+                        segments = load_lineament_segments(working)
+                        sampled = _sample_lineaments_at_point(
+                            segments=segments, x=target[0], y=target[1]
+                        )
+                        lineament_hit = {
+                            **sampled,
+                            "used_in_inference": False,
+                            "source_geo_id": rec.geo_id,
+                            "source_crs": working_crs,
+                            "not_confirmed_faults_or_fractures": True,
+                            "scientific_class": "candidate_magnetic_lineament",
+                            "scientific_validation_status": "NOT_VALIDATED",
+                            "reason": (
+                                "Sampled from candidate magnetic lineaments extracted "
+                                f"from TMI dataset {rec.geo_id}. Not confirmed faults; "
+                                "not injected into 13-channel inference."
+                            ),
+                        }
+                    except Exception:
+                        pass
 
     overlay["geological_context"] = tmi_contexts
     if tmi_contexts:

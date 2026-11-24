@@ -28,10 +28,11 @@ import {
 } from "@/lib/api";
 import { DASHBOARD_HREF } from "@/lib/navigation";
 import { LandPhoto } from "@/components/theme/LandPhoto";
+import { RequireOperatorAccess } from "@/components/auth/RequireOperatorAccess";
 
 type Step = "dataset" | "validate" | "configure" | "progress" | "result";
 
-export default function TrainingPage() {
+function OperatorTrainingWorkspace() {
   const [step, setStep] = useState<Step>("dataset");
   const [requirements, setRequirements] = useState<TrainingRequirements | null>(
     null,
@@ -638,5 +639,13 @@ export default function TrainingPage() {
         </aside>
       </div>
     </main>
+  );
+}
+
+export default function TrainingPage() {
+  return (
+    <RequireOperatorAccess nextPath="/training/operator">
+      <OperatorTrainingWorkspace />
+    </RequireOperatorAccess>
   );
 }
