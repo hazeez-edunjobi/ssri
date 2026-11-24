@@ -8,6 +8,22 @@ export type ConditioningLayer = {
   value: number | null;
   unit?: string;
   reason?: string | null;
+  /** Explicit: catalogue overlays must not claim Stage 2.5 v1 inference use. */
+  used_in_inference?: boolean | null;
+  source?: string | null;
+};
+
+export type GeologicalContextItem = {
+  geo_id?: string;
+  display_name?: string;
+  kind?: string;
+  structural_orientation_theme?: string | null;
+  published_interpretation_themes?: string[];
+  scientific_validation_status?: string;
+  not_overburden_thickness?: boolean;
+  not_confirmed_faults_or_fractures?: boolean;
+  not_hazard_labels?: boolean;
+  source?: string;
 };
 
 export type ConditioningFeatures = {
@@ -17,6 +33,13 @@ export type ConditioningFeatures = {
   sample_col?: number;
   notes?: string[];
   layers?: Record<string, ConditioningLayer>;
+  geological_context?: GeologicalContextItem[];
+  catalogue_overlay?: {
+    queried?: boolean;
+    used_in_inference?: boolean;
+    notes?: string[];
+    geological_context?: GeologicalContextItem[];
+  } | null;
 } | null | undefined;
 
 export type ConditioningMetricView = {
@@ -131,9 +154,18 @@ export function buildConditioningGroups(
     const meta = LAYER_META[key];
     const availableAtLocation =
       layer.status === "available" && layer.value != null && Number.isFinite(layer.value);
-    const usedInThisAssessment = availableAtLocation;
+    const usedInThisAssessment =
+      layer.used_in_inference === true
+        ? true
+        : layer.used_in_inference === false
+          ? false
+          : availableAtLocation && layer.source !== "geological_catalogue";
     let usageNote: string;
-    if (usedInThisAssessment) {
+    if (layer.used_in_inference === false || layer.source === "geological_catalogue") {
+      usageNote =
+        "Catalogue / overlay analytics only — not injected into the live 13-channel " +
+        "Stage 2.5 inference tensor for this assessment.";
+    } else if (usedInThisAssessment) {
       usageNote =
         "Present in this assessment feature stack at the sample cell. " +
         "It is a conditioning channel, not a hazard score.";
@@ -208,4 +240,28 @@ export function conditioningSampleCaption(
     parts.push(`${conditioning.schema_channel_count} channels in stack`);
   }
   return parts.length ? parts.join(" · ") : null;
+}
+
+/** Publication-guided magnetic / TMI geological context (not hazard labels). */
+export function geologicalContextLines(
+  conditioning: ConditioningFeatures,
+): string[] {
+  const items =
+    conditioning?.geological_context ||
+    conditioning?.catalogue_overlay?.geological_context ||
+    [];
+  const lines: string[] = [];
+  for (const item of items) {
+    const name = item.display_name || item.geo_id || "catalogue dataset";
+    if (item.structural_orientation_theme) {
+      lines.push(
+        `${name}: ${item.structural_orientation_theme} (${item.scientific_validation_status || "NOT_VALIDATED"}; not confirmed faults).`,
+      );
+    }
+    for (const theme of item.published_interpretation_themes || []) {
+      if (theme === item.structural_orientation_theme) continue;
+      lines.push(`${name}: ${theme}`);
+    }
+  }
+  return lines;
 }

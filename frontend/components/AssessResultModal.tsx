@@ -6,6 +6,7 @@ import type { AssessResponse, HazardProfile, ShellSettings } from "@/lib/api";
 import {
   buildConditioningGroups,
   conditioningSampleCaption,
+  geologicalContextLines,
 } from "@/lib/conditioning";
 import { ASSESSMENT_PREVIEW_LABEL } from "@/lib/activeModelStatus";
 import { PresentationDemoProgress } from "@/components/PresentationDemoProgress";
@@ -387,6 +388,26 @@ export function AssessResultModal({
                   </p>
                 )}
               </div>
+              {geologicalContextLines(result.conditioning_features).length > 0 && (
+                <div
+                  className="rounded-xl border border-meadow bg-mist px-4 py-3"
+                  data-testid="assess-geological-context"
+                >
+                  <p className="text-sm font-medium text-bark">
+                    Geological context (magnetic interpretation)
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-stone">
+                    Publication-guided themes from intersecting TMI catalogue footprints.
+                    Not confirmed faults, not overburden thickness, not hazard scores.
+                    Status remains NOT_VALIDATED.
+                  </p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-bark">
+                    {geologicalContextLines(result.conditioning_features).map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {buildConditioningGroups(result.conditioning_features).map((group) => (
                 <div
                   key={group.id}

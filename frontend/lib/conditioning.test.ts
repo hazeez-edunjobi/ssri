@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   buildConditioningGroups,
   conditioningSampleCaption,
+  geologicalContextLines,
 } from "./conditioning.ts";
 
 test("buildConditioningGroups always exposes overburden and lineaments", () => {
@@ -104,4 +105,42 @@ test("conditioningSampleCaption reports policy and cell", () => {
   assert.match(caption!, /tensor_centre/);
   assert.match(caption!, /r1 c2/);
   assert.match(caption!, /16 channels/);
+});
+
+test("catalogue overlay values are not marked as inference inputs", () => {
+  const groups = buildConditioningGroups({
+    layers: {
+      overburden_thickness: {
+        status: "available",
+        value: 18.5,
+        used_in_inference: false,
+        source: "geological_catalogue",
+        reason: "Sampled from catalogue",
+      },
+      lineament_density: { status: "unavailable", value: null },
+      lineament_distance: { status: "unavailable", value: null },
+    },
+  });
+  const thickness = groups[0].metrics[0];
+  assert.equal(thickness.availableAtLocation, true);
+  assert.equal(thickness.usedInThisAssessment, false);
+  assert.match(thickness.usageNote, /not injected/i);
+});
+
+test("geologicalContextLines surfaces NE-SW theme without inventing hazards", () => {
+  const lines = geologicalContextLines({
+    geological_context: [
+      {
+        display_name: "Abeokuta TMI",
+        structural_orientation_theme: "Predominantly NE-SW structural trends",
+        scientific_validation_status: "NOT_VALIDATED",
+        published_interpretation_themes: [
+          "Low magnetic zones associated with sedimentary formations",
+          "Predominantly NE-SW structural trends",
+        ],
+      },
+    ],
+  });
+  assert.ok(lines.some((l) => /NE-SW/i.test(l) && /NOT_VALIDATED/i.test(l)));
+  assert.ok(lines.some((l) => /sedimentary/i.test(l)));
 });

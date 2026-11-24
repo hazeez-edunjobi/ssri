@@ -29,6 +29,9 @@ from ssri_model.api.domain_similarity import resolve_domain_similarity
 from ssri_model.api.geojson import point_bbox, validate_polygon_geojson
 from ssri_model.api.geotiff_output import write_probability_geotiff
 from ssri_model.api.assess_conditioning import sample_conditioning_features
+from ssri_model.api.geological_conditioning_overlay import (
+    enrich_conditioning_with_geological_catalogue,
+)
 from ssri_model.api.location_provenance import build_location_provenance
 from ssri_model.auth.authorization import has_permission
 from ssri_model.auth.exceptions import AuthorizationError
@@ -714,6 +717,12 @@ def assess_endpoint(
         pixel_col=grid.get("pixel_col") if isinstance(grid, dict) else None,
         aoi_source=aoi_source,
     )
+    conditioning_features = enrich_conditioning_with_geological_catalogue(
+        conditioning_features,
+        output_root=output_root,
+        latitude=query_lat,
+        longitude=query_lon,
+    )
     for layer_name, layer in (conditioning_features.get("layers") or {}).items():
         notes.append(
             f"conditioning_{layer_name}={layer.get('status')}"
@@ -722,6 +731,11 @@ def assess_endpoint(
                 if layer.get("status") == "available" and layer.get("value") is not None
                 else ""
             )
+        )
+    if conditioning_features.get("geological_context"):
+        notes.append(
+            "geological_context_count="
+            + str(len(conditioning_features.get("geological_context") or []))
         )
     if spatial_url:
         notes.append(f"spatial_output_hazard={spatial_hazard}")

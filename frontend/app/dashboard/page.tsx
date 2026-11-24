@@ -57,7 +57,7 @@ import { PresentationScenarioPicker } from "@/components/PresentationScenarioPic
 import { ProductCapabilities } from "@/components/product/ProductCapabilities";
 import { LandPhoto } from "@/components/theme/LandPhoto";
 import { RequireSession, useRequiredSession } from "@/components/auth/RequireSession";
-import { buildConditioningGroups } from "@/lib/conditioning";
+import { buildConditioningGroups, geologicalContextLines } from "@/lib/conditioning";
 import { apiHealthLabel } from "@/lib/apiHealthStatus";
 import {
   assessmentButtonDisabled,
@@ -1485,6 +1485,18 @@ function AssessmentWorkspace() {
               <p className="text-[10px] uppercase tracking-widest text-stone">
                 Lineament &amp; overburden
               </p>
+              {geologicalContextLines(result.conditioning_features).length > 0 && (
+                <div data-testid="assess-summary-geological-context">
+                  <p className="font-medium text-bark">Geological context</p>
+                  <ul className="mt-1 space-y-0.5 text-[11px] text-stone">
+                    {geologicalContextLines(result.conditioning_features)
+                      .slice(0, 4)
+                      .map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                  </ul>
+                </div>
+              )}
               {buildConditioningGroups(result.conditioning_features).map((group) => (
                 <div key={group.id} data-testid={`assess-summary-${group.id}`}>
                   <p className="font-medium text-bark">{group.title}</p>
