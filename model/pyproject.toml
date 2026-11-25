@@ -28,6 +28,7 @@ boto3 = "^1.43.89"
 netcdf4 = "^1.7.4"
 httpx = "^0.28"
 pyproj = "^3.6.1"
+scikit-learn = "^1.5"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
@@ -63,7 +64,7 @@ python_version = "3.11"
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["torch.*", "ee.*", "rasterio.*", "whitebox.*", "scipy.*", "matplotlib.*", "fastapi.*", "starlette.*", "uvicorn.*", "redis.*", "celery.*", "sqlalchemy.*"]
+module = ["torch.*", "ee.*", "rasterio.*", "whitebox.*", "scipy.*", "sklearn.*", "matplotlib.*", "fastapi.*", "starlette.*", "uvicorn.*", "redis.*", "celery.*", "sqlalchemy.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
