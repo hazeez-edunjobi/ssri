@@ -153,6 +153,39 @@ def test_production_rejects_s3_without_bucket() -> None:
     assert any("SSRI_OBJECT_STORAGE_BUCKET" in err for err in result.errors)
 
 
+def test_production_distributed_rejects_local_object_storage() -> None:
+    result = validate_production_environment(
+        {
+            "SSRI_API_ENVIRONMENT": "production",
+            "SSRI_AUTH_ENABLED": "true",
+            "SSRI_CORS_ORIGINS": "https://app.example.com",
+            "SSRI_AUTH_DEVELOPMENT_MODE": "false",
+            "SSRI_AUTH_KEY_STORE": "auth/keys.json",
+            "SSRI_EXECUTION_MODE": "distributed",
+            "SSRI_OBJECT_STORAGE_BACKEND": "local",
+        }
+    )
+    assert result.ok is False
+    assert any("not durable across separate" in err for err in result.errors)
+
+
+def test_production_r2_requires_endpoint() -> None:
+    result = validate_production_environment(
+        {
+            "SSRI_API_ENVIRONMENT": "production",
+            "SSRI_AUTH_ENABLED": "true",
+            "SSRI_CORS_ORIGINS": "https://app.example.com",
+            "SSRI_AUTH_DEVELOPMENT_MODE": "false",
+            "SSRI_AUTH_KEY_STORE": "auth/keys.json",
+            "SSRI_OBJECT_STORAGE_BACKEND": "r2",
+            "SSRI_OBJECT_STORAGE_BUCKET": "ssri-artifacts",
+            "SSRI_OBJECT_STORAGE_ENDPOINT": "",
+        }
+    )
+    assert result.ok is False
+    assert any("SSRI_OBJECT_STORAGE_ENDPOINT" in err for err in result.errors)
+
+
 def test_missing_key_store_file_is_created_empty(tmp_path) -> None:
     created = ensure_key_store_file(tmp_path / "keys.json")
     assert json.loads(created.read_text(encoding="utf-8")) == {"keys": []}

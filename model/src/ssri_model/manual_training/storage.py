@@ -115,11 +115,33 @@ class TrainingStorage:
         meta = self._dataset_meta_path(record.dataset_id)
         meta.parent.mkdir(parents=True, exist_ok=True)
         meta.write_text(json.dumps(record.to_dict(), indent=2), encoding="utf-8")
+        try:
+            from ssri_model.storage.durable import is_remote_object_backend, mirror_training_dataset
+
+            if is_remote_object_backend():
+                # Mirror dataset.json parent + data tree when present.
+                dataset_home = self.datasets_dir / record.dataset_id
+                mirror_training_dataset(dataset_home, record.dataset_id)
+        except Exception:
+            pass
 
     def get_dataset(self, dataset_id: str) -> DatasetRecord:
         if not _DATASET_ID_RE.match(dataset_id):
             raise DatasetNotFoundError(f"Unknown dataset id: {dataset_id}")
         meta = self._dataset_meta_path(dataset_id)
+        if not meta.exists():
+            try:
+                from ssri_model.storage.durable import (
+                    ensure_training_dataset_local,
+                    is_remote_object_backend,
+                )
+
+                if is_remote_object_backend():
+                    ensure_training_dataset_local(
+                        self.datasets_dir / dataset_id, dataset_id
+                    )
+            except Exception:
+                pass
         if not meta.exists():
             raise DatasetNotFoundError(f"Dataset not found: {dataset_id}")
         return DatasetRecord.from_dict(json.loads(meta.read_text(encoding="utf-8")))

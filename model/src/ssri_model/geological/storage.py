@@ -104,14 +104,45 @@ class GeologicalStorage:
         tmp = meta.with_suffix(".tmp")
         tmp.write_text(json.dumps(record.to_storage_dict(), indent=2), encoding="utf-8")
         tmp.replace(meta)
+        self._mirror_dataset(record.geo_id)
 
     def get(self, geo_id: str) -> GeologicalDatasetRecord:
         meta = self._meta_path(geo_id)
+        if not meta.exists():
+            self._materialize_dataset(geo_id)
         if not meta.exists():
             raise DatasetNotFoundError(f"Geological dataset not found: {geo_id}")
         return GeologicalDatasetRecord.from_dict(
             json.loads(meta.read_text(encoding="utf-8"))
         )
+
+    def _mirror_dataset(self, geo_id: str) -> None:
+        try:
+            from ssri_model.storage.durable import (
+                is_remote_object_backend,
+                mirror_geological_dataset,
+            )
+
+            if not is_remote_object_backend():
+                return
+            mirror_geological_dataset(self.root, geo_id)
+        except Exception:
+            # Local catalogue remains authoritative; remote mirror is best-effort
+            # unless configuration validation raises at the call site.
+            return
+
+    def _materialize_dataset(self, geo_id: str) -> None:
+        try:
+            from ssri_model.storage.durable import (
+                ensure_geological_dataset_local,
+                is_remote_object_backend,
+            )
+
+            if not is_remote_object_backend():
+                return
+            ensure_geological_dataset_local(self.root, geo_id)
+        except Exception:
+            return
 
     def list(
         self,

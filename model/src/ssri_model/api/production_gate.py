@@ -109,8 +109,33 @@ def validate_production_environment(environ: dict[str, str] | None = None) -> Pr
             errors.append("JWT secret uses an unsafe default value")
 
     backend = (env.get("SSRI_OBJECT_STORAGE_BACKEND") or "local").lower()
-    if backend in {"s3", "minio", "r2"} and not (env.get("SSRI_OBJECT_STORAGE_BUCKET") or "").strip():
-        errors.append("SSRI_OBJECT_STORAGE_BUCKET is required for S3-compatible backends")
+    execution_mode = (env.get("SSRI_EXECUTION_MODE") or "local").lower()
+    require_durable = env.get("SSRI_REQUIRE_DURABLE_OBJECT_STORAGE", "").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    if backend in {"s3", "minio", "r2"}:
+        from ssri_model.storage.durable import validate_object_storage_configuration
+
+        errors.extend(validate_object_storage_configuration(env))
+    if (
+        backend == "local"
+        and (execution_mode == "distributed" or require_durable)
+    ):
+        errors.append(
+            "SSRI_OBJECT_STORAGE_BACKEND=local is not durable across separate "
+            "API/worker hosts. Set backend to r2/s3/minio with a shared bucket, "
+            "or co-locate API+worker on one host with a shared SSRI_API_OUTPUT_ROOT."
+        )
+    geo_backend = (env.get("SSRI_GEOLOGICAL_STORAGE_BACKEND") or "filesystem").lower()
+    if geo_backend in {"r2", "s3", "minio", "object", "objects"}:
+        errors.append(
+            "SSRI_GEOLOGICAL_STORAGE_BACKEND object-only modes are unsupported. "
+            "Keep filesystem and set SSRI_OBJECT_STORAGE_BACKEND=r2|s3|minio so "
+            "catalogue trees are mirrored to durable object storage."
+        )
 
     if env.get("SSRI_DEMO_MODE", "false").lower() in {"1", "true", "yes"}:
         errors.append("SSRI_DEMO_MODE must be false in production")

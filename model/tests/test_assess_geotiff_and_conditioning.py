@@ -55,6 +55,16 @@ def test_assess_returns_conditioning_and_geotiff_url(tmp_path: Path, monkeypatch
         "placeholder_origin",
         "acquisition_grid",
     }
+    assessment_id = body["assessment_id"]
+    spatial = client.get(f"/api/v1/assess/history/{assessment_id}/spatial")
+    assert spatial.status_code == 200, spatial.text
+    assert "image/tiff" in spatial.headers.get("content-type", "")
+    assert len(spatial.content) > 100
+    assert spatial.content[:2] in (b"II", b"MM")  # TIFF little/big endian magic
+    assert spatial.headers.get("X-SSRI-Assessment-Id") == assessment_id
+
+    missing = client.get("/api/v1/assess/history/assess-doesnotexist000/spatial")
+    assert missing.status_code in {400, 404, 422}
 
 
 def test_assess_v2_stack_exposes_available_overburden(tmp_path: Path, monkeypatch) -> None:

@@ -12,6 +12,7 @@ from typing import Any
 import numpy as np
 import torch
 from fastapi import APIRouter, Depends
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from ssri_model.api.acquisition import acquire_feature_array_for_bbox, live_acquisition_enabled
@@ -163,6 +164,7 @@ class AssessResponseBody(BaseModel):
     spatial_output_hazard: str | None = None
     spatial_output_crs: str | None = None
     spatial_output_georef_quality: str | None = None
+    spatial_object_key: str | None = None
 
 
 _ALLOWED_FEATURE_CHANNEL_COUNTS = frozenset({CHANNEL_COUNT, 16})
@@ -260,12 +262,29 @@ def resolve_assessment_checkpoint(
             root=models_root,
             label="Promoted model checkpoint",
         )
-        if not path.is_file():
-            raise InvalidServiceRequestError(
-                "A promoted model is selected, but its checkpoint file is unavailable. "
-                "Re-promote a valid Stage 2.5 checkpoint, then retry."
-            )
-        return str(path), "active_registry"
+        if path.is_file():
+            return str(path), "active_registry"
+        # Durable recovery: active.json / registry may carry object_storage_key.
+        try:
+            active_id = registry.get_active_model_id()
+            record = registry.get_model(active_id) if active_id else None
+            object_key = getattr(record, "object_storage_key", None) if record else None
+            if object_key:
+                from ssri_model.storage.durable import resolve_checkpoint_path
+
+                recovered = resolve_checkpoint_path(
+                    local_path=path,
+                    object_key=object_key,
+                    cache_dir=models_root / (active_id or "active") / ".object_cache",
+                )
+                if recovered.is_file():
+                    return str(recovered), "active_registry_object_storage"
+        except Exception:
+            pass
+        raise InvalidServiceRequestError(
+            "A promoted model is selected, but its checkpoint file is unavailable. "
+            "Re-promote a valid Stage 2.5 checkpoint, then retry."
+        )
 
     raise InvalidServiceRequestError(_NO_PRODUCTION_CHECKPOINT_MESSAGE)
 
@@ -346,6 +365,12 @@ def _persist_assessment_response(
     assess_dir.mkdir(parents=True, exist_ok=True)
     path = assess_dir / "assess_response.json"
     path.write_text(body.model_dump_json(indent=2), encoding="utf-8")
+    try:
+        from ssri_model.storage.durable import mirror_assessment_payload
+
+        mirror_assessment_payload(assess_dir, assessment_id)
+    except Exception:
+        pass
     return path
 
 
@@ -586,6 +611,7 @@ def assess_endpoint(
     spatial_hazard: str | None = None
     spatial_crs: str | None = None
     spatial_georef_quality: str | None = None
+    spatial_object_key: str | None = None
     if body.produce_geotiff and selected_indices:
         with torch.no_grad():
             model.eval()
@@ -626,8 +652,9 @@ def assess_endpoint(
             crs=geotiff_crs,
         )
         storage = build_object_storage_from_env()
+        spatial_object_key = f"assessments/{assessment_id}/{spatial_hazard}_{score_name}.tif"
         key = storage.put_bytes(
-            f"assessments/{assessment_id}/{spatial_hazard}_{score_name}.tif",
+            spatial_object_key,
             tif_path.read_bytes(),
             content_type="image/tiff",
         )
@@ -766,6 +793,7 @@ def assess_endpoint(
         spatial_output_hazard=spatial_hazard,
         spatial_output_crs=spatial_crs,
         spatial_output_georef_quality=spatial_georef_quality,
+        spatial_object_key=spatial_object_key,
     )
     _persist_assessment_response(
         output_root=output_root,
@@ -897,16 +925,7 @@ def get_assessment_history_detail(
 ) -> dict[str, Any]:
     """Return one persisted assessment summary + available detail fields."""
     del principal
-    # Assessment IDs are assess-<hex>; reject path traversal.
-    if (
-        not assessment_id
-        or ".." in assessment_id
-        or "/" in assessment_id
-        or "\\" in assessment_id
-        or not assessment_id.startswith("assess-")
-        or not all(ch.isalnum() or ch in "-_" for ch in assessment_id)
-    ):
-        raise InvalidServiceRequestError("Invalid assessment_id.")
+    _validate_assessment_id(assessment_id)
     assess_dir = Path(service_config.output_root) / "assessments" / assessment_id
     payload_path = assess_dir / "assess_response.json"
     if not payload_path.is_file():
@@ -939,4 +958,105 @@ def get_assessment_history_detail(
             "Persisted assess response. Scores are relative rankings; status remains "
             "NOT_VALIDATED unless independently validated."
         ),
+        "spatial_download_path": (
+            f"/api/v1/assess/history/{assessment_id}/spatial"
+            if any(assess_dir.glob("*.tif"))
+            or bool(data.get("spatial_output_url"))
+            or bool(data.get("spatial_output_hazard"))
+            else None
+        ),
+        "spatial_output_hazard": data.get("spatial_output_hazard"),
+        "spatial_output_crs": data.get("spatial_output_crs"),
+        "spatial_output_georef_quality": data.get("spatial_output_georef_quality"),
     }
+
+
+def _validate_assessment_id(assessment_id: str) -> None:
+    if (
+        not assessment_id
+        or ".." in assessment_id
+        or "/" in assessment_id
+        or "\\" in assessment_id
+        or not assessment_id.startswith("assess-")
+        or not all(ch.isalnum() or ch in "-_" for ch in assessment_id)
+    ):
+        raise InvalidServiceRequestError("Invalid assessment_id.")
+
+
+def _resolve_assessment_geotiff(
+    assess_dir: Path, data: dict[str, Any]
+) -> Path:
+    """Locate the on-disk GeoTIFF for an assessment (prefer hazard-named file)."""
+    hazard = data.get("spatial_output_hazard")
+    candidates: list[Path] = []
+    if isinstance(hazard, str) and hazard:
+        candidates.extend(
+            [
+                assess_dir / f"{hazard}_probability.tif",
+                assess_dir / f"{hazard}_ranking_score.tif",
+            ]
+        )
+    candidates.extend(sorted(assess_dir.glob("*.tif")))
+    for path in candidates:
+        if path.is_file():
+            return path
+    # Optional object-storage mirror under local backend root
+    objects_dir = Path(assess_dir).parents[1] / "objects" / "assessments" / assess_dir.name
+    if objects_dir.is_dir():
+        for path in sorted(objects_dir.glob("*.tif")):
+            if path.is_file():
+                return path
+    # Materialize from durable object key when local disk is empty (split services).
+    object_key = data.get("spatial_object_key")
+    if isinstance(object_key, str) and object_key.strip():
+        try:
+            from ssri_model.storage.durable import materialize_object_to_path
+
+            hazard_name = (
+                str(hazard)
+                if isinstance(hazard, str) and hazard
+                else "hazard"
+            )
+            dest = assess_dir / f"{hazard_name}_from_object_storage.tif"
+            materialize_object_to_path(object_key.strip(), dest)
+            if dest.is_file():
+                return dest
+        except Exception:
+            pass
+    raise InvalidServiceRequestError(
+        "No GeoTIFF artefact is available for this assessment. "
+        "Re-run with produce_geotiff=true."
+    )
+
+
+@router.get("/history/{assessment_id}/spatial")
+def download_assessment_spatial(
+    assessment_id: str,
+    service_config: ServiceConfig = Depends(get_service_config),
+    principal: AuthenticatedPrincipal = Depends(require_run_assess_rate_limited),
+) -> Response:
+    """Authenticated GeoTIFF download for a persisted assessment.
+
+    Prefer this over ``file://`` spatial_output_url values from local object storage,
+    which browsers cannot fetch from an http(s) frontend origin.
+    """
+    del principal
+    _validate_assessment_id(assessment_id)
+    assess_dir = Path(service_config.output_root) / "assessments" / assessment_id
+    payload_path = assess_dir / "assess_response.json"
+    if not payload_path.is_file():
+        raise InvalidServiceRequestError(f"Assessment '{assessment_id}' was not found.")
+    data = json.loads(payload_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise InvalidServiceRequestError("Assessment payload is not a JSON object.")
+    tif_path = _resolve_assessment_geotiff(assess_dir, data)
+    return FileResponse(
+        path=tif_path,
+        media_type="image/tiff",
+        filename=tif_path.name,
+        headers={
+            "Cache-Control": "no-store",
+            "X-SSRI-Assessment-Id": assessment_id,
+            "X-SSRI-Spatial-Hazard": str(data.get("spatial_output_hazard") or ""),
+        },
+    )

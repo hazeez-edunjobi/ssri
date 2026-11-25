@@ -30,6 +30,7 @@ from ssri_model.api.routes import (
     jobs,
     layers,
     platform,
+    subsidence,
     training,
 )
 from ssri_model.release_shell import routes as release_shell_routes
@@ -131,6 +132,7 @@ def create_app(
     app.include_router(training.router, prefix=config.api_prefix)
     app.include_router(platform.router, prefix=config.api_prefix)
     app.include_router(geological.router, prefix=config.api_prefix)
+    app.include_router(subsidence.router, prefix=config.api_prefix)
     # Release shell (upload→validate→train→eval). Behaviour gated by SSRI_RELEASE_SHELL.
     app.include_router(release_shell_routes.router, prefix=config.api_prefix)
 

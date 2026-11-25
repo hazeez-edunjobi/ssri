@@ -20,7 +20,8 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host "== Wait for Postgres =="
 $ready = $false
 for ($i = 0; $i -lt 40; $i++) {
-    docker exec ssri-postgres pg_isready -U ssri -d ssri 2>$null | Out-Null
+    # pg_isready may emit collation warnings on stderr; do not treat those as failures.
+    cmd /c "docker exec ssri-postgres pg_isready -U ssri -d ssri >NUL 2>&1"
     if ($LASTEXITCODE -eq 0) { $ready = $true; break }
     Start-Sleep -Seconds 2
 }

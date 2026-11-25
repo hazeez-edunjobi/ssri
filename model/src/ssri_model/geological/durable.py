@@ -1,24 +1,17 @@
 """Geological catalogue persistence strategy helpers.
 
-The live ``GeologicalStorage`` implementation is a **local filesystem** catalogue
-under ``{SSRI_API_OUTPUT_ROOT}/geological``. That design requires a durable
-mount (Compose volume or Render persistent disk) for production survival across
-redeploys.
+The live ``GeologicalStorage`` implementation is a **filesystem working cache**
+under ``{SSRI_API_OUTPUT_ROOT}/geological``.
 
-Existing ``ObjectStorage`` (local / S3 / R2) is used for assess GeoTIFF artifacts
-and only recently gained ``get_bytes``. It still lacks:
+When ``SSRI_OBJECT_STORAGE_BACKEND`` is ``r2`` / ``s3`` / ``minio``, dataset
+trees and ledgers are mirrored to object storage after writes and materialized
+on read when the local cache is empty — enabling API and worker hosts to share
+catalogue artefacts without a shared disk.
 
-* prefix listing for catalogue discovery
-* atomic compare-and-swap / conditional writes for ``dataset.json``
-* append-safe JSONL ledgers with distributed locks
-* path-based ``FileResponse`` / offline-apply readers used by the API and worker
-
-Storing only original CSVs in R2 while leaving ``dataset.json``, ``index.jsonl``,
-and ``feature_applications.jsonl`` on ephemeral disk is **unsafe** and is
-explicitly refused.
-
-Supported production path today: ``SSRI_GEOLOGICAL_STORAGE_BACKEND=filesystem``
-(default) with a durable ``SSRI_API_OUTPUT_ROOT`` shared by API and worker.
+``SSRI_GEOLOGICAL_STORAGE_BACKEND=r2|s3|minio|object`` remains refused: those
+values would imply a pure object catalogue without the FS working cache and
+JSONL append locks. Use filesystem (default) plus a remote ``SSRI_OBJECT_STORAGE_*``
+backend for durable split-host deployments.
 """
 
 from __future__ import annotations
@@ -53,13 +46,9 @@ def build_geological_storage(output_root: Path | str) -> GeologicalStorage:
     if backend in REFUSED_OBJECT_BACKENDS:
         raise InvalidServiceConfigError(
             "SSRI_GEOLOGICAL_STORAGE_BACKEND="
-            f"{backend!r} is not supported yet. "
-            "A complete R2/S3 geological catalogue needs list_prefix, get_bytes, "
-            "conditional metadata writes, and distributed ledger locks — beyond "
-            "the current ObjectStorage contract used for assess artifacts. "
-            "Use filesystem mode with a durable SSRI_API_OUTPUT_ROOT "
-            "(Render persistent disk shared by API and worker), or leave "
-            "SSRI_GEOLOGICAL_STORAGE_BACKEND unset."
+            f"{backend!r} is not supported. "
+            "Keep filesystem mode and set SSRI_OBJECT_STORAGE_BACKEND=r2|s3|minio "
+            "so GeologicalStorage mirrors dataset trees and ledgers to object storage."
         )
     if backend not in SUPPORTED_BACKENDS:
         raise InvalidServiceConfigError(

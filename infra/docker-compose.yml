@@ -172,9 +172,10 @@ services:
       start_period: 90s
     restart: unless-stopped
 
-  # Lease recovery sweeper (optional). Staging overlay enables it always.
-  # Production: start with `--profile recovery` only after ops approval.
+  # Lease recovery sweeper. Staging overlay enables it always.
+  # Production (owner-authorized 2026-11-25): start with:
   #   docker compose -f infra/docker-compose.yml --profile recovery up -d recovery
+  # Or run a Render Background Worker with Docker command `recovery`.
   recovery:
     build:
       context: ../model

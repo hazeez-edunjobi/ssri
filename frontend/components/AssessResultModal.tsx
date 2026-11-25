@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Gauge, X } from "lucide-react";
-import type { AssessResponse, HazardProfile, ShellSettings } from "@/lib/api";
+import {
+  downloadAssessmentSpatialOutput,
+  type AssessResponse,
+  type HazardProfile,
+  type ShellSettings,
+} from "@/lib/api";
 import {
   buildConditioningGroups,
   conditioningSampleCaption,
@@ -100,9 +105,17 @@ export function AssessResultModal({
 }: AssessResultModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
+  const [geotiffBusy, setGeotiffBusy] = useState(false);
+  const [geotiffError, setGeotiffError] = useState<string | null>(null);
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
+  useEffect(() => {
+    if (!open) {
+      setGeotiffBusy(false);
+      setGeotiffError(null);
+    }
+  }, [open]);
 
   // Escape dismisses the dialog and focus returns to whatever was focused
   // before it opened (usually the assessment inputs), so a real user is never
@@ -502,38 +515,73 @@ export function AssessResultModal({
               <Download className="h-3.5 w-3.5" /> Download report
             </button>
           )}
-          {!loading && result?.spatial_output_url && (
-            <a
-              href={result.spatial_output_url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-meadow px-3 py-2 text-xs text-bark"
-              data-testid="assess-download-geotiff"
+          {!loading &&
+            result &&
+            (result.spatial_output_hazard || result.spatial_output_url) && (
+              <button
+                type="button"
+                disabled={geotiffBusy}
+                data-testid="assess-download-geotiff"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-meadow px-3 py-2 text-xs text-bark disabled:opacity-60"
+                onClick={() => {
+                  if (!result?.assessment_id || geotiffBusy) return;
+                  setGeotiffError(null);
+                  setGeotiffBusy(true);
+                  const hint = result.spatial_output_hazard
+                    ? `${result.assessment_id}-${result.spatial_output_hazard}.tif`
+                    : `${result.assessment_id}.tif`;
+                  void downloadAssessmentSpatialOutput(result.assessment_id, hint)
+                    .catch((err: Error) => {
+                      setGeotiffError(err.message || "GeoTIFF download failed");
+                    })
+                    .finally(() => setGeotiffBusy(false));
+                }}
+              >
+                <Download className="h-3.5 w-3.5" />{" "}
+                {geotiffBusy
+                  ? "Downloading GeoTIFF…"
+                  : `Download GeoTIFF${
+                      result.spatial_output_hazard
+                        ? ` (${result.spatial_output_hazard})`
+                        : ""
+                    }`}
+              </button>
+            )}
+          {!loading &&
+            result &&
+            !result.spatial_output_url &&
+            !result.spatial_output_hazard && (
+              <p
+                className="w-full text-[11px] text-stone"
+                data-testid="assess-geotiff-absent"
+              >
+                No GeoTIFF artefact is available for this assessment. Enable “Produce
+                GeoTIFF” before running, or the assessment type may not generate spatial
+                output (for example demo mode).
+              </p>
+            )}
+          {geotiffError ? (
+            <p
+              className="w-full text-[11px] text-amber-900"
+              data-testid="assess-geotiff-error"
+              role="alert"
             >
-              <Download className="h-3.5 w-3.5" /> Download GeoTIFF
-              {result.spatial_output_hazard ? ` (${result.spatial_output_hazard})` : ""}
-            </a>
-          )}
-          {!loading && result && !result.spatial_output_url && (
-            <p className="w-full text-[11px] text-stone" data-testid="assess-geotiff-absent">
-              No GeoTIFF URL was returned
-              {result.spatial_output_georef_quality
-                ? ` (georef: ${result.spatial_output_georef_quality})`
-                : ""}
-              . Enable “Produce GeoTIFF” before running, or the assessment type may not
-              generate spatial output (for example demo mode).
+              {geotiffError}
             </p>
-          )}
-          {!loading && result?.spatial_output_url && result.spatial_output_expires_seconds != null && (
-            <p className="w-full text-[11px] text-stone" data-testid="assess-geotiff-expiry">
-              Signed URL typically expires after {result.spatial_output_expires_seconds}s
-              {result.spatial_output_crs ? ` · CRS ${result.spatial_output_crs}` : ""}
-              {result.spatial_output_georef_quality
-                ? ` · georef ${result.spatial_output_georef_quality}`
-                : ""}
-              . If the link fails later, re-run the assessment.
-            </p>
-          )}
+          ) : null}
+          {!loading &&
+            result?.spatial_output_url?.startsWith("http") &&
+            result.spatial_output_expires_seconds != null && (
+              <p className="w-full text-[11px] text-stone" data-testid="assess-geotiff-expiry">
+                Object-storage signed URL typically expires after{" "}
+                {result.spatial_output_expires_seconds}s
+                {result.spatial_output_crs ? ` · CRS ${result.spatial_output_crs}` : ""}
+                {result.spatial_output_georef_quality
+                  ? ` · georef ${result.spatial_output_georef_quality}`
+                  : ""}
+                . Prefer the authenticated Download GeoTIFF control for durable access.
+              </p>
+            )}
           <button
             type="button"
             onClick={onViewMap}

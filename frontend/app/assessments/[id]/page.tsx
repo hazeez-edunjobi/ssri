@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { RequireSession } from "@/components/auth/RequireSession";
 import { PlatformShell } from "@/components/platform/PlatformShell";
 import {
+  downloadAssessmentSpatialOutput,
   getAssessmentHistoryDetail,
   type AssessmentHistoryDetailResponse,
 } from "@/lib/api";
@@ -21,6 +22,8 @@ function AssessmentDetailWorkspace() {
   const [data, setData] = useState<AssessmentHistoryDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [geotiffBusy, setGeotiffBusy] = useState(false);
+  const [geotiffError, setGeotiffError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!assessmentId) return;
@@ -54,6 +57,13 @@ function AssessmentDetailWorkspace() {
     typeof assessment.spatial_output_url === "string"
       ? assessment.spatial_output_url
       : null;
+  const spatialHazard =
+    typeof assessment.spatial_output_hazard === "string"
+      ? assessment.spatial_output_hazard
+      : null;
+  const canDownloadSpatial = Boolean(
+    spatialHazard || spatialUrl || data?.spatial_download_path,
+  );
 
   return (
     <PlatformShell>
@@ -107,17 +117,46 @@ function AssessmentDetailWorkspace() {
                   Open on assessment map
                 </Link>
               )}
-              {spatialUrl && (
+              {canDownloadSpatial && (
+                <button
+                  type="button"
+                  className="font-semibold text-moss underline disabled:opacity-60"
+                  data-testid="assessment-detail-download-geotiff"
+                  disabled={geotiffBusy}
+                  onClick={() => {
+                    setGeotiffError(null);
+                    setGeotiffBusy(true);
+                    void downloadAssessmentSpatialOutput(
+                      assessmentId,
+                      spatialHazard
+                        ? `${assessmentId}-${spatialHazard}.tif`
+                        : `${assessmentId}.tif`,
+                    )
+                      .catch((err: Error) =>
+                        setGeotiffError(err.message || "GeoTIFF download failed"),
+                      )
+                      .finally(() => setGeotiffBusy(false));
+                  }}
+                >
+                  {geotiffBusy ? "Downloading GeoTIFF…" : "Download GeoTIFF"}
+                </button>
+              )}
+              {spatialUrl?.startsWith("http") && (
                 <a
                   href={spatialUrl}
                   className="font-semibold text-moss"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Spatial output link
+                  Signed spatial URL
                 </a>
               )}
             </div>
+            {geotiffError ? (
+              <p className="mt-2 text-xs text-amber-900" role="alert">
+                {geotiffError}
+              </p>
+            ) : null}
           </section>
 
           {data?.note && <p className="text-xs text-stone">{data.note}</p>}

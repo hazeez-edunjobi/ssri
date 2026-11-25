@@ -405,6 +405,10 @@ export type AssessmentHistoryDetailResponse = {
   summary: AssessmentHistoryItem;
   assessment: Record<string, unknown>;
   note?: string;
+  spatial_download_path?: string | null;
+  spatial_output_hazard?: string | null;
+  spatial_output_crs?: string | null;
+  spatial_output_georef_quality?: string | null;
 };
 
 export async function listAssessmentHistory(
@@ -434,6 +438,59 @@ export async function getAssessmentHistoryDetail(
     throw new Error(await parseError(response, "Could not load assessment detail"));
   }
   return response.json();
+}
+
+/** Authenticated GeoTIFF bytes for an assessment (works when spatial_output_url is file://). */
+export function assessmentSpatialDownloadUrl(assessmentId: string): string {
+  return `${apiUrl}/api/v1/assess/history/${encodeURIComponent(assessmentId)}/spatial`;
+}
+
+export async function downloadAssessmentSpatialOutput(
+  assessmentId: string,
+  filenameHint?: string,
+  apiKey?: string,
+): Promise<void> {
+  const headers = await authHeaders(apiKey);
+  delete headers["Content-Type"];
+  let response: Response;
+  try {
+    response = await fetch(assessmentSpatialDownloadUrl(assessmentId), { headers });
+  } catch {
+    throw new Error("Could not reach the API to download the GeoTIFF.");
+  }
+  if (response.status === 401 || response.status === 403) {
+    throw new Error("Not authorized to download this GeoTIFF.");
+  }
+  if (response.status === 404 || response.status === 400) {
+    throw new Error(
+      await parseError(
+        response,
+        "No GeoTIFF is available for this assessment. Re-run with Produce GeoTIFF enabled.",
+      ),
+    );
+  }
+  if (!response.ok) {
+    throw new Error(await parseError(response, "GeoTIFF download failed"));
+  }
+  const blob = await response.blob();
+  if (!blob.size) {
+    throw new Error("Downloaded GeoTIFF was empty.");
+  }
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const match = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(disposition);
+  const filename =
+    (match ? decodeURIComponent(match[1].replace(/"/g, "")) : null) ||
+    filenameHint ||
+    `${assessmentId}.tif`;
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(objectUrl);
 }
 
 export type GeophysicsLayerMetadata = {

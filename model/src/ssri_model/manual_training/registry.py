@@ -29,6 +29,9 @@ class ModelRecord:
     scientific_validation_status: str = "NOT_VALIDATED"
     active: bool = False
     notes: str = ""
+    # Durable object-storage key (R2/S3). Optional for FS-only local registries.
+    object_storage_key: str | None = None
+    object_storage_sha256: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -51,6 +54,16 @@ class ModelRecord:
             ),
             active=bool(payload.get("active", False)),
             notes=str(payload.get("notes", "")),
+            object_storage_key=(
+                str(payload["object_storage_key"])
+                if payload.get("object_storage_key")
+                else None
+            ),
+            object_storage_sha256=(
+                str(payload["object_storage_sha256"])
+                if payload.get("object_storage_sha256")
+                else None
+            ),
         )
 
 
@@ -64,12 +77,25 @@ class ModelRegistry:
 
     def _load_index(self) -> dict[str, Any]:
         if not self._index_path.exists():
+            try:
+                from ssri_model.storage.durable import ensure_registry_metadata_local
+
+                ensure_registry_metadata_local(self.storage.models_dir)
+            except Exception:
+                pass
+        if not self._index_path.exists():
             return {"models": []}
         return json.loads(self._index_path.read_text(encoding="utf-8"))
 
     def _save_index(self, payload: dict[str, Any]) -> None:
         self._index_path.parent.mkdir(parents=True, exist_ok=True)
         self._index_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        try:
+            from ssri_model.storage.durable import mirror_registry_metadata
+
+            mirror_registry_metadata(self.storage.models_dir)
+        except Exception:
+            pass
 
     def list_models(self) -> list[ModelRecord]:
         active_id = self.get_active_model_id()
@@ -130,11 +156,42 @@ class ModelRegistry:
                 "scientifically validated or production-ready."
             ),
         )
+        record = self._maybe_mirror_checkpoint(record, dest_checkpoint)
         index = self._load_index()
         models = [item for item in index.get("models", []) if item.get("model_id") != model_id]
         models.append(record.to_dict())
         index["models"] = models
         self._save_index(index)
+        return record
+
+    def _maybe_mirror_checkpoint(
+        self, record: ModelRecord, checkpoint: Path
+    ) -> ModelRecord:
+        """Best-effort durable mirror for remote object backends; never logs secrets."""
+        try:
+            from ssri_model.storage.durable import (
+                IncompleteObjectStorageConfigError,
+                checkpoint_object_key,
+                is_remote_object_backend,
+                mirror_file_to_object_storage,
+            )
+
+            if not is_remote_object_backend():
+                return record
+            meta = mirror_file_to_object_storage(
+                checkpoint,
+                checkpoint_object_key(record.model_id, checkpoint.name),
+                content_type="application/octet-stream",
+            )
+            if meta:
+                record.object_storage_key = str(meta["object_key"])
+                record.object_storage_sha256 = str(meta["sha256"])
+        except IncompleteObjectStorageConfigError:
+            raise
+        except Exception:
+            # Local registry remains authoritative; mirror is best-effort unless
+            # configuration is explicitly incomplete (raised above).
+            pass
         return record
 
     def get_active_model_id(self) -> str | None:
@@ -153,25 +210,71 @@ class ModelRegistry:
         model = self.get_model(model_id)
         checkpoint = Path(model.checkpoint_path)
         if not checkpoint.exists():
-            raise ModelNotFoundError(
-                f"Cannot activate model '{model_id}' because its checkpoint is missing."
-            )
+            # Backward-compatible recovery from durable object storage when FS is empty.
+            if model.object_storage_key:
+                from ssri_model.storage.durable import resolve_checkpoint_path
+
+                checkpoint = resolve_checkpoint_path(
+                    local_path=None,
+                    object_key=model.object_storage_key,
+                    cache_dir=self.storage.models_dir / model_id / ".object_cache",
+                )
+                # Persist recovered bytes into the registry tree for subsequent local loads.
+                dest = self.storage.models_dir / model_id / BEST_CHECKPOINT_NAME
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                if checkpoint.resolve() != dest.resolve():
+                    shutil.copy2(checkpoint, dest)
+                checkpoint = dest
+                model.checkpoint_path = str(dest.resolve())
+                index = self._load_index()
+                models = []
+                for item in index.get("models", []):
+                    if item.get("model_id") == model_id:
+                        item["checkpoint_path"] = model.checkpoint_path
+                    models.append(item)
+                index["models"] = models
+                self._save_index(index)
+            else:
+                raise ModelNotFoundError(
+                    f"Cannot activate model '{model_id}' because its checkpoint is missing."
+                )
         # Ensure path stays under training models dir
         try:
             checkpoint.resolve().relative_to(self.storage.models_dir.resolve())
         except ValueError as exc:
             raise UnsafePathError("Checkpoint path is outside the model registry.") from exc
+        model = self._maybe_mirror_checkpoint(model, checkpoint)
+        # Persist object key if newly mirrored
+        index = self._load_index()
+        models = []
+        for item in index.get("models", []):
+            if item.get("model_id") == model_id:
+                item["object_storage_key"] = model.object_storage_key
+                item["object_storage_sha256"] = model.object_storage_sha256
+                item["checkpoint_path"] = model.checkpoint_path
+            models.append(item)
+        index["models"] = models
+        self._save_index(index)
         self._active_path.write_text(
             json.dumps(
                 {
                     "model_id": model_id,
                     "checkpoint_path": str(checkpoint.resolve()),
+                    "object_storage_key": model.object_storage_key,
+                    "object_storage_sha256": model.object_storage_sha256,
                     "activated_at": datetime.now(timezone.utc).isoformat(),
+                    "scientific_validation_status": model.scientific_validation_status,
                 },
                 indent=2,
             ),
             encoding="utf-8",
         )
+        try:
+            from ssri_model.storage.durable import mirror_registry_metadata
+
+            mirror_registry_metadata(self.storage.models_dir)
+        except Exception:
+            pass
         model.active = True
         return model
 

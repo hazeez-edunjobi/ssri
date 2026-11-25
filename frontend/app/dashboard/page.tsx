@@ -138,7 +138,7 @@ function AssessmentWorkspace() {
   );
   const [modelStatusRefreshing, setModelStatusRefreshing] = useState(false);
   const [featuresPath, setFeaturesPath] = useState("");
-  const [produceGeotiff, setProduceGeotiff] = useState(false);
+  const [produceGeotiff, setProduceGeotiff] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AssessResponse | null>(null);
@@ -1417,6 +1417,7 @@ function AssessmentWorkspace() {
               type="checkbox"
               checked={produceGeotiff}
               onChange={(e) => setProduceGeotiff(e.target.checked)}
+              data-testid="produce-geotiff"
             />
             Produce GeoTIFF / signed URL when available
           </label>

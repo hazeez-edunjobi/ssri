@@ -20,6 +20,7 @@ const LINKS = [
   { href: "/training", label: "Training" },
   { href: "/models", label: "Models" },
   { href: "/assessments", label: "Assessments" },
+  { href: "/validation", label: "Validation" },
   { href: "/activity", label: "Activity" },
   { href: "/dashboard", label: "Assessment map" },
 ];

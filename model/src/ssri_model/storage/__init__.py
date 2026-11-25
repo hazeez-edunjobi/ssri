@@ -14,6 +14,10 @@ class ObjectStorage(Protocol):
 
     def get_bytes(self, key: str) -> bytes: ...
 
+    def exists(self, key: str) -> bool: ...
+
+    def list_prefix(self, prefix: str) -> list[str]: ...
+
     def signed_url(self, key: str, *, expires_seconds: int = 3600) -> str: ...
 
     def delete(self, key: str) -> None: ...
@@ -51,6 +55,24 @@ class LocalObjectStorage:
         if not path.is_file():
             raise FileNotFoundError(f"Object not found: {key}")
         return path.read_bytes()
+
+    def exists(self, key: str) -> bool:
+        return (self.root / _safe_key(key)).is_file()
+
+    def list_prefix(self, prefix: str) -> list[str]:
+        safe_prefix = _safe_key(prefix) if prefix.strip() else ""
+        base = self.root / safe_prefix if safe_prefix else self.root
+        if not base.exists():
+            return []
+        keys: list[str] = []
+        root_resolved = self.root.resolve()
+        if base.is_file():
+            return [safe_prefix]
+        for path in base.rglob("*"):
+            if path.is_file():
+                rel = path.resolve().relative_to(root_resolved).as_posix()
+                keys.append(rel)
+        return sorted(keys)
 
     def signed_url(self, key: str, *, expires_seconds: int = 3600) -> str:
         _ = expires_seconds
@@ -118,6 +140,37 @@ class S3CompatibleObjectStorage:
         body = response["Body"].read()
         return bytes(body)
 
+    def exists(self, key: str) -> bool:
+        safe = _safe_key(key)
+        try:
+            self._client.head_object(Bucket=self.bucket, Key=safe)
+            return True
+        except Exception:
+            return False
+
+    def list_prefix(self, prefix: str) -> list[str]:
+        safe_prefix = _safe_key(prefix) if prefix.strip() else ""
+        keys: list[str] = []
+        token: str | None = None
+        while True:
+            kwargs: dict[str, object] = {
+                "Bucket": self.bucket,
+                "Prefix": safe_prefix,
+            }
+            if token:
+                kwargs["ContinuationToken"] = token
+            response = self._client.list_objects_v2(**kwargs)
+            for item in response.get("Contents") or []:
+                key = item.get("Key")
+                if isinstance(key, str) and key:
+                    keys.append(key)
+            if not response.get("IsTruncated"):
+                break
+            token = response.get("NextContinuationToken")
+            if not token:
+                break
+        return keys
+
     def signed_url(self, key: str, *, expires_seconds: int = 3600) -> str:
         safe = _safe_key(key)
         if expires_seconds <= 0:
@@ -135,6 +188,8 @@ class S3CompatibleObjectStorage:
 
 
 def build_object_storage_from_env() -> ObjectStorage:
+    from ssri_model.storage.durable import validate_object_storage_configuration
+
     backend = os.getenv("SSRI_OBJECT_STORAGE_BACKEND", "local").lower()
     if backend == "local":
         default_root = os.getenv("SSRI_API_OUTPUT_ROOT", "outputs")
@@ -143,9 +198,11 @@ def build_object_storage_from_env() -> ObjectStorage:
         )
         return LocalObjectStorage(root=root)
     if backend in {"s3", "minio", "r2"}:
+        errors = validate_object_storage_configuration()
+        if errors:
+            raise ValueError("; ".join(errors))
         bucket = os.getenv("SSRI_OBJECT_STORAGE_BUCKET")
-        if not bucket:
-            raise ValueError("SSRI_OBJECT_STORAGE_BUCKET is required for S3 backend")
+        assert bucket  # validated above
         return S3CompatibleObjectStorage(
             bucket=bucket,
             endpoint_url=os.getenv("SSRI_OBJECT_STORAGE_ENDPOINT"),
