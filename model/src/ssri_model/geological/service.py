@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import shutil
 from datetime import datetime, timezone
 from typing import Any
 

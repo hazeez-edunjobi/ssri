@@ -233,7 +233,7 @@ def test_service_tmi_upload_validate_process(tmp_path: Path) -> None:
         assert ds.count == 1
         assert ds.crs.to_string() in {"EPSG:4326", "OGC:CRS84"} or "4326" in ds.crs.to_string()
 
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(Exception):
         svc.set_activation(rec.geo_id, activation_status="approved", acknowledged_warnings=[])
     # May fail on warnings first — acknowledge then expect TMI_NOT_APPROVABLE
     warn_names = [

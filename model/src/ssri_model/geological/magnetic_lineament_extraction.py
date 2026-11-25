@@ -650,9 +650,6 @@ def write_extraction_outputs(
         tags={"LAYER": "lineament_ridge_mask"},
     )
 
-    mask = result["ridge_mask"].astype(bool) | (
-        np.asarray(result["enhancement"]) != nodata
-    )
     # Valid survey approx: finite enhancement
     survey = np.isfinite(result["enhancement"]) & (result["enhancement"] != nodata)
     write_preview_png(

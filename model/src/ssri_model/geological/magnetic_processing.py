@@ -345,13 +345,13 @@ def reduction_to_equator(
     work, valid, prep = _prepare_fft(grid, mask, nodata)
     ny, nx = work.shape
     KX, KY, K = _wavenumbers(ny, nx, dy, dx)
-    I = math.radians(inclination_deg)
-    D = math.radians(declination_deg)
-    fx = np.cos(I) * np.cos(D)
-    fy = np.cos(I) * np.sin(D)
-    fz = np.sin(I)
-    fx_e = math.cos(0.0) * math.cos(D)
-    fy_e = math.cos(0.0) * math.sin(D)
+    inclination_rad = math.radians(inclination_deg)
+    declination_rad = math.radians(declination_deg)
+    fx = np.cos(inclination_rad) * np.cos(declination_rad)
+    fy = np.cos(inclination_rad) * np.sin(declination_rad)
+    fz = np.sin(inclination_rad)
+    fx_e = math.cos(0.0) * math.cos(declination_rad)
+    fy_e = math.cos(0.0) * math.sin(declination_rad)
     fz_e = 0.0
 
     with np.errstate(divide="ignore", invalid="ignore"):

@@ -22,7 +22,6 @@ from ssri_model.geological.target import resolve_offline_apply_target
 from ssri_model.manual_training.exceptions import ManualTrainingError
 from ssri_model.manual_training.storage import TrainingStorage
 from ssri_model.service.config import ServiceConfig
-from ssri_model.service.exceptions import InvalidServiceConfigError
 
 router = APIRouter(prefix="/geological", tags=["geological"])
 
