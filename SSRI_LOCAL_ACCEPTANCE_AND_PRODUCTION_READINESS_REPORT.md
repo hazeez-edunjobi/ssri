@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-25 (FINAL PRODUCTION CLOSURE SPRINT)  
 **Base HEAD (pre-sprint):** `43128af75dd03ddded668df4710d95c81c6a80b4`  
-**Closure commit:** *(filled after push — see git log)*  
+**Closure commit:** `db13b0d118063ad43c0a5e78343767dcc6f6035f`  
 **Mode:** Local hybrid stack + MinIO S3-compatible durable storage + host recovery loop  
 **Science posture:** **NOT_VALIDATED** (no independent ground truth). Software PASS ≠ geological truth.
 
