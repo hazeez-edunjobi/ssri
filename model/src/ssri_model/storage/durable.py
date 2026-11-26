@@ -324,6 +324,40 @@ def ensure_geological_dataset_local(
     return dataset_dir
 
 
+def discover_remote_geological_dataset_ids(
+    *,
+    storage: ObjectStorage | None = None,
+) -> list[str]:
+    """List geo_id values that have ``dataset.json`` under the geological object prefix.
+
+    Used so catalogue ``list()`` can materialize metadata after Render restarts
+    when the local FS cache is empty but R2/S3 still holds the datasets.
+    """
+    if not is_remote_object_backend() and storage is None:
+        return []
+    errors = validate_object_storage_configuration()
+    if errors and is_remote_object_backend():
+        raise IncompleteObjectStorageConfigError("; ".join(errors))
+    store = storage or build_object_storage_from_env()
+    prefix = "geological/datasets/"
+    ids: set[str] = set()
+    for key in store.list_prefix(prefix):
+        if not key.startswith(prefix):
+            continue
+        rest = key[len(prefix) :]
+        parts = rest.split("/")
+        if len(parts) < 2:
+            continue
+        geo_id, *tail = parts
+        if not geo_id.startswith("geo_"):
+            continue
+        if tail and tail[-1] == "dataset.json":
+            ids.add(geo_id)
+        elif len(tail) == 1 and tail[0] == "dataset.json":
+            ids.add(geo_id)
+    return sorted(ids)
+
+
 def mirror_training_dataset(
     dataset_root: Path,
     dataset_id: str,

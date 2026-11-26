@@ -115,6 +115,47 @@ def convert_csv_dataset(
     declared_crs = require_crs(crs)
     tables = _read_table_blobs(filename, content)
     kind, layers, labels, rows = _interpret_blobs(tables)
+    # Reject feature-only / incomplete surveys before rigid Stage 2.5 grid checks so
+    # client TMI (X,Y,Z) gets a clear "not trainable" message instead of CSV_GRID.
+    if kind == "single_layer" or labels is None or set(layers) != set(CHANNEL_NAMES):
+        xs: list[float] = []
+        ys: list[float] = []
+        x_spacing = 0.0
+        y_spacing = 0.0
+        try:
+            xs, ys, x_spacing, y_spacing = _grid_axes(layers[next(iter(layers))])
+        except ManualTrainingError:
+            pass
+        analysis = _analysis(
+            kind=kind,
+            rows=rows,
+            xs=xs,
+            ys=ys,
+            x_spacing=x_spacing,
+            y_spacing=y_spacing,
+            crs=declared_crs,
+            layers=layers,
+            labels=labels,
+        )
+        missing = [name for name in CHANNEL_NAMES if name not in layers]
+        analysis["status"] = "FEATURE_LAYER_ONLY"
+        analysis["trainable"] = False
+        analysis["missing_features"] = missing
+        message = (
+            "Training labels are missing. "
+            if labels is None
+            else "This CSV does not contain every SSRI feature channel. "
+        )
+        message += (
+            "A feature-only CSV can be imported as a spatial feature layer, "
+            "but it cannot be used as a supervised training dataset. "
+            "For client TMI / single-band point surveys (for example Abeokuta "
+            "sheet 260), use the geological catalogue upload — not Manual training."
+        )
+        if missing:
+            message += " Missing: " + ", ".join(missing) + "."
+        raise CsvFeatureOnly(message, analysis=analysis)
+
     xs, ys, x_spacing, y_spacing = _grid_axes(layers[next(iter(layers))])
     _align_layers(layers, labels, xs, ys)
     analysis = _analysis(
@@ -128,23 +169,6 @@ def convert_csv_dataset(
         layers=layers,
         labels=labels,
     )
-    if kind == "single_layer" or labels is None or set(layers) != set(CHANNEL_NAMES):
-        missing = [name for name in CHANNEL_NAMES if name not in layers]
-        analysis["status"] = "FEATURE_LAYER_ONLY"
-        analysis["trainable"] = False
-        analysis["missing_features"] = missing
-        message = (
-            "Training labels are missing. "
-            if labels is None
-            else "This CSV does not contain every SSRI feature channel. "
-        )
-        message += (
-            "A feature-only CSV can be imported as a spatial feature layer, "
-            "but it cannot be used as a supervised training dataset."
-        )
-        if missing:
-            message += " Missing: " + ", ".join(missing) + "."
-        raise CsvFeatureOnly(message, analysis=analysis)
 
     stack, label_grid = _stack_grids(layers, labels, xs, ys)
     split = _write_tiles(

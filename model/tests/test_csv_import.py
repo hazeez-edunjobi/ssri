@@ -99,7 +99,23 @@ def test_single_xyz_layer_is_not_trainable(tmp_path) -> None:
     version = response.json()["version"]
     assert version["validation_status"] == "failed"
     assert "cannot be used as a supervised training dataset" in version["validation_errors"][0]
+    assert "geological catalogue" in version["validation_errors"][0]
     assert version["preview"]["csv_analysis"]["status"] == "FEATURE_LAYER_ONLY"
+
+
+def test_irregular_xyz_tmi_is_feature_only_not_csv_grid(tmp_path) -> None:
+    """Abeokuta-like sparse X,Y,Z must not surface as a confusing CSV_GRID failure."""
+    from ssri_model.manual_training.csv_import import CsvFeatureOnly, convert_csv_dataset
+
+    lines = ["X,Y,Z", "0,0,1", "200,0,1", "0,100,1"]  # missing cell + irregular spacing
+    with pytest.raises(CsvFeatureOnly, match="geological catalogue"):
+        convert_csv_dataset(
+            tmp_path / "tmi",
+            filename="sheet_260_Abeokuta.csv",
+            content=("\n".join(lines) + "\n").encode(),
+            crs="EPSG:32632",
+            dataset_name="abeokuta",
+        )
 
 
 def test_csv_requires_crs_and_rejects_bad_spatial_data(tmp_path) -> None:
@@ -127,9 +143,22 @@ def test_csv_requires_crs_and_rejects_bad_spatial_data(tmp_path) -> None:
     with pytest.raises(ManualTrainingError, match="Duplicate spatial coordinate"):
         convert_csv_dataset(tmp_path / "dup", filename="a.csv", content=duplicate.encode(), crs="EPSG:32631", dataset_name="d")
 
+    # Incomplete channel/label CSVs fail as feature-only before rigid grid checks.
     irregular = _grid_csv(channels=["elevation"], label=None, x_gap=-1)
-    with pytest.raises(ManualTrainingError, match="irregular"):
+    from ssri_model.manual_training.csv_import import CsvFeatureOnly
+
+    with pytest.raises(CsvFeatureOnly, match="cannot be used as a supervised training dataset"):
         convert_csv_dataset(tmp_path / "irr", filename="elevation.csv", content=irregular, crs="EPSG:32631", dataset_name="d")
+
+    irregular_full = _grid_csv(channels=list(CHANNEL_NAMES), label="0", x_gap=-1)
+    with pytest.raises(ManualTrainingError, match="irregular"):
+        convert_csv_dataset(
+            tmp_path / "irr13",
+            filename="features.csv",
+            content=irregular_full,
+            crs="EPSG:32631",
+            dataset_name="d",
+        )
 
     missing_cell = _grid_csv(channels=list(CHANNEL_NAMES), label="0", skip=(1, 1))
     with pytest.raises(ManualTrainingError, match="missing"):
@@ -152,16 +181,41 @@ def test_nodata_labels_and_mismatched_layers(tmp_path) -> None:
     with zipfile.ZipFile(buffer, "w") as archive:
         archive.writestr("elevation.csv", "X,Y,Z\n0,0,1\n100,0,1\n0,100,1\n100,100,1\n")
         archive.writestr("slope.csv", "X,Y,Z\n0,0,1\n200,0,1\n0,100,1\n200,100,1\n")
-    from ssri_model.manual_training.csv_import import convert_csv_dataset
+    from ssri_model.manual_training.csv_import import CsvFeatureOnly, convert_csv_dataset
     from ssri_model.manual_training.exceptions import ManualTrainingError
 
-    with pytest.raises(ManualTrainingError, match="does not cover the same X/Y grid"):
+    # Incomplete feature sets are rejected as not trainable before grid alignment.
+    with pytest.raises(CsvFeatureOnly, match="cannot be used as a supervised training dataset"):
         convert_csv_dataset(
             tmp_path / "mismatch",
             filename="layers.zip",
             content=buffer.getvalue(),
             crs="EPSG:32632",
             dataset_name="mismatch",
+        )
+
+    # Full 13-channel set with a misaligned layer still fails on grid coverage.
+    buffer2 = io.BytesIO()
+    with zipfile.ZipFile(buffer2, "w") as archive:
+        for index, name in enumerate(CHANNEL_NAMES):
+            if name == "slope":
+                archive.writestr(
+                    f"{name}.csv",
+                    "X,Y,Z\n0,0,1\n200,0,1\n0,100,1\n200,100,1\n",
+                )
+            else:
+                archive.writestr(
+                    f"{name}.csv",
+                    "X,Y,Z\n0,0,1\n100,0,1\n0,100,1\n100,100,1\n",
+                )
+        archive.writestr("labels.csv", "X,Y,Z\n0,0,0\n100,0,0\n0,100,0\n100,100,0\n")
+    with pytest.raises(ManualTrainingError, match="does not cover the same X/Y grid"):
+        convert_csv_dataset(
+            tmp_path / "mismatch13",
+            filename="layers.zip",
+            content=buffer2.getvalue(),
+            crs="EPSG:32632",
+            dataset_name="mismatch13",
         )
 
 

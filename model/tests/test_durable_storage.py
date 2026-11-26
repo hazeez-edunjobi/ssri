@@ -112,6 +112,30 @@ def test_mirror_tree_and_materialize_prefix(
     assert (dest / "working" / "a.txt").read_text(encoding="utf-8") == "hello"
 
 
+def test_discover_remote_geological_dataset_ids(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("SSRI_OBJECT_STORAGE_BACKEND", "r2")
+    monkeypatch.setenv("SSRI_OBJECT_STORAGE_BUCKET", "ssri")
+    monkeypatch.setenv("SSRI_OBJECT_STORAGE_ENDPOINT", "https://example.r2.cloudflarestorage.com")
+    monkeypatch.setenv("SSRI_OBJECT_STORAGE_ACCESS_KEY", "ak")
+    monkeypatch.setenv("SSRI_OBJECT_STORAGE_SECRET_KEY", "sk")
+
+    from ssri_model.storage.durable import (
+        discover_remote_geological_dataset_ids,
+        geological_dataset_prefix,
+        mirror_tree_to_object_storage,
+    )
+
+    store = LocalObjectStorage(root=tmp_path / "objects")
+    src = tmp_path / "geo_abc"
+    src.mkdir()
+    (src / "dataset.json").write_text('{"geo_id":"geo_abc"}', encoding="utf-8")
+    mirror_tree_to_object_storage(src, geological_dataset_prefix("geo_abc"), storage=store)
+    ids = discover_remote_geological_dataset_ids(storage=store)
+    assert ids == ["geo_abc"]
+
+
 def test_incomplete_config_raises_on_mirror(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

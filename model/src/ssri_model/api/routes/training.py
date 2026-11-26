@@ -6,7 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from pydantic import BaseModel, Field
 
 from ssri_model.api.dependencies import (
@@ -459,6 +459,60 @@ def get_active_model(
         "checkpoint_path": None,
         "checkpoint_available": checkpoint_available,
         "model_id": model.model_id,
+    }
+
+
+@router.post("/models/register-checkpoint")
+async def register_checkpoint_upload(
+    file: UploadFile = File(...),
+    model_id: str = Form(...),
+    name: str = Form(...),
+    expected_sha256: str = Form(...),
+    activate: bool = Form(False),
+    notes: str = Form(""),
+    service_config: ServiceConfig = Depends(get_service_config),
+    _principal: AuthenticatedPrincipal = Depends(require_run_inference),
+) -> dict[str, Any]:
+    """Upload an existing Stage 2.5 best.pt into the registry (no retrain).
+
+    Uses the API host's configured object storage (production R2) so operators
+    do not need to copy bucket secrets into a local shell. Authentication is
+    required; scientific status remains NOT_VALIDATED.
+    """
+    from fastapi.responses import JSONResponse
+
+    from ssri_model.manual_training.upload_io import cleanup_temp, spool_upload_to_temp
+
+    tmp_path = None
+    try:
+        tmp_path, _nbytes = await spool_upload_to_temp(
+            file, suffix=Path(file.filename or "best.pt").suffix or ".pt"
+        )
+        registry = _registry(service_config)
+        model = registry.register_uploaded_checkpoint(
+            model_id=model_id.strip(),
+            name=name.strip() or model_id.strip(),
+            checkpoint_source=tmp_path,
+            expected_sha256=expected_sha256,
+            notes=notes,
+        )
+        if activate:
+            model = registry.activate(model.model_id)
+    except ManualTrainingError as exc:
+        return JSONResponse(status_code=400, content=_error_payload(exc))  # type: ignore[return-value]
+    finally:
+        cleanup_temp(tmp_path)
+    return {
+        "model": model.to_dict(),
+        "activated": bool(activate and model.active),
+        "object_storage_key": model.object_storage_key,
+        "object_storage_sha256": model.object_storage_sha256,
+        "scientific_validation_status": model.scientific_validation_status,
+        "message": (
+            "Checkpoint registered"
+            + (" and promoted for assessment." if activate else ".")
+            + " Scientific status remains NOT_VALIDATED."
+        ),
     }
 
 

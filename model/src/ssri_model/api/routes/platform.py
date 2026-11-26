@@ -253,21 +253,29 @@ async def upload_version(
     authorization: str | None = Header(default=None),
     service_config: ServiceConfig = Depends(get_service_config),
 ) -> Any:
+    from pathlib import Path
+
+    from ssri_model.manual_training.upload_io import cleanup_temp, spool_upload_to_temp
+
+    tmp_path = None
     try:
         store = _store(request)
         actor = get_actor(request, authorization)
-        content = await file.read()
+        suffix = Path(file.filename or "dataset.zip").suffix or ".zip"
+        tmp_path, _nbytes = await spool_upload_to_temp(file, suffix=suffix)
         version = register_dataset_zip(
             store,
             output_root=service_config.output_root,
             user_id=actor.user_id,
             dataset_id=dataset_id,
             filename=file.filename or "dataset.zip",
-            content=content,
+            upload_path=tmp_path,
             crs=crs,
         )
     except PlatformError as exc:
         return _error(exc)
+    finally:
+        cleanup_temp(tmp_path)
     return {"version": version.to_dict()}
 
 

@@ -112,6 +112,113 @@ class ModelRegistry:
                 return model
         raise ModelNotFoundError(f"Model not found: {model_id}")
 
+    def register_uploaded_checkpoint(
+        self,
+        *,
+        model_id: str,
+        name: str,
+        checkpoint_source: Path | str,
+        expected_sha256: str,
+        dataset_id: str = "external_bootstrap",
+        dataset_name: str = "external_checkpoint",
+        notes: str = "",
+        training_metrics: dict[str, Any] | None = None,
+    ) -> ModelRecord:
+        """Register an existing Stage 2.5 ``best.pt`` without retraining.
+
+        Verifies SHA-256 and ``model_config.in_channels == 13``. Does not overwrite
+        an existing model_id whose checkpoint bytes differ. Mirrors to object
+        storage when the remote backend is configured (production R2).
+        """
+        import hashlib
+
+        from ssri_model.ml.safe_torch import load_torch_checkpoint
+
+        source = Path(checkpoint_source)
+        if not source.is_file():
+            raise ModelNotFoundError(f"Checkpoint file was not found: {source}")
+        expected = expected_sha256.strip().lower()
+        if len(expected) != 64 or any(ch not in "0123456789abcdef" for ch in expected):
+            raise UnsafePathError("expected_sha256 must be a 64-character hex digest.")
+        digest = hashlib.sha256()
+        with source.open("rb") as handle:
+            while True:
+                chunk = handle.read(1024 * 1024)
+                if not chunk:
+                    break
+                digest.update(chunk)
+        actual = digest.hexdigest()
+        if actual != expected:
+            raise UnsafePathError(
+                "Checkpoint SHA-256 does not match the expected digest. "
+                "Refusing to register a substituted or corrupted file."
+            )
+        payload = load_torch_checkpoint(source, map_location="cpu")
+        config = payload.get("model_config") or {}
+        in_channels = int(config.get("in_channels") or 0)
+        if in_channels != 13:
+            raise UnsafePathError(
+                f"Checkpoint in_channels={in_channels} is incompatible with the "
+                "Stage 2.5 13-channel assess contract."
+            )
+        if "model_state_dict" not in payload:
+            raise UnsafePathError("Checkpoint is missing model_state_dict.")
+
+        # Refuse silent replacement of a different artifact under the same id.
+        index = self._load_index()
+        for item in index.get("models", []):
+            if item.get("model_id") != model_id:
+                continue
+            existing_sha = (item.get("object_storage_sha256") or "").strip().lower()
+            existing_path = Path(str(item.get("checkpoint_path") or ""))
+            if existing_sha and existing_sha != actual:
+                raise UnsafePathError(
+                    f"Model '{model_id}' is already registered with a different checkpoint digest."
+                )
+            if existing_path.is_file():
+                existing_digest = hashlib.sha256(existing_path.read_bytes()).hexdigest()
+                if existing_digest != actual:
+                    raise UnsafePathError(
+                        f"Model '{model_id}' is already registered with a different checkpoint file."
+                    )
+
+        dest_dir = self.storage.models_dir / model_id
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        dest_checkpoint = dest_dir / BEST_CHECKPOINT_NAME
+        if source.resolve() != dest_checkpoint.resolve():
+            shutil.copy2(source, dest_checkpoint)
+
+        record = ModelRecord(
+            model_id=model_id,
+            name=name,
+            created_at=datetime.now(timezone.utc).isoformat(),
+            dataset_id=dataset_id,
+            dataset_name=dataset_name,
+            checkpoint_path=str(dest_checkpoint.resolve()),
+            experiment_dir=str(dest_dir.resolve()),
+            job_id=None,
+            training_metrics=dict(training_metrics or {}),
+            evaluation_status="uploaded_checkpoint_only",
+            scientific_validation_status="NOT_VALIDATED",
+            active=False,
+            notes=(
+                notes.strip()
+                or (
+                    "Operator-uploaded Stage 2.5 checkpoint. "
+                    "NOT scientifically validated. Weights were not retrained."
+                )
+            ),
+            object_storage_sha256=actual,
+        )
+        record = self._maybe_mirror_checkpoint(record, dest_checkpoint)
+        if not record.object_storage_sha256:
+            record.object_storage_sha256 = actual
+        models = [item for item in index.get("models", []) if item.get("model_id") != model_id]
+        models.append(record.to_dict())
+        index["models"] = models
+        self._save_index(index)
+        return record
+
     def register_from_training(
         self,
         *,

@@ -153,6 +153,7 @@ class GeologicalStorage:
         limit: int = 100,
         offset: int = 0,
     ) -> tuple[list[GeologicalDatasetRecord], int]:
+        self._refresh_catalogue_from_object_storage()
         records: list[GeologicalDatasetRecord] = []
         if not self.datasets_dir.exists():
             return [], 0
@@ -172,6 +173,25 @@ class GeologicalStorage:
             records.append(rec)
         total = len(records)
         return records[offset : offset + limit], total
+
+    def _refresh_catalogue_from_object_storage(self) -> None:
+        """Materialize remote dataset.json shells so list() works after FS wipe."""
+        try:
+            from ssri_model.storage.durable import (
+                discover_remote_geological_dataset_ids,
+                ensure_geological_dataset_local,
+                is_remote_object_backend,
+            )
+
+            if not is_remote_object_backend():
+                return
+            for geo_id in discover_remote_geological_dataset_ids():
+                meta = self._meta_path(geo_id)
+                if meta.is_file():
+                    continue
+                ensure_geological_dataset_local(self.root, geo_id)
+        except Exception:
+            return
 
     def resolve_under(self, geo_id: str, relative: str) -> Path:
         base = self.dataset_dir(geo_id).resolve()

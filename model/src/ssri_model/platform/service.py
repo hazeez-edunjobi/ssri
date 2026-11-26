@@ -43,18 +43,58 @@ def register_dataset_zip(
     user_id: str,
     dataset_id: str,
     filename: str,
-    content: bytes,
+    content: bytes | None = None,
+    upload_path: Path | str | None = None,
     crs: str = "",
 ) -> DatasetVersion:
+    """Register a platform dataset version from bytes or a disk-spooled upload path.
+
+    Prefer ``upload_path`` for Stage 2.5 ZIP uploads so production does not load
+    the entire archive into RAM (classic ``/training/.../upload`` already spools).
+    """
+    from ssri_model.manual_training.ingest import ingest_zip_path
+
     dataset = store.get_dataset(dataset_id)
     if dataset is None or dataset.user_id != user_id:
         raise PlatformError("Dataset not found.", code="NOT_FOUND", status=404)
-    try:
-        reject_if_upload_too_large(len(content))
-    except ManualTrainingError as exc:
-        raise PlatformError(exc.message, code=exc.code, status=413) from exc
+
+    path = Path(upload_path) if upload_path is not None else None
+    if content is None and path is None:
+        raise PlatformError("Upload content is missing.", code="UPLOAD_EMPTY", status=400)
+    if content is None:
+        assert path is not None
+        try:
+            reject_if_upload_too_large(path.stat().st_size)
+        except ManualTrainingError as exc:
+            raise PlatformError(exc.message, code=exc.code, status=413) from exc
+    else:
+        try:
+            reject_if_upload_too_large(len(content))
+        except ManualTrainingError as exc:
+            raise PlatformError(exc.message, code=exc.code, status=413) from exc
+
     lowered = filename.lower()
-    if lowered.endswith(".csv") or looks_like_csv_bundle(filename, content):
+    is_csv_bundle = False
+    if lowered.endswith(".csv"):
+        is_csv_bundle = True
+    elif lowered.endswith(".zip"):
+        if content is not None:
+            is_csv_bundle = looks_like_csv_bundle(filename, content)
+        elif path is not None:
+            # Peek names only — do not load a Stage 2.5 archive into RAM.
+            import zipfile
+
+            with zipfile.ZipFile(path) as archive:
+                names = [
+                    item.replace("\\", "/")
+                    for item in archive.namelist()
+                    if not item.endswith("/")
+                ]
+            lowered_names = [name.lower() for name in names]
+            if not any(name.endswith("manifest.json") for name in lowered_names):
+                is_csv_bundle = any(name.endswith(".csv") for name in lowered_names)
+    if is_csv_bundle:
+        csv_bytes = content if content is not None else path.read_bytes()  # type: ignore[union-attr]
         return _register_csv(
             store,
             output_root=output_root,
@@ -62,7 +102,7 @@ def register_dataset_zip(
             dataset=dataset,
             dataset_id=dataset_id,
             filename=filename,
-            content=content,
+            content=csv_bytes,
             crs=crs,
         )
     if not lowered.endswith(".zip"):
@@ -76,14 +116,39 @@ def register_dataset_zip(
     storage = TrainingStorage(output_root)
     staging = storage.create_dataset(name=dataset.name, description=dataset.description)
     try:
-        _record, preview = ingest_zip_bytes(
-            storage,
-            staging.dataset_id,
-            filename=filename,
-            content=content,
-        )
+        if path is not None:
+            _record, preview = ingest_zip_path(
+                storage,
+                staging.dataset_id,
+                filename=filename,
+                zip_path=path,
+            )
+            file_size = path.stat().st_size
+            digest = hashlib.sha256()
+            with path.open("rb") as handle:
+                while True:
+                    chunk = handle.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    digest.update(chunk)
+            content_sha = digest.hexdigest()
+        else:
+            assert content is not None
+            _record, preview = ingest_zip_bytes(
+                storage,
+                staging.dataset_id,
+                filename=filename,
+                content=content,
+            )
+            file_size = len(content)
+            content_sha = hashlib.sha256(content).hexdigest()
     except ManualTrainingError as exc:
-        status = 413 if exc.code == "UPLOAD_TOO_LARGE" else 400
+        status = 413 if exc.code in {
+            "UPLOAD_TOO_LARGE",
+            "ZIP_TOO_LARGE_EXPANDED",
+            "ZIP_BOMB",
+            "ZIP_TOO_MANY_FILES",
+        } else 400
         raise PlatformError(exc.message, code=exc.code, status=status) from exc
     version_number = store.next_version_number(dataset_id)
     version_id = str(uuid.uuid4())
@@ -91,7 +156,8 @@ def register_dataset_zip(
     object_path = f"{user_id}/{dataset_id}/{version_id}/{safe_name}"
     upload_object = getattr(store, "upload_dataset_object", None)
     if upload_object is not None:
-        upload_object(path=object_path, content=content)
+        object_bytes = path.read_bytes() if path is not None else (content or b"")
+        upload_object(path=object_path, content=object_bytes)
     preview_payload = preview.to_dict()
     preview_payload["extracted_root"] = staging.root_path
     version = DatasetVersion(
@@ -100,8 +166,8 @@ def register_dataset_zip(
         version=version_number,
         storage_path=object_path,
         file_name=Path(filename).name,
-        file_size=len(content),
-        content_sha256=hashlib.sha256(content).hexdigest(),
+        file_size=file_size,
+        content_sha256=content_sha,
         crs=preview.crs,
         width=(preview.spatial_size or {}).get("width"),
         height=(preview.spatial_size or {}).get("height"),
