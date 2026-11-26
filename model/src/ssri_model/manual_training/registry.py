@@ -75,14 +75,22 @@ class ModelRegistry:
         self._index_path = storage.models_dir / "registry.json"
         self._active_path = storage.models_dir / "active.json"
 
-    def _load_index(self) -> dict[str, Any]:
-        if not self._index_path.exists():
-            try:
-                from ssri_model.storage.durable import ensure_registry_metadata_local
+    def _ensure_registry_metadata(self) -> None:
+        """Materialize registry.json / active.json from object storage when FS is empty.
 
-                ensure_registry_metadata_local(self.storage.models_dir)
-            except Exception:
-                pass
+        Render redeploys wipe ephemeral disks. Readiness used to call
+        ``get_active_model_id`` without this recovery, so a still-valid R2
+        ``active.json`` looked like "no promoted model".
+        """
+        try:
+            from ssri_model.storage.durable import ensure_registry_metadata_local
+
+            ensure_registry_metadata_local(self.storage.models_dir)
+        except Exception:
+            pass
+
+    def _load_index(self) -> dict[str, Any]:
+        self._ensure_registry_metadata()
         if not self._index_path.exists():
             return {"models": []}
         return json.loads(self._index_path.read_text(encoding="utf-8"))
@@ -302,6 +310,7 @@ class ModelRegistry:
         return record
 
     def get_active_model_id(self) -> str | None:
+        self._ensure_registry_metadata()
         if not self._active_path.exists():
             return None
         payload = json.loads(self._active_path.read_text(encoding="utf-8"))

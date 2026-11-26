@@ -101,3 +101,5 @@ poc/browser_acceptance_evidence/*.bin
 poc/browser_acceptance_evidence/derived_download.bin
 poc/browser_acceptance_evidence/bad_incomplete.csv
 
+
+.env.operator.local

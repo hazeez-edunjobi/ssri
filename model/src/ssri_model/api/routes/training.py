@@ -446,7 +446,20 @@ def get_active_model(
             "model_id": None,
         }
     model = registry.get_model(model_id)
-    checkpoint_available = Path(model.checkpoint_path).is_file()
+    checkpoint = Path(model.checkpoint_path)
+    checkpoint_available = checkpoint.is_file()
+    if not checkpoint_available and getattr(model, "object_storage_key", None):
+        try:
+            from ssri_model.storage.durable import resolve_checkpoint_path
+
+            recovered = resolve_checkpoint_path(
+                local_path=checkpoint,
+                object_key=model.object_storage_key,
+                cache_dir=registry.storage.models_dir / model_id / ".object_cache",
+            )
+            checkpoint_available = recovered.is_file()
+        except Exception:
+            checkpoint_available = False
     if reveal_paths:
         return {
             "active": model.to_dict(),
