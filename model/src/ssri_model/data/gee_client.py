@@ -83,13 +83,21 @@ class GEEConfig:
 
         resolved = Path(credentials_path)
         if not resolved.is_file():
-            # Resolve relative paths against CWD, package parents, and credentials/.
+            # Resolve relative / host paths against known runtime locations.
+            # Render Secret Files mount at /etc/secrets/<filename>.
+            # Compose mounts local credentials/ at /credentials (read-only).
+            basename = Path(credentials_path).name or "earth-engine.json"
             here = Path(__file__).resolve()
             search_roots = [Path.cwd(), *here.parents[:6]]
-            candidates: list[Path] = []
+            candidates: list[Path] = [
+                Path("/etc/secrets") / basename,
+                Path("/etc/secrets") / "earth-engine.json",
+                Path("/credentials") / basename,
+                Path("/credentials") / "earth-engine.json",
+            ]
             for root in search_roots:
                 candidates.append(root / credentials_path)
-                candidates.append(root / "credentials" / Path(credentials_path).name)
+                candidates.append(root / "credentials" / basename)
                 candidates.append(root / "credentials" / "earth-engine.json")
             for candidate in candidates:
                 if candidate.is_file():
@@ -97,7 +105,14 @@ class GEEConfig:
                     break
         if not resolved.is_file():
             raise GEEAuthenticationError(
-                f"Credentials file not found: {credentials_path}"
+                f"Credentials file not found: {credentials_path}. "
+                "Production (Render) must mount the service-account JSON as a "
+                "Secret File and set GOOGLE_APPLICATION_CREDENTIALS (or "
+                "GEE_PRIVATE_KEY_PATH) to the absolute container path "
+                f"(typically /etc/secrets/{Path(credentials_path).name or 'earth-engine.json'}). "
+                "Compose uses /credentials/earth-engine.json. "
+                "Relative paths like credentials/earth-engine.json only work when "
+                "that file exists in the process working directory."
             )
 
         return cls(

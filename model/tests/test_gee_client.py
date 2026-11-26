@@ -100,6 +100,50 @@ class TestAuthentication:
         with pytest.raises(GEEAuthenticationError, match="Credentials file not found"):
             authenticate(config)
 
+    def test_from_env_accepts_absolute_credentials_path(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        key = tmp_path / "earth-engine.json"
+        key.write_text(
+            '{"type":"service_account","client_email":"sa@test.iam.gserviceaccount.com"}',
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", str(key))
+        monkeypatch.setenv("GEE_SERVICE_ACCOUNT", "sa@test.iam.gserviceaccount.com")
+        monkeypatch.setenv("GEE_PROJECT", "ssri-504721")
+        cfg = GEEConfig.from_env()
+        assert Path(cfg.credentials_path).is_file()
+        assert cfg.project_id == "ssri-504721"
+        assert cfg.service_account == "sa@test.iam.gserviceaccount.com"
+
+    def test_from_env_missing_file_mentions_render_secret_mount(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv(
+            "GOOGLE_APPLICATION_CREDENTIALS",
+            "credentials/ssri-missing-earth-engine-for-test.json",
+        )
+        monkeypatch.setenv("GEE_SERVICE_ACCOUNT", "sa@test.iam.gserviceaccount.com")
+        monkeypatch.setenv("GEE_PROJECT", "ssri-504721")
+        real_is_file = Path.is_file
+
+        def _no_local_cred_files(self: Path) -> bool:  # noqa: ANN001
+            text = str(self).replace("\\", "/")
+            if text.endswith(".json") and (
+                "credentials" in text or "/etc/secrets/" in text
+            ):
+                return False
+            return real_is_file(self)
+
+        monkeypatch.setattr(Path, "is_file", _no_local_cred_files)
+        with pytest.raises(GEEAuthenticationError, match="/etc/secrets"):
+            GEEConfig.from_env()
+
 
 class TestInitialization:
     def test_initialize_calls_ee_initialize_once(
