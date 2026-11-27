@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import {
   ASSESSMENT_LOADING_STAGES,
@@ -23,6 +23,8 @@ export type LoaderProps = {
   progress?: BackendAssessmentProgress | null;
   onCancel?: () => void;
   onRetry?: () => void;
+  /** Assessment-only: small popup in the bottom-right corner (default true). */
+  floating?: boolean;
   error?: string | null;
   "data-testid"?: string;
 };
@@ -67,6 +69,7 @@ function IndeterminateBar() {
   );
 }
 
+/** Shows ONE step at a time, then moves to the next. */
 function AssessmentBody({
   presentation,
   onCancel,
@@ -74,97 +77,68 @@ function AssessmentBody({
   presentation: AssessmentLoadingPresentation;
   onCancel?: () => void;
 }) {
+  const [tick, setTick] = useState(0);
+
+  // No backend progress yet: walk through the steps one by one and rest on the last.
+  useEffect(() => {
+    if (presentation.mode !== "indeterminate") return;
+    const last = ASSESSMENT_LOADING_STAGES.length - 1;
+    const id = setInterval(() => setTick((t) => Math.min(t + 1, last)), 2500);
+    return () => clearInterval(id);
+  }, [presentation.mode]);
+
+  let label: string;
+  let detail: string | undefined;
+  let position: string | undefined;
+
+  if (presentation.mode === "staged") {
+    const idx = Math.max(
+      0,
+      presentation.stages.findIndex((st) => st.id === presentation.currentStageId),
+    );
+    const current = presentation.stages[idx];
+    label = current?.label ?? presentation.title;
+    detail = current?.description;
+    position = `${idx + 1} of ${presentation.stages.length}`;
+  } else {
+    const current = ASSESSMENT_LOADING_STAGES[tick];
+    label = current?.label ?? presentation.title;
+    position = `${tick + 1} of ${ASSESSMENT_LOADING_STAGES.length}`;
+  }
+
   return (
     <div
-      className="space-y-5 rounded-2xl border border-meadow bg-white/60 p-5"
+      className="flex items-center gap-3 rounded-2xl border border-meadow bg-white px-4 py-3 shadow-lg"
       data-testid="assessment-loader-body"
     >
-      <div className="flex items-start gap-4">
-        <Spinner className="mt-0.5 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <h3 className="font-display text-lg text-bark">
-            {presentation.title}
-          </h3>
-          <p className="mt-1 text-sm leading-relaxed text-stone">
-            {presentation.description}
-          </p>
-          {presentation.mode === "indeterminate" && (
-            <p
-              className="mt-2 text-sm text-moss"
-              data-testid="assessment-loader-status"
-            >
-              {presentation.statusLabel}
-            </p>
-          )}
-        </div>
+      <Spinner className="h-5 w-5 shrink-0 border-2" />
+      <div className="min-w-0 flex-1">
+        <p
+          key={label}
+          className="ssri-step truncate text-sm font-medium text-bark"
+          data-testid="assessment-loader-status"
+        >
+          {label}
+        </p>
+        {detail && <p className="truncate text-xs text-stone">{detail}</p>}
       </div>
-
-      {presentation.mode === "staged" ? (
-        <ol className="space-y-0.5" data-testid="assessment-loader-stages">
-          {presentation.stages.map((stage) => {
-            const done = presentation.completedStageIds.includes(stage.id);
-            const current = presentation.currentStageId === stage.id;
-            return (
-              <li
-                key={stage.id}
-                className={cn(
-                  "flex items-start gap-3 rounded-xl px-3 py-2",
-                  current && "bg-meadow/50",
-                )}
-                data-testid={`assessment-loader-stage-${stage.id}`}
-                data-state={current ? "current" : done ? "done" : "pending"}
-              >
-                <span
-                  className={cn(
-                    "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                    current && "bg-leaf animate-pulse motion-reduce:animate-none",
-                    done && !current && "bg-moss",
-                    !done && !current && "bg-meadow",
-                  )}
-                  aria-hidden
-                />
-                <span className="min-w-0">
-                  <span
-                    className={cn(
-                      "block text-sm",
-                      current
-                        ? "font-medium text-bark"
-                        : done
-                          ? "text-moss"
-                          : "text-stone/60",
-                    )}
-                  >
-                    {stage.label}
-                  </span>
-                  {current && (
-                    <span className="mt-0.5 block text-xs text-stone">
-                      {stage.description}
-                    </span>
-                  )}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      ) : (
-        <div className="space-y-3" data-testid="assessment-loader-honest-stages">
-          <IndeterminateBar />
-          <p className="text-xs text-stone">
-            {ASSESSMENT_LOADING_STAGES.map((s) => s.label).join(", ")}
-          </p>
-        </div>
-      )}
-
+      <span className="shrink-0 text-xs text-stone/70">{position}</span>
       {onCancel && (
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md text-sm text-moss underline underline-offset-2 hover:text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf"
+          aria-label="Cancel assessment"
+          className="shrink-0 rounded-md px-1 text-lg leading-none text-stone hover:text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-leaf"
           data-testid="assessment-loader-cancel"
         >
-          Cancel assessment
+          ×
         </button>
       )}
+      <style>{`
+        @keyframes ssri-step-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+        .ssri-step { animation: ssri-step-in .25s ease-out; }
+        @media (prefers-reduced-motion: reduce) { .ssri-step { animation: none; } }
+      `}</style>
     </div>
   );
 }
@@ -182,6 +156,7 @@ export function Loader({
   progress,
   onCancel,
   onRetry,
+  floating = true,
   error,
   "data-testid": testId,
 }: LoaderProps) {
@@ -262,7 +237,10 @@ export function Loader({
           "flex min-h-[40vh] w-full flex-col items-center justify-center px-6 py-16",
         variant === "section" && "flex w-full justify-center py-10",
         variant === "inline" && "inline-flex items-center",
-        variant === "assessment" && "mt-5 w-full",
+        variant === "assessment" &&
+          (floating
+            ? "fixed bottom-4 right-4 z-50 w-[calc(100%-2rem)] max-w-sm"
+            : "mt-5 w-full max-w-sm"),
         className,
       )}
       role="status"
