@@ -70,8 +70,9 @@ export function RequireSession({
       <main className="min-h-screen bg-mist">
         <Loader
           variant="page"
-          title="Checking session"
-          description="Confirming your signed-in workspace before continuing."
+          title="Verifying authentication session"
+          description="Confirming your signed-in workspace before opening the assessment environment."
+          stage="SSRI session"
           data-testid="session-loading"
         />
       </main>

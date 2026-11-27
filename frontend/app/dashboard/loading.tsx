@@ -6,7 +6,8 @@ export default function DashboardLoading() {
       <Loader
         variant="page"
         title="Opening assessment workspace"
-        description="Preparing the map and operator controls."
+        description="Loading the dashboard route before session and system preparation."
+        stage="SSRI dashboard"
         data-testid="dashboard-route-loading"
       />
     </main>

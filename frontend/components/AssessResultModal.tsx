@@ -17,7 +17,9 @@ import { ASSESSMENT_PREVIEW_LABEL } from "@/lib/activeModelStatus";
 import { PresentationDemoProgress } from "@/components/PresentationDemoProgress";
 import { buildAssessmentReportHtml } from "@/lib/report";
 import { presentHazardIntervals } from "@/lib/uncertaintyIntervals";
+import { AssessmentExecutionLoader } from "@/components/AssessmentExecutionLoader";
 import { Loader } from "@/components/ui/loader";
+import type { AssessmentClientPhase } from "@/lib/assessmentExecution";
 import type { BackendAssessmentProgress } from "@/lib/assessmentLoading";
 
 /**
@@ -90,6 +92,8 @@ type AssessResultModalProps = {
   onCancelLoading?: () => void;
   /** Optional backend progress; omit for honest indeterminate processing. */
   loadingProgress?: BackendAssessmentProgress | null;
+  /** Client-confirmed assess request phase (live sync POST). */
+  executionPhase?: AssessmentClientPhase;
   onClose: () => void;
   onViewMap: () => void;
 };
@@ -106,6 +110,7 @@ export function AssessResultModal({
   settings,
   onCancelLoading,
   loadingProgress = null,
+  executionPhase = "awaiting_response",
   onClose,
   onViewMap,
 }: AssessResultModalProps) {
@@ -258,9 +263,9 @@ export function AssessResultModal({
           />
         )}
         {loading && !presentationDemo && (
-          <Loader
-            variant="assessment"
-            progress={loadingProgress}
+          <AssessmentExecutionLoader
+            phase={executionPhase}
+            backendProgress={loadingProgress}
             onCancel={onCancelLoading}
             data-testid="assess-result-loading"
           />

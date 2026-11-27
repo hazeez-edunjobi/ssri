@@ -340,11 +340,13 @@ export async function getDemoScenarios(): Promise<DemoScenariosResponse> {
 export async function submitAssess(
   payload: AssessRequest,
   apiKey?: string,
+  signal?: AbortSignal,
 ): Promise<AssessResponse> {
   const response = await fetch(`${apiUrl}/api/v1/assess`, {
     method: "POST",
     headers: await authHeaders(apiKey),
     body: JSON.stringify(buildAssessRequestBody(payload)),
+    signal,
   });
   if (!response.ok) {
     const message = await parseError(response, "Assessment failed");

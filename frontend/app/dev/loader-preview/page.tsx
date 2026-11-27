@@ -1,12 +1,32 @@
 "use client";
 
+import { AssessmentExecutionLoader } from "@/components/AssessmentExecutionLoader";
+import { DashboardPreparation } from "@/components/DashboardPreparation";
 import { ContentSkeleton, Loader, MapSkeleton } from "@/components/ui/loader";
+import { presentDashboardPreparation } from "@/lib/dashboardPreparation";
 
 /**
  * Local visual review surface for loader variants.
  * Not linked from production navigation.
  */
 export default function LoaderPreviewPage() {
+  const prepInFlight = presentDashboardPreparation({
+    sessionEmail: "ops@ssri.test",
+    apiStatus: "ok",
+    modelStatus: {
+      kind: "loading",
+      modelId: null,
+      label: null,
+      checkpointAvailable: false,
+    },
+    hazardRegistry: "in_progress",
+    hazards: ["subsidence", "landslide", "sinkhole"],
+    mapLoaded: false,
+    geophysics: "in_progress",
+    geological: "pending",
+    geologicalCount: 0,
+  });
+
   return (
     <main className="min-h-screen bg-land-wash px-4 py-10 text-bark sm:px-8">
       <div className="mx-auto max-w-5xl space-y-10">
@@ -16,13 +36,34 @@ export default function LoaderPreviewPage() {
           </p>
           <h1 className="mt-2 font-display text-3xl">SSRI loader variants</h1>
           <p className="mt-2 max-w-2xl text-sm text-stone">
-            Assessment uses an honest indeterminate state when the API does not
-            confirm stages. Staged mode appears only with confirmed backend progress.
+            Dashboard preparation and assessment execution reflect real async
+            operations. Server stages stay unconfirmed unless the API reports them.
           </p>
         </header>
 
         <section className="rounded-2xl border border-meadow bg-chalk p-5 shadow-soft">
-          <h2 className="font-display text-lg">Assessment — indeterminate</h2>
+          <h2 className="font-display text-lg">Dashboard preparation</h2>
+          <div className="relative mt-4 h-[34rem] overflow-hidden rounded-xl border border-meadow">
+            <DashboardPreparation
+              presentation={prepInFlight}
+              contained
+              data-testid="preview-dashboard-preparation"
+            />
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-meadow bg-chalk p-5 shadow-soft">
+          <h2 className="font-display text-lg">Assessment execution — live sync</h2>
+          <AssessmentExecutionLoader
+            phase="awaiting_response"
+            backendProgress={{ status: "processing" }}
+            onCancel={() => undefined}
+            data-testid="preview-assessment-execution"
+          />
+        </section>
+
+        <section className="rounded-2xl border border-meadow bg-chalk p-5 shadow-soft">
+          <h2 className="font-display text-lg">Assessment — legacy indeterminate</h2>
           <Loader
             variant="assessment"
             progress={{ status: "running" }}

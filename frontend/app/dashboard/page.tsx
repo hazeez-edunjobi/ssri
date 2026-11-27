@@ -53,12 +53,19 @@ import {
   resolvePresentationDemoActive,
 } from "@/lib/productionIntegrity";
 import { AssessResultModal } from "@/components/AssessResultModal";
+import { DashboardPreparation } from "@/components/DashboardPreparation";
 import { PresentationScenarioPicker } from "@/components/PresentationScenarioPicker";
 import { ProductCapabilities } from "@/components/product/ProductCapabilities";
 import { LandPhoto } from "@/components/theme/LandPhoto";
 import { RequireSession, useRequiredSession } from "@/components/auth/RequireSession";
 import { MapSkeleton } from "@/components/ui/loader";
+import type { AssessmentClientPhase } from "@/lib/assessmentExecution";
 import { buildConditioningGroups, geologicalContextLines } from "@/lib/conditioning";
+import {
+  presentDashboardPreparation,
+  type HazardRegistryStatus,
+  type OptionalLayerStatus,
+} from "@/lib/dashboardPreparation";
 import { apiHealthLabel } from "@/lib/apiHealthStatus";
 import {
   assessmentButtonDisabled,
@@ -104,10 +111,21 @@ function AssessmentWorkspace() {
   const mapRef = useRef<import("maplibre-gl").Map | undefined>();
   const markerRef = useRef<import("maplibre-gl").Marker | undefined>();
   const drawPointsRef = useRef<[number, number][]>([]);
-  const [mapReady, setMapReady] = useState(true);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapFailed, setMapFailed] = useState(false);
   const [apiStatus, setApiStatus] = useState<
     "checking" | "ok" | "degraded" | "down"
   >("checking");
+  const [hazardRegistry, setHazardRegistry] =
+    useState<HazardRegistryStatus>("pending");
+  const [geophysicsStatus, setGeophysicsStatus] =
+    useState<OptionalLayerStatus>("pending");
+  const [geologicalStatus, setGeologicalStatus] =
+    useState<OptionalLayerStatus>("pending");
+  const [prepDismissed, setPrepDismissed] = useState(false);
+  const [prepRetryKey, setPrepRetryKey] = useState(0);
+  const [assessPhase, setAssessPhase] =
+    useState<AssessmentClientPhase>("idle");
   /**
    * Presentation demo UI — only when server demo_mode AND client opt-in
    * (never in production builds). See productionIntegrity.ts.
@@ -280,6 +298,10 @@ function AssessmentWorkspace() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (!cancelled) {
+        setApiStatus("checking");
+        setHazardRegistry("in_progress");
+      }
       try {
         await getHealth();
         try {
@@ -338,17 +360,19 @@ function AssessmentWorkspace() {
         if (!cancelled) {
           setHazards(names);
           setSelectedHazards(names);
+          setHazardRegistry("loaded");
         }
         if (!cancelled && status.settings) setShellSettings(status.settings);
         if (!cancelled) setShellEnabled(Boolean(status.release_shell_enabled));
       } catch {
         // Backend registry unavailable; keep the mirrored fallback list.
+        if (!cancelled) setHazardRegistry("fallback");
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [refreshActiveModel]);
+  }, [refreshActiveModel, prepRetryKey]);
 
   // Re-check when the signed-in identity changes (session restoration).
   useEffect(() => {
@@ -383,9 +407,25 @@ function AssessmentWorkspace() {
   useEffect(() => {
     let map: import("maplibre-gl").Map | undefined;
     let cancelled = false;
+    const resetOptionalLayers = window.setTimeout(() => {
+      if (cancelled) return;
+      setMapFailed(false);
+      setGeophysicsStatus("pending");
+      setGeologicalStatus("pending");
+    }, 0);
     const readyTimer = window.setTimeout(() => {
-      if (!cancelled) setMapReady(true);
-    }, 2500);
+      // Failsafe so preparation cannot hang if MapLibre never emits load/error.
+      if (!cancelled) {
+        setMapReady(true);
+        setMapLoaded(true);
+        setGeophysicsStatus((prev) =>
+          prev === "pending" || prev === "in_progress" ? "unavailable" : prev,
+        );
+        setGeologicalStatus((prev) =>
+          prev === "pending" || prev === "in_progress" ? "unavailable" : prev,
+        );
+      }
+    }, 4000);
 
     const applyGravity = (
       active: import("maplibre-gl").Map,
@@ -479,6 +519,7 @@ function AssessmentWorkspace() {
           if (!cancelled) {
             setMapReady(true);
             setMapLoaded(true);
+            setMapFailed(false);
           }
         };
         map.on("load", markReady);
@@ -532,6 +573,7 @@ function AssessmentWorkspace() {
             DEFAULT_PRODUCT_BOUNDS,
           ];
 
+          if (!cancelled) setGeophysicsStatus("in_progress");
           try {
             const layer = await getGravityLayer();
             if (cancelled || !mapRef.current) return;
@@ -540,6 +582,7 @@ function AssessmentWorkspace() {
             setGravityLoaded(true);
             setGravityError(null);
             setGravityVisible(true);
+            setGeophysicsStatus("available");
             const coords = layer.features.flatMap((f) => f.geometry.coordinates[0]);
             footprintBoxes.push(boundsFromRing(coords as [number, number][]));
           } catch (err) {
@@ -550,10 +593,12 @@ function AssessmentWorkspace() {
               setGravityError(
                 err instanceof Error ? err.message : "Gravity layer failed to load",
               );
+              setGeophysicsStatus("unavailable");
             }
           }
 
           // Catalogue footprints — only verified WGS84 boxes (never projected XY).
+          if (!cancelled) setGeologicalStatus("in_progress");
           try {
             const { datasets } = await listGeologicalDatasets({ limit: 50 });
             if (cancelled || !mapRef.current) return;
@@ -587,6 +632,9 @@ function AssessmentWorkspace() {
             const fc = { type: "FeatureCollection" as const, features };
             const mapNow = mapRef.current;
             setFootprintCount(features.length);
+            setGeologicalStatus(
+              features.length > 0 ? "available" : "unavailable",
+            );
             if (mapNow.getSource(FOOTPRINT_SOURCE)) {
               (
                 mapNow.getSource(FOOTPRINT_SOURCE) as import("maplibre-gl").GeoJSONSource
@@ -612,6 +660,10 @@ function AssessmentWorkspace() {
             }
           } catch {
             // Catalogue optional on assessment map.
+            if (!cancelled) {
+              setFootprintCount(0);
+              setGeologicalStatus("unavailable");
+            }
           }
 
           const combined = unionBounds(footprintBoxes);
@@ -623,18 +675,25 @@ function AssessmentWorkspace() {
           }
         });
       } catch {
-        if (!cancelled) setMapReady(true);
+        if (!cancelled) {
+          setMapReady(true);
+          setMapLoaded(true);
+          setMapFailed(true);
+          setGeophysicsStatus("unavailable");
+          setGeologicalStatus("unavailable");
+        }
       }
     })();
 
     return () => {
       cancelled = true;
+      window.clearTimeout(resetOptionalLayers);
       window.clearTimeout(readyTimer);
       map?.remove();
     };
     // gravityVisible is applied via dedicated effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [redrawPolygon]);
+  }, [redrawPolygon, prepRetryKey]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -822,8 +881,39 @@ function AssessmentWorkspace() {
     assessAbortRef.current?.abort();
     assessAbortRef.current = null;
     assessInFlightRef.current = false;
+    setAssessPhase("cancelled");
     setLoading(false);
     setError("Assessment cancelled.");
+  }, []);
+
+  const preparation = presentDashboardPreparation({
+    sessionEmail: email,
+    apiStatus,
+    modelStatus,
+    hazardRegistry,
+    hazards,
+    mapLoaded,
+    mapFailed,
+    geophysics: geophysicsStatus,
+    geological: geologicalStatus,
+    geologicalCount: footprintCount,
+    registryReadyDetail,
+  });
+  const showPreparation = !prepDismissed && !preparation.ready;
+
+  const retryPreparation = useCallback(() => {
+    setPrepDismissed(false);
+    setApiStatus("checking");
+    setModelStatus(loadingActiveModel());
+    setHazardRegistry("pending");
+    setMapReady(false);
+    setMapLoaded(false);
+    setMapFailed(false);
+    setGeophysicsStatus("pending");
+    setGeologicalStatus("pending");
+    setGravityLoaded(false);
+    setFootprintCount(0);
+    setPrepRetryKey((key) => key + 1);
   }, []);
 
   const applyDemoScenario = useCallback(
@@ -896,45 +986,57 @@ function AssessmentWorkspace() {
     const abort = new AbortController();
     assessAbortRef.current?.abort();
     assessAbortRef.current = abort;
+    setAssessPhase("validating");
     setLoading(true);
     setError(null);
     setResult(null); // Never keep prior/demo results as current inference.
     setModalOpen(true);
     try {
-      const assessPromise = submitAssess({
-        // Always send the picked AOI: the backend accepts a point/polygon
-        // alongside offline `features`, and the release-shell gate needs it to
-        // decide in-region vs outside_training_region.
-        point: mode === "point" ? point ?? undefined : undefined,
-        polygon_geojson: mode === "polygon" ? polygon ?? undefined : undefined,
-        features: featuresPath || undefined,
-        // Ordinary clients omit checkpoint so the API resolves the promoted model.
-        checkpoint: checkpoint.trim() || undefined,
-        model_id:
-          !checkpoint.trim() && modelStatus.modelId
-            ? modelStatus.modelId
-            : undefined,
-        hazards: selectedHazards,
-        mc_samples: 20,
-        produce_geotiff: produceGeotiff,
-        demo_scenario_key:
-          presentationDemo && demoScenarioKey ? demoScenarioKey : undefined,
-      });
+      setAssessPhase("submitting");
+      const assessPromise = submitAssess(
+        {
+          // Always send the picked AOI: the backend accepts a point/polygon
+          // alongside offline `features`, and the release-shell gate needs it to
+          // decide in-region vs outside_training_region.
+          point: mode === "point" ? point ?? undefined : undefined,
+          polygon_geojson: mode === "polygon" ? polygon ?? undefined : undefined,
+          features: featuresPath || undefined,
+          // Ordinary clients omit checkpoint so the API resolves the promoted model.
+          checkpoint: checkpoint.trim() || undefined,
+          model_id:
+            !checkpoint.trim() && modelStatus.modelId
+              ? modelStatus.modelId
+              : undefined,
+          hazards: selectedHazards,
+          mc_samples: 20,
+          produce_geotiff: produceGeotiff,
+          demo_scenario_key:
+            presentationDemo && demoScenarioKey ? demoScenarioKey : undefined,
+        },
+        undefined,
+        abort.signal,
+      );
+      setAssessPhase("awaiting_response");
       const waitPromise = presentationDemo
         ? waitForPresentationDemo(PRESENTATION_DEMO_DURATION_MS, abort.signal)
         : Promise.resolve();
       const [response] = await Promise.all([assessPromise, waitPromise]);
-      if (abort.signal.aborted) return;
+      if (abort.signal.aborted) {
+        setAssessPhase("cancelled");
+        return;
+      }
+      setAssessPhase("complete");
       setResult(response);
     } catch (err) {
-      if (abort.signal.aborted) return;
-      setResult(null); // Failed inference must not leave fabricated/prior scores visible.
-      const message = err instanceof Error ? err.message : String(err);
-      if (err instanceof DOMException && err.name === "AbortError") {
+      if (abort.signal.aborted || (err instanceof DOMException && err.name === "AbortError")) {
+        setAssessPhase("cancelled");
+        setResult(null);
         setError("Assessment cancelled.");
-      } else {
-        setError(message);
+        return;
       }
+      setAssessPhase("failed");
+      setResult(null); // Failed inference must not leave fabricated/prior scores visible.
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       if (assessAbortRef.current === abort) {
         assessAbortRef.current = null;
@@ -968,6 +1070,17 @@ function AssessmentWorkspace() {
 
   return (
     <main className="flex h-screen flex-col bg-mist text-bark md:flex-row">
+      {showPreparation && (
+        <DashboardPreparation
+          presentation={preparation}
+          onRetry={retryPreparation}
+          onContinue={
+            preparation.blockingError
+              ? () => setPrepDismissed(true)
+              : undefined
+          }
+        />
+      )}
       <aside className="z-10 w-full space-y-6 overflow-y-auto border-b border-meadow bg-chalk p-6 md:h-full md:w-96 md:border-b-0 md:border-r">
         <div>
           <Link
@@ -1573,6 +1686,16 @@ function AssessmentWorkspace() {
         projectedPoint={projectedPoint}
         settings={shellSettings}
         onCancelLoading={cancelAssess}
+        executionPhase={assessPhase}
+        loadingProgress={
+          loading
+            ? {
+                status: "processing",
+                message:
+                  "Live assess runs as one synchronous request. Server stages are not streamed until the response returns.",
+              }
+            : null
+        }
         onClose={() => {
           if (loading) cancelAssess();
           setModalOpen(false);
