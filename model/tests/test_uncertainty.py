@@ -10,15 +10,20 @@ from ssri_model.ml.constants import CHANNEL_COUNT, SUPPORTED_LABELS
 from ssri_model.uncertainty import (
     ConfidenceTier,
     DomainCentroid,
+    REASON_NO_DROPOUT_MODULES,
+    REASON_ZERO_VARIANCE,
     UncertaintyConfig,
     assess_from_mc_samples,
     assign_confidence_tier,
     cosine_similarity,
+    count_active_dropout_modules,
     embedding_from_features,
     empirical_credible_interval,
     gradient_feature_attribution,
     normalize_similarity,
+    resolve_interval_availability,
     run_mc_dropout,
+    samples_effectively_deterministic,
 )
 
 
@@ -91,11 +96,93 @@ def test_assessment_result_from_samples() -> None:
         domain_similarity_calibrated=True,
         assessment_id="a-1",
         primary_drivers_by_class={0: ["ndvi", "slope"], 1: ["twi"], 2: ["clay"]},
+        dropout_modules=2,
     )
     assert len(result.hazard_profiles) == 3
     payload = result.to_dict()
     assert payload["assessment_id"] == "a-1"
-    assert "credible_interval_80" in payload["hazard_profiles"][0]
+    assert payload["hazard_profiles"][0]["uncertainty_intervals_available"] is True
+    assert payload["hazard_profiles"][0]["credible_interval_80"] is not None
+    assert payload["hazard_profiles"][0]["credible_interval_80"][0] <= (
+        payload["hazard_profiles"][0]["credible_interval_80"][1]
+    )
+
+
+def test_zero_dropout_modules_marks_intervals_unavailable() -> None:
+    model = SSRIModel(SSRIModelConfig(base_channels=8, dropout=0.0))
+    assert count_active_dropout_modules(model) == 0
+    features = torch.randn(1, CHANNEL_COUNT, 8, 8)
+    samples = run_mc_dropout(
+        model, features, config=UncertaintyConfig(mc_samples=8, seed=1)
+    )
+    assert samples_effectively_deterministic(samples)
+    available, reason = resolve_interval_availability(
+        dropout_modules=0, samples=samples
+    )
+    assert available is False
+    assert reason == REASON_NO_DROPOUT_MODULES
+    result = assess_from_mc_samples(
+        samples,
+        hazard_names=SUPPORTED_LABELS,
+        domain_similarity=None,
+        domain_similarity_calibrated=False,
+        dropout_modules=0,
+    )
+    for profile in result.hazard_profiles:
+        payload = profile.to_dict()
+        assert payload["uncertainty_intervals_available"] is False
+        assert payload["credible_interval_80"] is None
+        assert payload["credible_interval_95"] is None
+        assert payload["uncertainty_unavailable_reason"] == REASON_NO_DROPOUT_MODULES
+        assert isinstance(payload["point_estimate"], float)
+
+
+def test_zero_variance_with_dropout_modules_marks_unavailable() -> None:
+    samples = np.array([[0.4, 0.5, 0.6], [0.4, 0.5, 0.6], [0.4, 0.5, 0.6]])
+    available, reason = resolve_interval_availability(
+        dropout_modules=3, samples=samples
+    )
+    assert available is False
+    assert reason == REASON_ZERO_VARIANCE
+    result = assess_from_mc_samples(
+        samples,
+        hazard_names=SUPPORTED_LABELS,
+        domain_similarity=0.9,
+        domain_similarity_calibrated=True,
+        dropout_modules=3,
+    )
+    assert result.hazard_profiles[0].credible_interval_80 is None
+    assert result.hazard_profiles[0].uncertainty_intervals_available is False
+
+
+def test_stochastic_dropout_model_has_nonzero_interval_width() -> None:
+    model = _tiny_model()
+    assert count_active_dropout_modules(model) > 0
+    features = torch.randn(1, CHANNEL_COUNT, 16, 16)
+    samples = run_mc_dropout(
+        model,
+        features,
+        config=UncertaintyConfig(mc_samples=20, dropout_p=0.3, seed=7),
+    )
+    available, reason = resolve_interval_availability(
+        dropout_modules=count_active_dropout_modules(model),
+        samples=samples,
+    )
+    assert available is True
+    assert reason is None
+    result = assess_from_mc_samples(
+        samples,
+        hazard_names=SUPPORTED_LABELS,
+        domain_similarity=0.8,
+        domain_similarity_calibrated=True,
+        dropout_modules=count_active_dropout_modules(model),
+    )
+    widths = [
+        p.credible_interval_80.width()
+        for p in result.hazard_profiles
+        if p.credible_interval_80 is not None
+    ]
+    assert widths and max(widths) > 0.0
 
 
 def test_uncalibrated_domain_similarity_nulls_score() -> None:

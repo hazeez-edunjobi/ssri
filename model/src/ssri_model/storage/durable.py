@@ -205,10 +205,12 @@ def mirror_file_to_object_storage(
     *,
     content_type: str,
     storage: ObjectStorage | None = None,
+    overwrite: bool = True,
 ) -> dict[str, Any] | None:
     """Upload an immutable file when a remote backend is configured.
 
     Returns metadata including object key and sha256, or None for local backend.
+    When ``overwrite`` is False and the object already exists, the upload is skipped.
     """
     if not is_remote_object_backend():
         return None
@@ -216,6 +218,16 @@ def mirror_file_to_object_storage(
     if errors:
         raise IncompleteObjectStorageConfigError("; ".join(errors))
     store = storage or build_object_storage_from_env()
+    if not overwrite and store.exists(key):
+        logger.info("mirror_skip_existing key=%s", key)
+        return {
+            "object_key": key,
+            "sha256": None,
+            "bytes": None,
+            "backend": object_storage_backend(),
+            "content_type": content_type,
+            "skipped_existing": True,
+        }
     payload = path.read_bytes()
     digest = sha256_bytes(payload)
     stored_key = store.put_bytes(key, payload, content_type=content_type)
@@ -231,6 +243,7 @@ def mirror_file_to_object_storage(
         "bytes": len(payload),
         "backend": object_storage_backend(),
         "content_type": content_type,
+        "skipped_existing": False,
     }
 
 
@@ -739,4 +752,64 @@ def mirror_assessment_payload(
                 assessment_object_key(assessment_id, path.name),
                 content_type=_content_type_for(path),
                 storage=storage,
+                overwrite=False,
             )
+    acquisition = assess / "acquisition"
+    if acquisition.is_dir():
+        mirror_assessment_acquisition_evidence(
+            acquisition, assessment_id, storage=storage
+        )
+
+
+def mirror_assessment_acquisition_evidence(
+    acquisition_dir: Path,
+    assessment_id: str,
+    *,
+    storage: ObjectStorage | None = None,
+) -> dict[str, Any] | None:
+    """Mirror acquisition evidence files without overwriting existing R2 objects."""
+    root = Path(acquisition_dir)
+    if not root.is_dir():
+        return None
+    if not is_remote_object_backend() and storage is None:
+        return None
+    uploaded = 0
+    skipped = 0
+    for path in sorted(root.rglob("*")):
+        if not path.is_file():
+            continue
+        if path.name.startswith("."):
+            continue
+        rel = path.relative_to(root).as_posix()
+        key = f"assessments/{assessment_id}/acquisition/{rel}"
+        meta = mirror_file_to_object_storage(
+            path,
+            key,
+            content_type=_content_type_for(path),
+            storage=storage,
+            overwrite=False,
+        )
+        if meta and meta.get("skipped_existing"):
+            skipped += 1
+        elif meta:
+            uploaded += 1
+    return {
+        "assessment_id": assessment_id,
+        "uploaded": uploaded,
+        "skipped_existing": skipped,
+        "backend": object_storage_backend(),
+    }
+
+
+def ensure_assessment_acquisition_evidence_local(
+    acquisition_dir: Path,
+    assessment_id: str,
+    *,
+    storage: ObjectStorage | None = None,
+) -> int:
+    """Materialize acquisition evidence prefix from object storage when missing locally."""
+    return materialize_prefix_to_directory(
+        f"assessments/{assessment_id}/acquisition",
+        Path(acquisition_dir),
+        storage=storage,
+    )

@@ -32,6 +32,12 @@ from ssri_model.api.domain_similarity import resolve_domain_similarity
 from ssri_model.api.geojson import point_bbox, validate_polygon_geojson
 from ssri_model.api.geotiff_output import write_probability_geotiff
 from ssri_model.api.assess_conditioning import sample_conditioning_features
+from ssri_model.api.assessment_evidence import (
+    EVIDENCE_FILENAME,
+    TENSOR_FILENAME,
+    evidence_status_for_assessment,
+    persist_acquisition_evidence,
+)
 from ssri_model.api.geological_conditioning_overlay import (
     enrich_conditioning_with_geological_catalogue,
 )
@@ -52,8 +58,10 @@ from ssri_model.uncertainty import (
     UncertaintyConfig,
     assess_from_mc_samples,
     build_template_explanation,
+    count_active_dropout_modules,
     embedding_from_features,
     gradient_feature_attribution,
+    resolve_interval_availability,
     run_mc_dropout,
 )
 
@@ -165,6 +173,7 @@ class AssessResponseBody(BaseModel):
     spatial_output_crs: str | None = None
     spatial_output_georef_quality: str | None = None
     spatial_object_key: str | None = None
+    acquisition_evidence: dict[str, Any] | None = None
 
 
 _ALLOWED_FEATURE_CHANNEL_COUNTS = frozenset({CHANNEL_COUNT, 16})
@@ -538,7 +547,12 @@ def assess_endpoint(
             raise InvalidServiceRequestError(str(exc)) from exc
 
     cfg = UncertaintyConfig(mc_samples=body.mc_samples, seed=42)
+    dropout_modules = count_active_dropout_modules(model)
     samples = run_mc_dropout(model, features, config=cfg)
+    intervals_available, unavailable_reason = resolve_interval_availability(
+        dropout_modules=dropout_modules,
+        samples=samples,
+    )
     embedding = embedding_from_features(features)
     domain = resolve_domain_similarity(embedding)
 
@@ -565,6 +579,9 @@ def assess_endpoint(
         },
         assessment_id=assessment_id,
         model_version=body.model_version,
+        dropout_modules=dropout_modules,
+        intervals_available=intervals_available,
+        unavailable_reason=unavailable_reason,
     )
 
     if release_shell_enabled():
@@ -587,7 +604,10 @@ def assess_endpoint(
             requested=selected,
         )
         # Replace scored profiles with contract-compliant entries (no score if not evaluated).
-        # Preserve attribution drivers computed above when the shell entry omitted them.
+        # Preserve attribution drivers and honest uncertainty fields from MC path.
+        classic_by_hazard = {
+            str(p.hazard_type): p.to_dict() for p in result.hazard_profiles
+        }
         for profile in shell_profiles:
             hazard_name = str(profile.get("hazard_type") or "")
             if hazard_name and not profile.get("primary_drivers"):
@@ -597,6 +617,25 @@ def assess_endpoint(
                     continue
                 if drivers.get(class_index):
                     profile["primary_drivers"] = list(drivers[class_index])
+            classic = classic_by_hazard.get(hazard_name) or {}
+            for key in (
+                "credible_interval_80",
+                "credible_interval_95",
+                "uncertainty_intervals_available",
+                "uncertainty_unavailable_reason",
+                "confidence_tier",
+                "domain_similarity_score",
+                "point_estimate",
+            ):
+                if key in classic and key not in profile:
+                    profile[key] = classic[key]
+                elif key in classic and key in {
+                    "credible_interval_80",
+                    "credible_interval_95",
+                    "uncertainty_intervals_available",
+                    "uncertainty_unavailable_reason",
+                }:
+                    profile[key] = classic[key]
         explanation = (
             "Relative susceptibility rankings only where gate_status is evaluated. "
             "Status remains NOT_VALIDATED. Not for insurance, engineering, safety, "
@@ -606,6 +645,13 @@ def assess_endpoint(
     else:
         explanation = build_template_explanation(result.hazard_profiles)
         result_profiles = [profile.to_dict() for profile in result.hazard_profiles]
+    if not intervals_available and unavailable_reason:
+        notes_uncertainty = [
+            f"uncertainty_intervals_available=false",
+            f"uncertainty_unavailable_reason={unavailable_reason}",
+        ]
+    else:
+        notes_uncertainty = ["uncertainty_intervals_available=true"]
     spatial_url: str | None = None
     spatial_expires: int | None = None
     spatial_hazard: str | None = None
@@ -668,6 +714,7 @@ def assess_endpoint(
         f"checkpoint_sha256={checkpoint_sha256}",
         f"checkpoint_source={checkpoint_source}",
         f"is_fixture_checkpoint={str(is_fixture).lower()}",
+        *notes_uncertainty,
     ]
 
     if release_shell_enabled():
@@ -770,6 +817,32 @@ def assess_endpoint(
         notes.append(f"spatial_output_hazard={spatial_hazard}")
         notes.append(f"spatial_output_georef_quality={spatial_georef_quality}")
 
+    acquisition_evidence_doc: dict[str, Any] | None = None
+    if acquisition_meta is not None:
+        try:
+            acquisition_evidence_doc = persist_acquisition_evidence(
+                output_root=output_root,
+                assessment_id=assessment_id,
+                request_id=request_id,
+                tensor=features,
+                channel_names=advertised_names,
+                acquisition_meta=acquisition_meta,
+                location_provenance=location_provenance,
+                checkpoint_id=(
+                    checkpoint_path.stem if release_shell_enabled() else checkpoint_path.name
+                ),
+                checkpoint_sha256=checkpoint_sha256,
+                pixel_row=grid.get("pixel_row") if isinstance(grid, dict) else None,
+                pixel_col=grid.get("pixel_col") if isinstance(grid, dict) else None,
+            )
+            notes.append("acquisition_evidence=persisted")
+            artifacts = (acquisition_evidence_doc or {}).get("artifacts") or {}
+            evidence_key = (artifacts.get(EVIDENCE_FILENAME) or {}).get("object_key")
+            if evidence_key:
+                notes.append(f"acquisition_evidence_object_key={evidence_key}")
+        except Exception as exc:  # noqa: BLE001
+            notes.append(f"acquisition_evidence_error={type(exc).__name__}")
+
     response = AssessResponseBody(
         assessment_id=result.assessment_id,
         hazard_profiles=result_profiles,
@@ -794,6 +867,21 @@ def assess_endpoint(
         spatial_output_crs=spatial_crs,
         spatial_output_georef_quality=spatial_georef_quality,
         spatial_object_key=spatial_object_key,
+        acquisition_evidence=(
+            {
+                "available": True,
+                "historical_gap": False,
+                "query_pixel": (acquisition_evidence_doc or {}).get("query_pixel"),
+                "artifacts": (acquisition_evidence_doc or {}).get("artifacts"),
+                "channel_names": (acquisition_evidence_doc or {}).get("channel_names"),
+                "grid": (acquisition_evidence_doc or {}).get("grid"),
+                "checkpoint": (acquisition_evidence_doc or {}).get("checkpoint"),
+                "evidence_path": f"/api/v1/assess/history/{assessment_id}/evidence",
+                "tensor_path": f"/api/v1/assess/history/{assessment_id}/evidence/tensor",
+            }
+            if acquisition_evidence_doc
+            else None
+        ),
     )
     _persist_assessment_response(
         output_root=output_root,
@@ -929,6 +1017,19 @@ def get_assessment_history_detail(
     assess_dir = Path(service_config.output_root) / "assessments" / assessment_id
     payload_path = assess_dir / "assess_response.json"
     if not payload_path.is_file():
+        try:
+            from ssri_model.storage.durable import (
+                assessment_object_key,
+                materialize_object_to_path,
+            )
+
+            materialize_object_to_path(
+                assessment_object_key(assessment_id, "assess_response.json"),
+                payload_path,
+            )
+        except Exception:
+            pass
+    if not payload_path.is_file():
         raise InvalidServiceRequestError(f"Assessment '{assessment_id}' was not found.")
     data = json.loads(payload_path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
@@ -968,6 +1069,11 @@ def get_assessment_history_detail(
         "spatial_output_hazard": data.get("spatial_output_hazard"),
         "spatial_output_crs": data.get("spatial_output_crs"),
         "spatial_output_georef_quality": data.get("spatial_output_georef_quality"),
+        "acquisition_evidence": evidence_status_for_assessment(
+            Path(service_config.output_root), assessment_id
+        ),
+        "acquisition_evidence_path": f"/api/v1/assess/history/{assessment_id}/evidence",
+        "acquisition_tensor_path": f"/api/v1/assess/history/{assessment_id}/evidence/tensor",
     }
 
 
@@ -1058,5 +1164,74 @@ def download_assessment_spatial(
             "Cache-Control": "no-store",
             "X-SSRI-Assessment-Id": assessment_id,
             "X-SSRI-Spatial-Hazard": str(data.get("spatial_output_hazard") or ""),
+        },
+    )
+
+
+@router.get("/history/{assessment_id}/evidence")
+def get_assessment_acquisition_evidence(
+    assessment_id: str,
+    service_config: ServiceConfig = Depends(get_service_config),
+    principal: AuthenticatedPrincipal = Depends(require_run_assess_rate_limited),
+) -> dict[str, Any]:
+    """Authenticated acquisition evidence document (materializes from R2 when needed)."""
+    del principal
+    _validate_assessment_id(assessment_id)
+    assess_dir = Path(service_config.output_root) / "assessments" / assessment_id
+    if not (assess_dir / "assess_response.json").is_file() and not (
+        assess_dir / "acquisition" / EVIDENCE_FILENAME
+    ).is_file():
+        # Still attempt R2 materialize for evidence-only recovery.
+        status = evidence_status_for_assessment(
+            Path(service_config.output_root), assessment_id
+        )
+        if not status.get("available"):
+            raise InvalidServiceRequestError(
+                f"Assessment '{assessment_id}' evidence was not found. "
+                "Historical assessments created before durable evidence "
+                "persistence cannot recover fabricated feature values."
+            )
+        return status
+    status = evidence_status_for_assessment(
+        Path(service_config.output_root), assessment_id
+    )
+    if not status.get("available"):
+        raise InvalidServiceRequestError(
+            f"Assessment '{assessment_id}' has no durable acquisition evidence. "
+            "This is expected for assessments created before evidence persistence."
+        )
+    return status
+
+
+@router.get("/history/{assessment_id}/evidence/tensor")
+def download_assessment_acquisition_tensor(
+    assessment_id: str,
+    service_config: ServiceConfig = Depends(get_service_config),
+    principal: AuthenticatedPrincipal = Depends(require_run_assess_rate_limited),
+) -> Response:
+    """Authenticated download of the 13-channel feature_stack.npy evidence artefact."""
+    del principal
+    _validate_assessment_id(assessment_id)
+    root = Path(service_config.output_root)
+    status = evidence_status_for_assessment(root, assessment_id)
+    if not status.get("available") and not status.get("tensor_present"):
+        raise InvalidServiceRequestError(
+            f"No acquisition tensor is available for '{assessment_id}'. "
+            "Historical assessments may lack durable tensor evidence."
+        )
+    tensor_path = (
+        root / "assessments" / assessment_id / "acquisition" / TENSOR_FILENAME
+    )
+    if not tensor_path.is_file():
+        raise InvalidServiceRequestError(
+            f"Acquisition tensor file is missing for '{assessment_id}'."
+        )
+    return FileResponse(
+        path=tensor_path,
+        media_type="application/octet-stream",
+        filename=f"{assessment_id}_{TENSOR_FILENAME}",
+        headers={
+            "Cache-Control": "no-store",
+            "X-SSRI-Assessment-Id": assessment_id,
         },
     )

@@ -16,6 +16,7 @@ import {
 import { ASSESSMENT_PREVIEW_LABEL } from "@/lib/activeModelStatus";
 import { PresentationDemoProgress } from "@/components/PresentationDemoProgress";
 import { buildAssessmentReportHtml } from "@/lib/report";
+import { presentHazardIntervals } from "@/lib/uncertaintyIntervals";
 
 /**
  * Deterministic palette (one accent per surface). Indexed by position so it
@@ -363,14 +364,28 @@ export function AssessResultModal({
                         : " · domain uncalibrated"}
                     </p>
                   )}
-                  {profile.credible_interval_80 && profile.credible_interval_95 && (
-                    <p className="mt-1 font-mono text-[11px] text-stone">
-                      80% CI [{profile.credible_interval_80[0].toFixed(3)},{" "}
-                      {profile.credible_interval_80[1].toFixed(3)}] · 95% CI [
-                      {profile.credible_interval_95[0].toFixed(3)},{" "}
-                      {profile.credible_interval_95[1].toFixed(3)}]
-                    </p>
-                  )}
+                  {(() => {
+                    const intervals = presentHazardIntervals(profile);
+                    if (intervals.kind === "unavailable") {
+                      return (
+                        <p
+                          className="mt-1 text-[11px] text-stone"
+                          data-testid="assess-hazard-ci-unavailable"
+                        >
+                          Confidence intervals unavailable: {intervals.reason}
+                        </p>
+                      );
+                    }
+                    return (
+                      <p
+                        className="mt-1 font-mono text-[11px] text-stone"
+                        data-testid="assess-hazard-ci"
+                      >
+                        80% CI [{intervals.ci80[0].toFixed(3)}, {intervals.ci80[1].toFixed(3)}] ·
+                        95% CI [{intervals.ci95[0].toFixed(3)}, {intervals.ci95[1].toFixed(3)}]
+                      </p>
+                    );
+                  })()}
                   {profile.primary_drivers && profile.primary_drivers.length > 0 && (
                     <p className="mt-1 text-[11px] text-stone" data-testid="assess-hazard-drivers">
                       Contributing features: {profile.primary_drivers.join(", ")}

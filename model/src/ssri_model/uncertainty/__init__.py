@@ -64,23 +64,87 @@ class CredibleInterval:
         return [self.lower, self.upper]
 
 
+# Samples with peak-to-peak below this are treated as effectively deterministic.
+MC_VARIANCE_ATOL = 1e-12
+
+REASON_NO_DROPOUT_MODULES = (
+    "Checkpoint has no active stochastic dropout modules; "
+    "MC credible intervals are unavailable."
+)
+REASON_ZERO_VARIANCE = (
+    "MC predictions have effectively zero variance; "
+    "credible intervals are unavailable."
+)
+
+
+def count_active_dropout_modules(module: nn.Module) -> int:
+    """Count Dropout layers with p > 0 (Identity placeholders are ignored)."""
+    count = 0
+    for submodule in module.modules():
+        if isinstance(submodule, (nn.Dropout, nn.Dropout2d, nn.Dropout3d)):
+            if float(getattr(submodule, "p", 0.0) or 0.0) > 0.0:
+                count += 1
+    return count
+
+
+def samples_effectively_deterministic(
+    samples: np.ndarray,
+    *,
+    atol: float = MC_VARIANCE_ATOL,
+) -> bool:
+    """True when every class column has effectively zero range across MC draws."""
+    if samples.ndim != 2 or samples.shape[0] < 1:
+        return True
+    if samples.shape[0] == 1:
+        return True
+    peak = float(np.max(np.ptp(samples.astype(np.float64), axis=0)))
+    return peak <= float(atol)
+
+
+def resolve_interval_availability(
+    *,
+    dropout_modules: int,
+    samples: np.ndarray,
+) -> tuple[bool, str | None]:
+    """Decide whether empirical CIs are honest given dropout + sample variance."""
+    if int(dropout_modules) <= 0:
+        return False, REASON_NO_DROPOUT_MODULES
+    if samples_effectively_deterministic(samples):
+        return False, REASON_ZERO_VARIANCE
+    return True, None
+
+
 @dataclass(frozen=True)
 class HazardUncertainty:
     hazard_type: str
     point_estimate: float
-    credible_interval_80: CredibleInterval
-    credible_interval_95: CredibleInterval
+    credible_interval_80: CredibleInterval | None
+    credible_interval_95: CredibleInterval | None
     domain_similarity_score: float | None
     confidence_tier: ConfidenceTier
     primary_drivers: tuple[str, ...] = ()
+    uncertainty_intervals_available: bool = True
+    uncertainty_unavailable_reason: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "hazard_type": self.hazard_type,
             "point_estimate": self.point_estimate,
             "susceptibility_score": self.point_estimate,
-            "credible_interval_80": self.credible_interval_80.to_list(),
-            "credible_interval_95": self.credible_interval_95.to_list(),
+            "credible_interval_80": (
+                self.credible_interval_80.to_list()
+                if self.credible_interval_80 is not None
+                else None
+            ),
+            "credible_interval_95": (
+                self.credible_interval_95.to_list()
+                if self.credible_interval_95 is not None
+                else None
+            ),
+            "uncertainty_intervals_available": bool(
+                self.uncertainty_intervals_available
+            ),
+            "uncertainty_unavailable_reason": self.uncertainty_unavailable_reason,
             "domain_similarity_score": self.domain_similarity_score,
             "confidence_tier": self.confidence_tier.value,
             "primary_drivers": list(self.primary_drivers),
@@ -284,16 +348,39 @@ def assess_from_mc_samples(
     model_version: str = "unknown",
     explanation: str = "",
     domain_similarity_calibrated: bool = True,
+    dropout_modules: int | None = None,
+    intervals_available: bool | None = None,
+    unavailable_reason: str | None = None,
 ) -> AssessmentResult:
     cfg = config or UncertaintyConfig()
     if samples.ndim != 2:
         raise ValueError("samples must be shaped (N, C)")
+    if intervals_available is None:
+        if dropout_modules is not None:
+            intervals_available, unavailable_reason = resolve_interval_availability(
+                dropout_modules=int(dropout_modules),
+                samples=samples,
+            )
+        elif samples_effectively_deterministic(samples):
+            intervals_available, unavailable_reason = False, REASON_ZERO_VARIANCE
+        else:
+            intervals_available, unavailable_reason = True, None
     profiles: list[HazardUncertainty] = []
     for class_index, hazard_name in enumerate(hazard_names):
         class_samples = samples[:, class_index]
         median = float(np.median(class_samples))
-        ci80 = empirical_credible_interval(class_samples, level=cfg.interval_80)
-        ci95 = empirical_credible_interval(class_samples, level=cfg.interval_95)
+        if intervals_available:
+            ci80: CredibleInterval | None = empirical_credible_interval(
+                class_samples, level=cfg.interval_80
+            )
+            ci95: CredibleInterval | None = empirical_credible_interval(
+                class_samples, level=cfg.interval_95
+            )
+            interval_width = ci80.width()
+        else:
+            ci80 = None
+            ci95 = None
+            interval_width = float("inf")
         # Uncalibrated domain similarity must not drive tiers via a fake 0.5 score.
         # Conservative: report Low until a real reference centroid is configured.
         if not domain_similarity_calibrated or domain_similarity is None:
@@ -301,7 +388,7 @@ def assess_from_mc_samples(
             similarity_score: float | None = None
         else:
             tier = assign_confidence_tier(
-                interval_width=ci80.width(),
+                interval_width=interval_width,
                 domain_similarity=float(domain_similarity),
                 config=cfg,
             )
@@ -316,6 +403,10 @@ def assess_from_mc_samples(
                 domain_similarity_score=similarity_score,
                 confidence_tier=tier,
                 primary_drivers=drivers,
+                uncertainty_intervals_available=bool(intervals_available),
+                uncertainty_unavailable_reason=(
+                    None if intervals_available else unavailable_reason
+                ),
             )
         )
     return AssessmentResult(

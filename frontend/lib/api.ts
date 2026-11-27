@@ -74,8 +74,11 @@ export type HazardProfile = {
   preview_unevaluated_scores?: boolean;
   scientific_validation_status?: string;
   limitations?: string[] | null;
-  credible_interval_80?: [number, number];
-  credible_interval_95?: [number, number];
+  credible_interval_80?: [number, number] | null;
+  credible_interval_95?: [number, number] | null;
+  /** False when MC dropout is unavailable or zero-variance; do not treat null CIs as [x,x]. */
+  uncertainty_intervals_available?: boolean;
+  uncertainty_unavailable_reason?: string | null;
   domain_similarity_score?: number | null;
   confidence_tier?: string;
   primary_drivers?: string[];
