@@ -3,14 +3,20 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { Download } from "lucide-react";
 import { PlatformShell } from "@/components/platform/PlatformShell";
-import { TmiSurveyPreview } from "@/components/geological/TmiSurveyPreview";
+import { GeologicalExplorationWorkspace } from "@/components/geological/GeologicalExplorationWorkspace";
+import { GeologicalPipelineStepper } from "@/components/geological/GeologicalPipelineStepper";
+import { GeologicalProcessingTimeline } from "@/components/geological/GeologicalProcessingTimeline";
+import { GeologicalProductCards } from "@/components/geological/GeologicalProductCards";
+import { GeologicalTechnicalDetails } from "@/components/geological/GeologicalTechnicalDetails";
+import { Loader } from "@/components/ui/loader";
 import { COMMON_CRS_OPTIONS } from "@/lib/crsOptions";
 import {
   declareGeologicalMetadata,
   downloadGeologicalOriginal,
   extractGeologicalLineaments,
-  geologicalDerivedUrl,
+  fetchGeologicalDerived,
   getAbeokutaTmiPreset,
   getGeologicalDataset,
   listGeologicalMagnetic,
@@ -27,9 +33,15 @@ import {
   type ValidationReport,
 } from "@/lib/geologicalApi";
 import {
-  clientValidationOutcome,
-  validationOutcomeTone,
-} from "@/lib/validationOutcome";
+  directionBins,
+  parseLineamentGeoJson,
+  presentGeologicalProductCards,
+  presentGlanceStats,
+  presentPipelineSteps,
+  presentProcessingHistory,
+  statusBadges,
+  type LineamentFeature,
+} from "@/lib/geologicalPresentation";
 
 export default function GeologicalDetailPage() {
   const params = useParams();
@@ -40,6 +52,7 @@ export default function GeologicalDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [measurementType, setMeasurementType] = useState("");
   const [crs, setCrs] = useState("");
@@ -53,7 +66,7 @@ export default function GeologicalDetailPage() {
   const [surveyDate, setSurveyDate] = useState("");
   const [surveyMethod, setSurveyMethod] = useState("");
   const [samplingSpacing, setSamplingSpacing] = useState("");
-  const [processingHistory, setProcessingHistory] = useState("");
+  const [processingHistoryNote, setProcessingHistoryNote] = useState("");
   const [geoCoverage, setGeoCoverage] = useState("");
   const [gridResolution, setGridResolution] = useState("100");
   const [compatibility, setCompatibility] = useState<Record<string, unknown> | null>(
@@ -69,8 +82,19 @@ export default function GeologicalDetailPage() {
   const [gaussStd, setGaussStd] = useState("0.5");
   const [gaussMode, setGaussMode] = useState("low_pass");
   const [rteClip, setRteClip] = useState("10");
+  const [activeOperation, setActiveOperation] = useState("tmi");
+  const [showLineaments, setShowLineaments] = useState(true);
+  const [lineamentFeatures, setLineamentFeatures] = useState<LineamentFeature[]>(
+    [],
+  );
+  const [lineamentCrs, setLineamentCrs] = useState<string | null>(null);
+  const [selectedLineamentId, setSelectedLineamentId] = useState<string | null>(
+    null,
+  );
+  const [operatorOpen, setOperatorOpen] = useState(false);
 
-  const isTmi = measurementType === "total_magnetic_intensity" || measurementType === "tmi";
+  const isTmi =
+    measurementType === "total_magnetic_intensity" || measurementType === "tmi";
   const looksAbeokuta = Boolean(
     (dataset?.original_filename || dataset?.display_name || "")
       .toLowerCase()
@@ -98,7 +122,7 @@ export default function GeologicalDetailPage() {
       setSurveyDate(String(prov.survey_date || ""));
       setSurveyMethod(String(prov.survey_method || ""));
       setSamplingSpacing(String(prov.sampling_spacing || ""));
-      setProcessingHistory(String(prov.processing_history || ""));
+      setProcessingHistoryNote(String(prov.processing_history || ""));
       setGeoCoverage(String(prov.geographic_coverage || ""));
       const cols = body.inspect?.detected_columns;
       const headers = body.inspect?.header_row;
@@ -107,9 +131,18 @@ export default function GeologicalDetailPage() {
         setYCol(headers[cols.y ?? 1] || "Y");
         setZCol(headers[cols.z ?? 2] || "Z");
       }
+      if (!body.dataset.crs || body.dataset.validation_status !== "validated") {
+        setOperatorOpen(true);
+      }
     },
     [],
   );
+
+  const refreshMagnetic = useCallback(async () => {
+    if (!geoId) return;
+    const mag = await listGeologicalMagnetic(geoId);
+    setMagnetic(mag);
+  }, [geoId]);
 
   const reload = useCallback(() => {
     if (!geoId) return;
@@ -118,32 +151,71 @@ export default function GeologicalDetailPage() {
       .catch((err: Error) => setError(err.message));
   }, [geoId, applyDetail]);
 
-  useEffect(() => {
+  const loadDetail = useCallback(async () => {
     if (!geoId) return;
-    let cancelled = false;
-    getGeologicalDataset(geoId)
-      .then(async (body) => {
-        if (cancelled) return;
-        applyDetail(body);
-        const mt = body.dataset.measurement_type;
-        if (mt === "total_magnetic_intensity" || mt === "tmi") {
-          try {
-            const mag = await listGeologicalMagnetic(geoId);
-            if (!cancelled) setMagnetic(mag);
-            const previewBody = await previewGeologicalTmi(geoId);
-            if (!cancelled) setTmiPreview(previewBody.preview);
-          } catch {
-            /* optional until validated/processed */
-          }
+    setLoading(true);
+    setError(null);
+    try {
+      const body = await getGeologicalDataset(geoId);
+      applyDetail(body);
+      const mt = body.dataset.measurement_type;
+      if (mt === "total_magnetic_intensity" || mt === "tmi") {
+        try {
+          const mag = await listGeologicalMagnetic(geoId);
+          setMagnetic(mag);
+          const previewBody = await previewGeologicalTmi(geoId);
+          setTmiPreview(previewBody.preview);
+        } catch {
+          /* optional until validated/processed */
         }
-      })
-      .catch((err: Error) => {
-        if (!cancelled) setError(err.message);
-      });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load dataset");
+    } finally {
+      setLoading(false);
+    }
+  }, [geoId, applyDetail]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadDetail();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadDetail]);
+
+  useEffect(() => {
+    if (!geoId || !magnetic) return;
+    const lineamentProduct = magnetic.products.find(
+      (p) => p.operation === "candidate_lineament_extraction",
+    );
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (!lineamentProduct?.geojson_exists) {
+        setLineamentFeatures([]);
+        setLineamentCrs(null);
+        return;
+      }
+      void fetchGeologicalDerived(geoId, "candidate_lineaments.geojson")
+        .then(async (blob) => {
+          const text = await blob.text();
+          if (cancelled) return;
+          const parsed = parseLineamentGeoJson(JSON.parse(text));
+          setLineamentFeatures(parsed.features);
+          setLineamentCrs(parsed.crsName);
+          setSelectedLineamentId((current) => current ?? parsed.features[0]?.id ?? null);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setLineamentFeatures([]);
+            setLineamentCrs(null);
+          }
+        });
+    }, 0);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
-  }, [geoId, applyDetail]);
+  }, [geoId, magnetic]);
 
   const warnNames = useMemo(
     () =>
@@ -153,14 +225,45 @@ export default function GeologicalDetailPage() {
     [validation],
   );
 
-  const outcome = clientValidationOutcome(validation?.overall);
-  const outcomeTone = validationOutcomeTone(outcome);
   const headerNames = useMemo(() => {
     const headers = inspect?.header_row;
     return Array.isArray(headers) ? headers.filter(Boolean) : [];
   }, [inspect]);
 
+  const productCards = useMemo(
+    () => presentGeologicalProductCards(magnetic),
+    [magnetic],
+  );
+  const pipeline = useMemo(
+    () =>
+      presentPipelineSteps({
+        dataset,
+        validation,
+        magnetic,
+        compatibility,
+      }),
+    [dataset, validation, magnetic, compatibility],
+  );
+  const history = useMemo(
+    () => presentProcessingHistory(magnetic, dataset),
+    [magnetic, dataset],
+  );
+  const glance = useMemo(
+    () => presentGlanceStats({ dataset, validation, magnetic }),
+    [dataset, validation, magnetic],
+  );
+  const badges = useMemo(
+    () => statusBadges({ dataset, validation }),
+    [dataset, validation],
+  );
+  const bins = useMemo(() => directionBins(lineamentFeatures), [lineamentFeatures]);
+  const valueRangeLabel = useMemo(() => {
+    const range = glance.find((g) => g.label === "Value range");
+    return range?.value || null;
+  }, [glance]);
+
   async function applyAbeokutaPreset() {
+    if (!geoId) return;
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -179,8 +282,9 @@ export default function GeologicalDetailPage() {
         const p = preset.publication_magnetic_params;
         if (p.inclination_deg != null) setInclination(String(p.inclination_deg));
         if (p.declination_deg != null) setDeclination(String(p.declination_deg));
-        if (p.gaussian_central_wavelength_m != null)
+        if (p.gaussian_central_wavelength_m != null) {
           setGaussWave(String(p.gaussian_central_wavelength_m));
+        }
         if (p.gaussian_std != null) setGaussStd(String(p.gaussian_std));
       }
       const declared = await declareGeologicalMetadata(geoId, {
@@ -199,8 +303,13 @@ export default function GeologicalDetailPage() {
       setNotice(
         "Abeokuta Sheet 260 metadata applied (X=easting, Y=northing, Z=TMI; source EPSG:32632 → processing EPSG:32631 → display EPSG:4326). Validate next.",
       );
-      const previewBody = await previewGeologicalTmi(geoId);
-      setTmiPreview(previewBody.preview);
+      try {
+        const previewBody = await previewGeologicalTmi(geoId);
+        setTmiPreview(previewBody.preview);
+      } catch {
+        /* optional */
+      }
+      reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not apply Abeokuta preset");
     } finally {
@@ -210,39 +319,32 @@ export default function GeologicalDetailPage() {
 
   async function onDeclare(event: FormEvent) {
     event.preventDefault();
+    if (!geoId) return;
     setBusy(true);
     setError(null);
-    setNotice(null);
     try {
-      const body: Record<string, unknown> = {
-        measurement_type: measurementType || null,
-        crs: crs || null,
-        units: units || null,
-        description,
-        source_client: sourceClient,
-      };
-      if (isTmi) {
-        body.survey_date = surveyDate || null;
-        body.survey_method = surveyMethod || null;
-        body.sampling_spacing = samplingSpacing || null;
-        body.processing_history = processingHistory || null;
-        body.geographic_coverage = geoCoverage || null;
-        body.source_organization = sourceClient || null;
-      }
-      if (dataset?.asset_kind === "point_grid_csv") {
-        body.x_column = xCol;
-        body.y_column = yCol;
-        body.z_column = zCol;
-      }
-      if (looksAbeokuta || isTmi) {
-        body.apply_abeokuta_tmi_preset = looksAbeokuta;
-      }
-      await declareGeologicalMetadata(geoId, body);
-      setNotice("Metadata saved. Run validation next.");
+      await declareGeologicalMetadata(geoId, {
+        measurement_type: measurementType || undefined,
+        description: description || undefined,
+        source_client: sourceClient || undefined,
+        x_column: xCol,
+        y_column: yCol,
+        z_column: zCol,
+        crs: crs || undefined,
+        units: units || undefined,
+        survey_date: surveyDate || undefined,
+        survey_method: surveyMethod || undefined,
+        sampling_spacing: samplingSpacing || undefined,
+        processing_history: processingHistoryNote || undefined,
+        geographic_coverage: geoCoverage || undefined,
+      });
+      setNotice("Metadata saved.");
       reload();
-      if (isTmi || looksAbeokuta) {
+      try {
         const previewBody = await previewGeologicalTmi(geoId);
         setTmiPreview(previewBody.preview);
+      } catch {
+        /* optional */
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Declare failed");
@@ -252,42 +354,33 @@ export default function GeologicalDetailPage() {
   }
 
   async function onValidate() {
+    if (!geoId) return;
     setBusy(true);
     setError(null);
-    setNotice(null);
     try {
       const body = await validateGeologicalDataset(geoId);
       setDataset(body.dataset);
       setValidation(body.validation);
-      setNotice(`Validation ${body.validation.overall}`);
-      if (
-        body.dataset.measurement_type === "total_magnetic_intensity" ||
-        looksAbeokuta
-      ) {
-        const previewBody = await previewGeologicalTmi(geoId);
-        setTmiPreview(previewBody.preview);
-      }
-    } catch (err) {
-      // Validation may return 400 with a FAIL report still embedded — surface message.
-      setError(err instanceof Error ? err.message : "Validation failed");
-      reload();
+      setNotice(`Validation ${body.validation.overall || "complete"}`);
       try {
         const previewBody = await previewGeologicalTmi(geoId);
         setTmiPreview(previewBody.preview);
       } catch {
-        /* preview optional after fail */
+        /* optional */
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Validation failed");
     } finally {
       setBusy(false);
     }
   }
 
   async function onDownloadOriginal() {
+    if (!geoId) return;
     setBusy(true);
     setError(null);
-    setNotice(null);
     try {
-      await downloadGeologicalOriginal(geoId, dataset?.original_filename || undefined);
+      await downloadGeologicalOriginal(geoId, dataset?.original_filename);
       setNotice("Original file download started.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Download failed");
@@ -296,14 +389,35 @@ export default function GeologicalDetailPage() {
     }
   }
 
-  async function onActivate(status: string) {
+  async function onDownloadDerived(filename: string) {
+    if (!geoId) return;
     setBusy(true);
     setError(null);
-    setNotice(null);
+    try {
+      const blob = await fetchGeologicalDerived(geoId, filename);
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Download failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onActivate(status: string) {
+    if (!geoId) return;
+    setBusy(true);
+    setError(null);
     try {
       const body = await setGeologicalActivation(geoId, {
         activation_status: status,
-        acknowledged_warnings: status === "inactive" ? [] : ack,
+        acknowledged_warnings: status === "reporting_only" ? ack : [],
       });
       setDataset(body.dataset);
       setNotice(`Activation set to ${body.dataset.activation_status}`);
@@ -315,46 +429,44 @@ export default function GeologicalDetailPage() {
   }
 
   async function onProcessTmi() {
+    if (!geoId) return;
     setBusy(true);
     setError(null);
-    setNotice(null);
     try {
       const body = await processGeologicalTmi(geoId, {
-        resolution: Number(gridResolution),
+        resolution: Number(gridResolution) || 100,
       });
       setDataset(body.dataset);
       setProcessing(body.processing);
-      setCompatibility(body.feature_compatibility || null);
-      const mag = await listGeologicalMagnetic(geoId);
-      setMagnetic(mag);
-      setNotice("Derived TMI grid written (original preserved).");
+      if (body.feature_compatibility) setCompatibility(body.feature_compatibility);
+      await refreshMagnetic();
+      setActiveOperation("tmi");
+      setNotice("TMI grid processed.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Processing failed");
-      reload();
     } finally {
       setBusy(false);
     }
   }
 
   async function onMagneticOp() {
+    if (!geoId) return;
     setBusy(true);
     setError(null);
-    setNotice(null);
     try {
-      const body = await runGeologicalMagnetic(geoId, {
+      await runGeologicalMagnetic(geoId, {
         operation: magneticOp,
-        resolution: Number(gridResolution) || 100,
-        inclination_deg: Number(inclination),
-        declination_deg: Number(declination),
-        gaussian_central_wavelength_m: Number(gaussWave),
-        gaussian_std: Number(gaussStd),
+        inclination_deg: Number(inclination) || undefined,
+        declination_deg: Number(declination) || undefined,
+        gaussian_central_wavelength_m: Number(gaussWave) || undefined,
+        gaussian_std: Number(gaussStd) || undefined,
         gaussian_mode: gaussMode,
-        rte_amplitude_clip: Number(rteClip),
+        rte_amplitude_clip: rteClip.trim() ? Number(rteClip) : undefined,
       });
-      setDataset(body.dataset);
-      const mag = await listGeologicalMagnetic(geoId);
-      setMagnetic(mag);
+      await refreshMagnetic();
+      setActiveOperation(magneticOp);
       setNotice(`Magnetic operation '${magneticOp}' completed (NOT_VALIDATED).`);
+      reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Magnetic operation failed");
     } finally {
@@ -363,24 +475,21 @@ export default function GeologicalDetailPage() {
   }
 
   async function onExtractLineaments() {
+    if (!geoId) return;
     setBusy(true);
     setError(null);
-    setNotice(null);
     try {
-      const body = await extractGeologicalLineaments(geoId, {
-        percentile: 92,
-        ensure_derivatives: true,
-      });
-      setDataset(body.dataset);
-      const mag = await listGeologicalMagnetic(geoId);
-      setMagnetic(mag);
-      const stats = (body.lineaments?.statistics || {}) as {
-        n_lineaments?: number;
-      };
+      const body = await extractGeologicalLineaments(geoId, {});
+      await refreshMagnetic();
+      setShowLineaments(true);
+      const count = (body.lineaments as { n_lineaments?: number } | undefined)
+        ?.n_lineaments;
       setNotice(
-        `Candidate magnetic lineaments extracted (n=${stats.n_lineaments ?? "?"}). ` +
-          "NOT confirmed faults. NOT_VALIDATED. used_in_inference=false.",
+        `Candidate lineaments extracted. NOT confirmed faults. used_in_inference=false. count=${String(
+          count ?? "unknown",
+        )}`,
       );
+      reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lineament extraction failed");
     } finally {
@@ -388,24 +497,15 @@ export default function GeologicalDetailPage() {
     }
   }
 
-  async function refreshMagnetic() {
-    try {
-      const mag = await listGeologicalMagnetic(geoId);
-      setMagnetic(mag);
-    } catch {
-      /* optional */
-    }
-  }
-
   async function onCompatibility(decision: string) {
+    if (!geoId) return;
     setBusy(true);
     setError(null);
-    setNotice(null);
     try {
       const body = await setGeologicalCompatibility(geoId, { decision });
+      if (body.feature_compatibility) setCompatibility(body.feature_compatibility);
       setDataset(body.dataset);
-      setCompatibility(body.feature_compatibility || body.dataset.feature_compatibility || null);
-      setNotice(`Compatibility decision: ${decision}`);
+      setNotice(`Compatibility ${decision.split("_").join(" ")}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Compatibility update failed");
     } finally {
@@ -413,844 +513,509 @@ export default function GeologicalDetailPage() {
     }
   }
 
-  if (!dataset && !error) {
+  if (loading) {
     return (
       <PlatformShell>
-        <p className="text-sm text-stone">Loading dataset…</p>
+        <Loader
+          variant="section"
+          title="Loading geological dataset"
+          description="Fetching catalogue metadata and available magnetic products."
+          data-testid="geological-detail-loading"
+        />
       </PlatformShell>
     );
   }
 
   return (
     <PlatformShell>
-      <Link href="/geological" className="text-xs text-stone underline">
-        ← Geological catalogue
-      </Link>
-      <h1 className="mt-3 font-display text-2xl">{dataset?.display_name || geoId}</h1>
-      <p className="mt-1 text-sm text-stone">
-        {dataset?.geo_id} · {dataset?.asset_kind} · validation{" "}
-        {dataset?.validation_status} · processing {dataset?.processing_status || "not_started"}{" "}
-        · activation {dataset?.activation_status}
-      </p>
-      <p className="mt-2 text-xs text-stone">
-        Scientific status: {dataset?.scientific_validation_status || "NOT_VALIDATED"}.
-        Uploaded source ≠ validated ≠ processed ≠ model-compatible ≠ training-ready.
-        Catalogue activation does not feed live 13-channel inference. Mutations and
-        original download require operator/admin (<code>manage_geological</code>).
-      </p>
-
-      {error && <p className="mt-4 text-sm text-amber-900">{error}</p>}
-      {notice && <p className="mt-4 text-sm text-leaf">{notice}</p>}
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          disabled={busy || !dataset?.has_original}
-          onClick={onDownloadOriginal}
-          className="rounded-xl border border-meadow px-4 py-2 text-sm disabled:opacity-50"
-        >
-          Download original file
-        </button>
-        {dataset?.original_filename && (
-          <span className="self-center text-xs text-stone">
-            {dataset.original_filename}
-            {dataset.content_sha256
-              ? ` · sha256 ${String(dataset.content_sha256).slice(0, 12)}…`
-              : ""}
-          </span>
-        )}
-      </div>
-
-      <section className="mt-8 rounded-2xl border border-meadow bg-chalk p-5">
-        <h2 className="font-display text-lg">Inspect</h2>
-        {!inspect || Object.keys(inspect).length === 0 ? (
-          <p className="mt-2 text-sm text-stone">No inspect report yet.</p>
-        ) : (
-          <dl className="mt-3 grid gap-2 text-sm md:grid-cols-2">
-            <div>
-              <dt className="text-xs text-stone">Rows</dt>
-              <dd>{String(inspect.row_count ?? "—")}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-stone">Suggested columns</dt>
-              <dd>{JSON.stringify(inspect.detected_columns || {})}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-stone">Negative Z count</dt>
-              <dd>{String(inspect.negative_z_count ?? "—")}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-stone">Missing lattice cells</dt>
-              <dd>{String(inspect.missing_lattice_cells ?? "—")}</dd>
-            </div>
-            <div className="md:col-span-2">
-              <dt className="text-xs text-stone">Coverage bbox</dt>
-              <dd>{JSON.stringify(inspect.coverage_bbox || dataset?.coverage_bbox || null)}</dd>
-            </div>
-          </dl>
-        )}
-      </section>
-
-      <form
-        onSubmit={onDeclare}
-        className="mt-6 grid gap-3 rounded-2xl border border-meadow bg-chalk p-5 md:grid-cols-2"
-      >
-        <h2 className="font-display text-lg md:col-span-2">Declare metadata</h2>
-        {(looksAbeokuta || isTmi || dataset?.asset_kind === "point_grid_csv") && (
-          <div className="md:col-span-2 rounded-xl border border-leaf/40 bg-mist/60 p-3 text-sm">
-            <p className="text-bark">
-              Abeokuta Sheet 260 (publication-guided): <strong>X=easting</strong>,{" "}
-              <strong>Y=northing</strong>, <strong>Z=TMI</strong>. Source{" "}
-              <strong>EPSG:32632</strong> → processing <strong>EPSG:32631</strong> →
-              display <strong>EPSG:4326</strong>. Z is not elevation or a hazard
-              label. Not a Stage 2.5 training input.
-            </p>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void applyAbeokutaPreset()}
-              className="mt-2 rounded-lg bg-leaf px-3 py-2 text-xs font-medium text-chalk disabled:opacity-50"
-              data-testid="abeokuta-tmi-preset"
-            >
-              Apply Abeokuta TMI metadata
-            </button>
-          </div>
-        )}
-        {dataset?.asset_kind === "point_grid_csv" ? (
-          <label className="text-xs md:col-span-2">
-            Measurement type
-            <select
-              className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-              value={measurementType}
-              onChange={(e) => setMeasurementType(e.target.value)}
-              required
-            >
-              <option value="">Select…</option>
-              <option value="overburden_thickness">overburden_thickness</option>
-              <option value="depth_to_bedrock">depth_to_bedrock</option>
-              <option value="total_magnetic_intensity">
-                total_magnetic_intensity (TMI — not hazard labels)
-              </option>
-            </select>
-          </label>
-        ) : (
-          <p className="text-xs text-stone md:col-span-2">
-            Measurement type is fixed as lineament_vectors for this asset.
-          </p>
-        )}
-        <label className="text-xs">
-          Source CRS (required — never assumed)
-          <select
-            className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-            value={
-              COMMON_CRS_OPTIONS.some((o) => o.code === crs) ? crs : crs ? "__custom__" : ""
-            }
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === "__custom__") return;
-              setCrs(v);
-            }}
-            required={!crs}
-          >
-            <option value="">Select EPSG…</option>
-            {COMMON_CRS_OPTIONS.map((o) => (
-              <option key={o.code} value={o.code}>
-                {o.code} — {o.label}
-              </option>
-            ))}
-            {crs && !COMMON_CRS_OPTIONS.some((o) => o.code === crs) ? (
-              <option value="__custom__">Custom: {crs}</option>
-            ) : null}
-          </select>
-          <input
-            className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-            value={crs}
-            onChange={(e) => setCrs(e.target.value)}
-            placeholder="Or type EPSG:#### / WKT"
-            required
-            aria-label="Source CRS text"
-          />
-          <span className="mt-1 block text-[11px] text-stone">
-            Source CRS is the coordinate system of the uploaded file. Processing CRS
-            (working metres grid) and display CRS (WGS84 map) are separate roles.
-          </span>
-        </label>
-        {dataset?.asset_kind === "point_grid_csv" && (
-          <label className="text-xs">
-            Units {isTmi ? "(do not assume nT)" : ""}
-            <input
-              className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-              value={units}
-              onChange={(e) => setUnits(e.target.value)}
-              placeholder={isTmi ? "unknown or confirmed unit" : "m"}
-              required={!isTmi}
-            />
-          </label>
-        )}
-        {dataset?.asset_kind === "point_grid_csv" && (
-          <>
-            <label className="text-xs">
-              X column
-              {headerNames.length ? (
-                <select
-                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                  value={xCol}
-                  onChange={(e) => setXCol(e.target.value)}
+      <div className="space-y-6" data-testid="geological-detail-workspace">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <Link href="/geological" className="text-xs text-moss hover:underline">
+              ← Geological catalogue
+            </Link>
+            <h1 className="mt-2 font-display text-2xl text-bark">
+              {dataset?.display_name || geoId}
+            </h1>
+            <p className="mt-1 font-mono text-[11px] text-stone">{geoId}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {badges.map((badge) => (
+                <span
+                  key={badge.label}
+                  className={
+                    badge.tone === "ok"
+                      ? "rounded-full border border-leaf/40 bg-leaf/10 px-2.5 py-1 text-[11px] text-moss"
+                      : badge.tone === "warn"
+                        ? "rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] text-amber-900"
+                        : badge.tone === "danger"
+                          ? "rounded-full border border-red-300 bg-red-50 px-2.5 py-1 text-[11px] text-red-900"
+                          : "rounded-full border border-meadow bg-mist px-2.5 py-1 text-[11px] text-stone"
+                  }
                 >
-                  {headerNames.map((name) => (
-                    <option key={`x-${name}`} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                  value={xCol}
-                  onChange={(e) => setXCol(e.target.value)}
-                />
-              )}
-            </label>
-            <label className="text-xs">
-              Y column
-              {headerNames.length ? (
-                <select
-                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                  value={yCol}
-                  onChange={(e) => setYCol(e.target.value)}
-                >
-                  {headerNames.map((name) => (
-                    <option key={`y-${name}`} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                  value={yCol}
-                  onChange={(e) => setYCol(e.target.value)}
-                />
-              )}
-            </label>
-            <label className="text-xs">
-              Z / measurement column
-              {headerNames.length ? (
-                <select
-                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                  value={zCol}
-                  onChange={(e) => setZCol(e.target.value)}
-                >
-                  {headerNames.map((name) => (
-                    <option key={`z-${name}`} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                  value={zCol}
-                  onChange={(e) => setZCol(e.target.value)}
-                />
-              )}
-            </label>
-          </>
-        )}
-        <label className="text-xs md:col-span-2">
-          Description
-          <input
-            className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </label>
-        <label className="text-xs md:col-span-2">
-          Source organization
-          <input
-            className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-            value={sourceClient}
-            onChange={(e) => setSourceClient(e.target.value)}
-            placeholder="Leave blank → remains unknown"
-          />
-        </label>
-        {isTmi && (
-          <>
-            <label className="text-xs">
-              Survey date
-              <input
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={surveyDate}
-                onChange={(e) => setSurveyDate(e.target.value)}
-                placeholder="unknown if blank"
-              />
-            </label>
-            <label className="text-xs">
-              Survey method
-              <input
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={surveyMethod}
-                onChange={(e) => setSurveyMethod(e.target.value)}
-                placeholder="unknown if blank"
-              />
-            </label>
-            <label className="text-xs">
-              Sampling / measurement spacing
-              <input
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={samplingSpacing}
-                onChange={(e) => setSamplingSpacing(e.target.value)}
-                placeholder="unknown if blank"
-              />
-            </label>
-            <label className="text-xs">
-              Geographic coverage (text)
-              <input
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={geoCoverage}
-                onChange={(e) => setGeoCoverage(e.target.value)}
-                placeholder="unknown if blank"
-              />
-            </label>
-            <label className="text-xs md:col-span-2">
-              Processing history (client-supplied)
-              <input
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={processingHistory}
-                onChange={(e) => setProcessingHistory(e.target.value)}
-                placeholder="unknown if blank — no RTP/UC assumed"
-              />
-            </label>
-          </>
-        )}
-        <button
-          type="submit"
-          disabled={busy}
-          className="rounded-xl bg-leaf px-4 py-2 text-sm text-chalk disabled:opacity-50 md:w-fit"
-        >
-          Save declaration
-        </button>
-      </form>
-
-      <div className="mt-6 flex flex-wrap gap-2">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={onValidate}
-          className="rounded-xl border border-meadow px-4 py-2 text-sm disabled:opacity-50"
-        >
-          Run validation
-        </button>
-      </div>
-
-      {validation && Object.keys(validation).length > 0 && (
-        <section className="mt-6 rounded-2xl border border-meadow bg-chalk p-5">
-          <h2 className="font-display text-lg">
-            Validation · {outcome}
-            <span className="ml-2 text-sm font-normal text-stone">
-              ({validation.overall || "—"})
-            </span>
-          </h2>
-          <p
-            className={
-              outcomeTone === "ok"
-                ? "mt-1 text-sm text-leaf"
-                : outcomeTone === "warn"
-                  ? "mt-1 text-sm text-amber-800"
-                  : outcomeTone === "block"
-                    ? "mt-1 text-sm text-red-800"
-                    : "mt-1 text-sm text-stone"
-            }
-          >
-            {outcome === "Ready"
-              ? "Dataset meets requirements for compatible operations."
-              : outcome === "Ready with warnings"
-                ? "Processing is possible — read every warning before relying on outputs."
-                : outcome === "Blocked"
-                  ? "Fix the blocking issues below. Analysis controls stay disabled."
-                  : "Run validation to determine readiness."}
-          </p>
-          <p className="mt-1 text-xs text-stone">
-            can_train={String(validation.can_train ?? false)} · can_process=
-            {String(validation.can_process ?? "—")} · can_activate_reporting=
-            {String(validation.can_activate_reporting ?? "—")}
-          </p>
-          <ul className="mt-3 space-y-2 text-sm">
-            {(validation.checks || []).map((check) => (
-              <li key={check.name} className="rounded-lg border border-meadow/60 px-3 py-2">
-                <span className="font-medium">
-                  {check.name}: {check.status}
+                  {badge.label}
                 </span>
-                <p className="text-stone">{check.message}</p>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-6 text-sm">
-            <h3 className="font-medium">TMI spatial preview</h3>
-            <TmiSurveyPreview preview={tmiPreview} />
+              ))}
+            </div>
           </div>
-
-          {validation.tmi_statistics && (
-            <div className="mt-4 text-sm">
-              <h3 className="font-medium">TMI statistics</h3>
-              <pre className="mt-2 overflow-x-auto rounded-lg bg-mist p-3 text-xs">
-                {JSON.stringify(validation.tmi_statistics, null, 2)}
-              </pre>
-            </div>
-          )}
-          {validation.spatial && (
-            <div className="mt-4 text-sm">
-              <h3 className="font-medium">Spatial coverage</h3>
-              <pre className="mt-2 overflow-x-auto rounded-lg bg-mist p-3 text-xs">
-                {JSON.stringify(validation.spatial, null, 2)}
-              </pre>
-            </div>
-          )}
-        </section>
-      )}
-
-      {isTmi && (
-        <section className="mt-6 rounded-2xl border border-meadow bg-chalk p-5">
-          <h2 className="font-display text-lg">TMI gridding</h2>
-          <p className="mt-1 text-xs text-stone">
-            Grid TMI in the processing CRS (metres for Abeokuta EPSG:32631). Original
-            CSV is never overwritten. Magnetic transforms are run separately below —
-            not applied silently. Does not feed live hazard predictions.
-          </p>
-          {(dataset?.provenance || magnetic?.crs_roles) && (
-            <dl className="mt-3 grid gap-2 text-sm md:grid-cols-3">
-              <div>
-                <dt className="text-xs text-stone">Source CRS</dt>
-                <dd>
-                  {String(
-                    magnetic?.crs_roles?.source_crs ||
-                      dataset?.crs ||
-                      (dataset?.provenance as Record<string, unknown> | undefined)
-                        ?.source_crs ||
-                      "—",
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-stone">Processing CRS</dt>
-                <dd>
-                  {String(
-                    magnetic?.crs_roles?.processing_crs ||
-                      dataset?.working_crs ||
-                      (dataset?.provenance as Record<string, unknown> | undefined)
-                        ?.processing_crs ||
-                      "—",
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-stone">Display CRS</dt>
-                <dd>
-                  {String(
-                    magnetic?.crs_roles?.display_crs ||
-                      (dataset?.provenance as Record<string, unknown> | undefined)
-                        ?.display_crs ||
-                      "EPSG:4326",
-                  )}
-                </dd>
-              </div>
-            </dl>
-          )}
-          <label className="mt-3 block text-xs">
-            Grid resolution (metres for UTM processing; Sheet 260 ≈ 100 m)
-            <input
-              className="mt-1 w-full max-w-xs rounded-lg border border-meadow bg-mist px-3 py-2"
-              value={gridResolution}
-              onChange={(e) => setGridResolution(e.target.value)}
-            />
-          </label>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              disabled={
-                busy ||
-                dataset?.validation_status !== "validated" ||
-                validation?.can_process === false
-              }
-              onClick={onProcessTmi}
-              className="rounded-xl border border-meadow px-4 py-2 text-sm disabled:opacity-50"
+              disabled={busy || !dataset?.has_original}
+              onClick={() => void onDownloadOriginal()}
+              className="rounded-xl border border-meadow bg-chalk px-4 py-2 text-sm text-bark disabled:opacity-50"
             >
-              Process TMI grid
+              Download original file
             </button>
             <button
               type="button"
-              disabled={busy}
-              onClick={() => void refreshMagnetic()}
-              className="rounded-xl border border-meadow px-4 py-2 text-sm disabled:opacity-50"
+              disabled={busy || lineamentFeatures.length === 0}
+              onClick={() => void onDownloadDerived("candidate_lineaments.geojson")}
+              className="inline-flex items-center gap-2 rounded-xl bg-moss px-4 py-2 text-sm text-chalk disabled:opacity-50"
             >
-              Refresh products
+              <Download className="h-3.5 w-3.5" />
+              Export lineaments (GeoJSON)
             </button>
           </div>
-          {processing && Object.keys(processing).length > 0 && (
-            <pre className="mt-3 overflow-x-auto rounded-lg bg-mist p-3 text-xs">
-              {JSON.stringify(processing, null, 2)}
-            </pre>
-          )}
-        </section>
-      )}
+        </div>
 
-      {isTmi && (
-        <section className="mt-6 rounded-2xl border border-meadow bg-chalk p-5">
-          <h2 className="font-display text-lg">Publication-guided magnetic processing</h2>
-          <p className="mt-1 text-xs text-stone">
-            Explicit operations only. Publication parameters (I=11.04°, D=3.52°, Gaussian
-            λ=2000 m, σ=0.5) are recorded separately from implementation choices (RTE
-            amplitude clip, FFT NoData fill, Gaussian low-pass default). Maps are for
-            comparison with published interpretations — not faults, sinkholes, landslides
-            or hazard scores. Scientific status:{" "}
-            <strong>{magnetic?.scientific_validation_status || "NOT_VALIDATED"}</strong>.
+        {error && (
+          <p
+            className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+            role="alert"
+          >
+            {error}
           </p>
+        )}
+        {notice && (
+          <p className="rounded-xl border border-leaf/30 bg-leaf/10 px-3 py-2 text-sm text-moss">
+            {notice}
+          </p>
+        )}
 
-          {(magnetic?.gridding_reconciliation ||
-            magnetic?.inspect_missing_lattice_cells != null) && (
-            <div className="mt-4 rounded-xl border border-meadow/50 bg-mist/50 p-3 text-sm">
-              <h3 className="font-medium">Gridding reconciliation</h3>
-              <dl className="mt-2 grid gap-2 md:grid-cols-2">
-                <div>
-                  <dt className="text-xs text-stone">Source lattice empty (inspect)</dt>
-                  <dd>{String(magnetic?.inspect_missing_lattice_cells ?? "—")}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-stone">Expected source lattice cells</dt>
-                  <dd>{String(magnetic?.inspect_expected_full_grid_cells ?? "—")}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-stone">Processing NoData cells</dt>
-                  <dd>
-                    {String(
-                      (
-                        magnetic?.gridding_reconciliation as
-                          | { processing_crs_scatter_bin?: { cells_remaining_nodata?: number } }
-                          | undefined
-                      )?.processing_crs_scatter_bin?.cells_remaining_nodata ?? "—",
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-stone">Observation cells / interpolated</dt>
-                  <dd>
-                    {String(
-                      (
-                        magnetic?.gridding_reconciliation as
-                          | {
-                              processing_crs_scatter_bin?: {
-                                cells_populated_by_direct_observations?: number;
-                                cells_populated_by_interpolation?: number;
-                              };
-                            }
-                          | undefined
-                      )?.processing_crs_scatter_bin?.cells_populated_by_direct_observations ??
-                        "—",
-                    )}{" "}
-                    /{" "}
-                    {String(
-                      (
-                        magnetic?.gridding_reconciliation as
-                          | {
-                              processing_crs_scatter_bin?: {
-                                cells_populated_by_interpolation?: number;
-                              };
-                            }
-                          | undefined
-                      )?.processing_crs_scatter_bin?.cells_populated_by_interpolation ?? "—",
-                    )}
-                  </dd>
-                </div>
+        <GeologicalPipelineStepper steps={pipeline} />
+
+        <GeologicalExplorationWorkspace
+          geoId={geoId}
+          products={productCards}
+          activeOperation={activeOperation}
+          onChangeOperation={setActiveOperation}
+          showLineaments={showLineaments}
+          onToggleLineaments={setShowLineaments}
+          lineamentFeatures={lineamentFeatures}
+          selectedLineamentId={selectedLineamentId}
+          onSelectLineament={setSelectedLineamentId}
+          directionBins={bins}
+          lineamentCrs={lineamentCrs}
+          tmiPreview={tmiPreview}
+          valueRangeLabel={valueRangeLabel}
+        />
+
+        <GeologicalProductCards
+          geoId={geoId}
+          products={productCards}
+          activeOperation={activeOperation}
+          onSelect={setActiveOperation}
+          onDownload={(filename) => void onDownloadDerived(filename)}
+        />
+
+        <div className="grid gap-6 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <GeologicalProcessingTimeline entries={history} />
+          </div>
+          <aside className="space-y-4 lg:col-span-2">
+            <div className="rounded-2xl border border-meadow bg-chalk p-4">
+              <h2 className="font-display text-lg text-bark">Dataset at a glance</h2>
+              <dl className="mt-3 space-y-2 text-sm">
+                {glance.map((row) => (
+                  <div key={row.label} className="flex justify-between gap-3">
+                    <dt className="text-stone">{row.label}</dt>
+                    <dd className="font-medium text-bark">{row.value}</dd>
+                  </div>
+                ))}
+                {!glance.length && (
+                  <p className="text-xs text-stone">
+                    Statistics appear after validation or magnetic product listing.
+                  </p>
+                )}
               </dl>
-              <p className="mt-2 text-xs text-stone">
-                {(
-                  magnetic?.gridding_reconciliation as { reconciliation_note?: string } | undefined
-                )?.reconciliation_note ||
-                  "Source-CRS missing lattice cells and processing-CRS NoData differ because UTM 32N→31N warps the survey lattice."}
+            </div>
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+              <h3 className="font-medium">What this dataset can and cannot do</h3>
+              <p className="mt-2 text-xs leading-relaxed">
+                Geological catalogue products support context, reporting, and map
+                overlays. Client TMI does not replace the live EMAG2 magnetics channel,
+                does not train Stage 2.5 models (can_train remains false), and remains
+                NOT_VALIDATED for scientific or engineering decisions.
               </p>
             </div>
-          )}
-
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <label className="text-xs">
-              Operation
-              <select
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={magneticOp}
-                onChange={(e) => setMagneticOp(e.target.value)}
-              >
-                {(magnetic?.operation_catalog || []).map((c) => (
-                  <option key={c.operation} value={c.operation}>
-                    {c.title || c.operation}
-                  </option>
-                ))}
-                {!(magnetic?.operation_catalog || []).length && (
-                  <>
-                    <option value="tmi">TMI</option>
-                    <option value="rte">Reduction to Magnetic Equator</option>
-                    <option value="gaussian">Gaussian filter</option>
-                    <option value="analytic_signal">Analytic signal</option>
-                    <option value="first_vertical_derivative">First vertical derivative</option>
-                    <option value="first_horizontal_derivative">
-                      First horizontal derivative (THG)
-                    </option>
-                    <option value="tilt_derivative">Tilt derivative</option>
-                    <option value="radially_averaged_power_spectrum">
-                      Radially averaged power spectrum
-                    </option>
-                  </>
-                )}
-              </select>
-            </label>
-            <p className="self-end text-xs text-stone md:col-span-1">
-              {(magnetic?.operation_catalog || []).find((c) => c.operation === magneticOp)
-                ?.summary || ""}
-            </p>
-            <label className="text-xs">
-              Inclination (°) — publication
-              <input
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={inclination}
-                onChange={(e) => setInclination(e.target.value)}
-              />
-            </label>
-            <label className="text-xs">
-              Declination (°) — publication
-              <input
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={declination}
-                onChange={(e) => setDeclination(e.target.value)}
-              />
-            </label>
-            <label className="text-xs">
-              Gaussian wavelength (m) — publication
-              <input
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={gaussWave}
-                onChange={(e) => setGaussWave(e.target.value)}
-              />
-            </label>
-            <label className="text-xs">
-              Gaussian σ — publication
-              <input
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={gaussStd}
-                onChange={(e) => setGaussStd(e.target.value)}
-              />
-            </label>
-            <label className="text-xs">
-              Gaussian mode — implementation choice
-              <select
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={gaussMode}
-                onChange={(e) => setGaussMode(e.target.value)}
-              >
-                <option value="low_pass">low_pass (default)</option>
-                <option value="high_pass">high_pass residual</option>
-              </select>
-            </label>
-            <label className="text-xs">
-              RTE amplitude clip — implementation choice (not publication)
-              <input
-                className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
-                value={rteClip}
-                onChange={(e) => setRteClip(e.target.value)}
-                placeholder="10 or empty to disable"
-              />
-            </label>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={busy || dataset?.validation_status !== "validated"}
-              onClick={() => void onMagneticOp()}
-              className="rounded-xl bg-leaf px-4 py-2 text-sm text-chalk disabled:opacity-50"
-            >
-              Run magnetic operation
-            </button>
-            <button
-              type="button"
-              disabled={busy || dataset?.validation_status !== "validated"}
-              onClick={() => void onExtractLineaments()}
-              className="rounded-xl border border-bark/30 bg-chalk px-4 py-2 text-sm text-bark disabled:opacity-50"
-              data-testid="extract-candidate-lineaments"
-            >
-              Extract candidate magnetic lineaments
-            </button>
-          </div>
-          <p className="mt-2 text-xs text-stone">
-            Candidate lineaments follow magnetic gradient ridges. They are{" "}
-            <strong>not</strong> confirmed faults or fractures, stay{" "}
-            <code>NOT_VALIDATED</code>, and are not injected into the 13-channel
-            inference model.
-          </p>
-          {magnetic && (
-            <div className="mt-4 space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {(magnetic.products || [])
-                  .filter((p) => p.preview_exists)
-                  .map((p) => {
-                    const file =
-                      p.operation === "tmi"
-                        ? "tmi_preview.png"
-                        : p.operation === "radially_averaged_power_spectrum"
-                          ? "raps_preview.png"
-                          : p.operation === "candidate_lineament_extraction"
-                            ? "candidate_lineaments_preview.png"
-                            : `${p.operation}_preview.png`;
-                    return (
-                      <figure key={p.operation} className="text-sm">
-                        <figcaption className="mb-1 text-xs text-stone">
-                          {p.title || p.operation}
-                          {p.units ? ` · ${p.units}` : ""}
-                        </figcaption>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={geologicalDerivedUrl(geoId, file)}
-                          alt={`${p.operation} preview`}
-                          className="w-full rounded-lg border border-meadow bg-mist"
-                        />
-                      </figure>
-                    );
-                  })}
-              </div>
-              {(magnetic as MagneticProducts & { candidate_lineaments?: Record<string, unknown> })
-                .candidate_lineaments && (
-                <div className="rounded-xl border border-dashed border-meadow bg-mist/60 p-3 text-xs text-stone">
-                  <p className="font-medium text-bark">Candidate lineament provenance</p>
-                  <pre className="mt-2 overflow-x-auto">
-                    {JSON.stringify(
-                      (magnetic as { candidate_lineaments?: unknown }).candidate_lineaments,
-                      null,
-                      2,
-                    )}
-                  </pre>
-                  <a
-                    className="mt-2 inline-block font-semibold text-moss"
-                    href={geologicalDerivedUrl(geoId, "candidate_lineaments.geojson")}
-                  >
-                    Download candidate_lineaments.geojson
-                  </a>
-                </div>
-              )}
-              {magnetic.raps && (
-                <div>
-                  <h3 className="text-sm font-medium">RAPS (no source-depth claim)</h3>
-                  <p className="mt-1 text-xs text-stone">
-                    {String(
-                      (magnetic.raps.depth_interpretation as { note?: string } | undefined)
-                        ?.note ||
-                        "Wavelength vs log10(power). Depth interpretation requires an explicit fitting method.",
-                    )}
-                  </p>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={geologicalDerivedUrl(geoId, "raps_preview.png")}
-                    alt="RAPS chart"
-                    className="mt-2 max-w-xl rounded-lg border border-meadow bg-mist"
-                  />
-                </div>
-              )}
-              <div>
-                <h3 className="text-sm font-medium">Processing history (provenance)</h3>
-                <pre className="mt-2 max-h-64 overflow-auto rounded-lg bg-mist p-3 text-xs">
-                  {JSON.stringify(magnetic.processing_history || [], null, 2)}
-                </pre>
-              </div>
-              {magnetic.publication_comparison && (
-                <div>
-                  <h3 className="text-sm font-medium">Publication comparison notes</h3>
-                  <pre className="mt-2 overflow-x-auto rounded-lg bg-mist p-3 text-xs">
-                    {JSON.stringify(magnetic.publication_comparison, null, 2)}
-                  </pre>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
-      )}
-
-      {(compatibility || validation?.feature_compatibility) && (
-        <section className="mt-6 rounded-2xl border border-meadow bg-chalk p-5">
-          <h2 className="font-display text-lg">Feature schema compatibility</h2>
-          <p className="mt-1 text-xs text-stone">
-            Client TMI is not the Stage 2.5 <code>magnetics</code> (EMAG2) channel.
-            The 13-channel production model is unchanged. Not training-ready.
-          </p>
-          <pre className="mt-3 overflow-x-auto rounded-lg bg-mist p-3 text-xs">
-            {JSON.stringify(
-              compatibility || validation?.feature_compatibility,
-              null,
-              2,
-            )}
-          </pre>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              className="rounded-xl border border-meadow px-3 py-2 text-sm"
-              onClick={() => onCompatibility("accepted_with_limitations")}
-            >
-              Accept with limitations
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              className="rounded-xl border border-meadow px-3 py-2 text-sm"
-              onClick={() => onCompatibility("rejected")}
-            >
-              Reject
-            </button>
-          </div>
-        </section>
-      )}
-
-      <section className="mt-6 rounded-2xl border border-meadow bg-chalk p-5">
-        <h2 className="font-display text-lg">Activation</h2>
-        <p className="mt-1 text-xs text-stone">
-          reporting_only enables catalogue coverage matching — not live inference.
-          TMI cannot be approved into the Stage 2.5 feature stack.
-        </p>
-        {warnNames.length > 0 && (
-          <fieldset className="mt-3 space-y-1 text-xs">
-            <legend>Acknowledge warnings</legend>
-            {warnNames.map((name) => (
-              <label key={name} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={ack.includes(name)}
-                  onChange={(e) => {
-                    setAck((prev) =>
-                      e.target.checked
-                        ? [...prev, name]
-                        : prev.filter((n) => n !== name),
-                    );
-                  }}
-                />
-                {name}
-              </label>
-            ))}
-          </fieldset>
-        )}
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={busy}
-            className="rounded-xl border border-meadow px-3 py-2 text-sm"
-            onClick={() => onActivate("inactive")}
-          >
-            Deactivate
-          </button>
-          <button
-            type="button"
-            disabled={busy || dataset?.validation_status !== "validated"}
-            className="rounded-xl bg-leaf px-3 py-2 text-sm text-chalk disabled:opacity-50"
-            onClick={() => onActivate("reporting_only")}
-          >
-            Activate reporting_only
-          </button>
+          </aside>
         </div>
-      </section>
+
+        <GeologicalTechnicalDetails
+          payload={{
+            dataset,
+            inspect,
+            validation,
+            compatibility,
+            processing,
+            magnetic,
+            lineament_crs: lineamentCrs,
+            lineament_count: lineamentFeatures.length,
+          }}
+        />
+
+        <details
+          className="rounded-2xl border border-meadow bg-chalk"
+          open={operatorOpen}
+          onToggle={(event) =>
+            setOperatorOpen((event.target as HTMLDetailsElement).open)
+          }
+        >
+          <summary className="cursor-pointer px-4 py-3 font-display text-lg text-bark">
+            Processing controls
+            <span className="ml-2 text-sm font-normal text-stone">
+              Declare, validate, grid, magnetic ops, activation
+            </span>
+          </summary>
+          <div className="space-y-6 border-t border-meadow/70 p-4">
+            {looksAbeokuta && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void applyAbeokutaPreset()}
+                className="rounded-xl border border-leaf/40 bg-leaf/10 px-4 py-2 text-sm text-moss disabled:opacity-50"
+              >
+                Apply Abeokuta TMI metadata
+              </button>
+            )}
+
+            <form onSubmit={onDeclare} className="grid gap-3 md:grid-cols-2">
+              <label className="text-xs">
+                Measurement type
+                <input
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={measurementType}
+                  onChange={(e) => setMeasurementType(e.target.value)}
+                />
+              </label>
+              <label className="text-xs">
+                Source CRS
+                <select
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={crs}
+                  onChange={(e) => setCrs(e.target.value)}
+                >
+                  <option value="">Select CRS</option>
+                  {COMMON_CRS_OPTIONS.map((option) => (
+                    <option key={option.code} value={option.code}>
+                      {option.code} — {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs">
+                X column
+                <select
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={xCol}
+                  onChange={(e) => setXCol(e.target.value)}
+                >
+                  {(headerNames.length ? headerNames : ["X"]).map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs">
+                Y column
+                <select
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={yCol}
+                  onChange={(e) => setYCol(e.target.value)}
+                >
+                  {(headerNames.length ? headerNames : ["Y"]).map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs">
+                Z column
+                <select
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={zCol}
+                  onChange={(e) => setZCol(e.target.value)}
+                >
+                  {(headerNames.length ? headerNames : ["Z"]).map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs">
+                Units
+                <input
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={units}
+                  onChange={(e) => setUnits(e.target.value)}
+                />
+              </label>
+              <label className="text-xs md:col-span-2">
+                Description
+                <input
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </label>
+              <label className="text-xs">
+                Source client
+                <input
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={sourceClient}
+                  onChange={(e) => setSourceClient(e.target.value)}
+                />
+              </label>
+              <label className="text-xs">
+                Survey date
+                <input
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={surveyDate}
+                  onChange={(e) => setSurveyDate(e.target.value)}
+                />
+              </label>
+              <label className="text-xs">
+                Survey method
+                <input
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={surveyMethod}
+                  onChange={(e) => setSurveyMethod(e.target.value)}
+                />
+              </label>
+              <label className="text-xs">
+                Sampling spacing
+                <input
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={samplingSpacing}
+                  onChange={(e) => setSamplingSpacing(e.target.value)}
+                />
+              </label>
+              <label className="text-xs md:col-span-2">
+                Geographic coverage
+                <input
+                  className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                  value={geoCoverage}
+                  onChange={(e) => setGeoCoverage(e.target.value)}
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={busy}
+                className="rounded-xl border border-meadow px-4 py-2 text-sm disabled:opacity-50 md:col-span-2"
+              >
+                Save declaration
+              </button>
+            </form>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void onValidate()}
+                className="rounded-xl border border-meadow px-4 py-2 text-sm disabled:opacity-50"
+              >
+                Run validation
+              </button>
+            </div>
+
+            {isTmi && (
+              <div className="space-y-3 rounded-xl border border-meadow/70 p-3">
+                <label className="block text-xs">
+                  Grid resolution (metres)
+                  <input
+                    className="mt-1 w-full max-w-xs rounded-lg border border-meadow bg-mist px-3 py-2"
+                    value={gridResolution}
+                    onChange={(e) => setGridResolution(e.target.value)}
+                  />
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={
+                      busy ||
+                      dataset?.validation_status !== "validated" ||
+                      validation?.can_process === false
+                    }
+                    onClick={() => void onProcessTmi()}
+                    className="rounded-xl border border-meadow px-4 py-2 text-sm disabled:opacity-50"
+                  >
+                    Process TMI grid
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void refreshMagnetic()}
+                    className="rounded-xl border border-meadow px-4 py-2 text-sm disabled:opacity-50"
+                  >
+                    Refresh products
+                  </button>
+                </div>
+                <label className="block text-xs">
+                  Magnetic operation
+                  <select
+                    className="mt-1 w-full max-w-md rounded-lg border border-meadow bg-mist px-3 py-2"
+                    value={magneticOp}
+                    onChange={(e) => setMagneticOp(e.target.value)}
+                  >
+                    {(magnetic?.operation_catalog || []).map((c) => (
+                      <option key={c.operation} value={c.operation}>
+                        {c.title || c.operation}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="grid gap-2 md:grid-cols-2">
+                  <label className="text-xs">
+                    Inclination (°)
+                    <input
+                      className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                      value={inclination}
+                      onChange={(e) => setInclination(e.target.value)}
+                    />
+                  </label>
+                  <label className="text-xs">
+                    Declination (°)
+                    <input
+                      className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                      value={declination}
+                      onChange={(e) => setDeclination(e.target.value)}
+                    />
+                  </label>
+                  <label className="text-xs">
+                    Gaussian wavelength (m)
+                    <input
+                      className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                      value={gaussWave}
+                      onChange={(e) => setGaussWave(e.target.value)}
+                    />
+                  </label>
+                  <label className="text-xs">
+                    Gaussian σ
+                    <input
+                      className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                      value={gaussStd}
+                      onChange={(e) => setGaussStd(e.target.value)}
+                    />
+                  </label>
+                  <label className="text-xs">
+                    Gaussian mode
+                    <select
+                      className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                      value={gaussMode}
+                      onChange={(e) => setGaussMode(e.target.value)}
+                    >
+                      <option value="low_pass">low_pass</option>
+                      <option value="high_pass">high_pass</option>
+                    </select>
+                  </label>
+                  <label className="text-xs">
+                    RTE amplitude clip
+                    <input
+                      className="mt-1 w-full rounded-lg border border-meadow bg-mist px-3 py-2"
+                      value={rteClip}
+                      onChange={(e) => setRteClip(e.target.value)}
+                    />
+                  </label>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={busy || dataset?.validation_status !== "validated"}
+                    onClick={() => void onMagneticOp()}
+                    className="rounded-xl bg-leaf px-4 py-2 text-sm text-chalk disabled:opacity-50"
+                  >
+                    Run magnetic operation
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy || dataset?.validation_status !== "validated"}
+                    onClick={() => void onExtractLineaments()}
+                    className="rounded-xl border border-bark/30 px-4 py-2 text-sm disabled:opacity-50"
+                    data-testid="extract-candidate-lineaments"
+                  >
+                    Extract candidate magnetic lineaments
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void onCompatibility("accepted_with_limitations")}
+                className="rounded-xl border border-meadow px-4 py-2 text-sm disabled:opacity-50"
+              >
+                Accept with limitations
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void onCompatibility("rejected")}
+                className="rounded-xl border border-meadow px-4 py-2 text-sm disabled:opacity-50"
+              >
+                Reject
+              </button>
+            </div>
+
+            {warnNames.length > 0 && (
+              <div className="space-y-2 text-sm">
+                <p className="text-xs text-stone">
+                  Acknowledge warnings before activation:
+                </p>
+                {warnNames.map((name) => (
+                  <label key={name} className="flex items-center gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={ack.includes(name)}
+                      onChange={(e) =>
+                        setAck((prev) =>
+                          e.target.checked
+                            ? [...prev, name]
+                            : prev.filter((item) => item !== name),
+                        )
+                      }
+                    />
+                    {name}
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void onActivate("inactive")}
+                className="rounded-xl border border-meadow px-4 py-2 text-sm disabled:opacity-50"
+              >
+                Deactivate
+              </button>
+              <button
+                type="button"
+                disabled={busy || dataset?.validation_status !== "validated"}
+                onClick={() => void onActivate("reporting_only")}
+                className="rounded-xl bg-moss px-4 py-2 text-sm text-chalk disabled:opacity-50"
+              >
+                Activate reporting_only
+              </button>
+            </div>
+          </div>
+        </details>
+      </div>
     </PlatformShell>
   );
 }

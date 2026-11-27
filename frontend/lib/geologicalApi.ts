@@ -342,6 +342,22 @@ export async function processGeologicalTmi(
   }>(`/datasets/${geoId}/process`, body);
 }
 
+export type MagneticProductEntry = {
+  operation: string;
+  title?: string;
+  summary?: string;
+  units?: string;
+  geotiff_exists?: boolean;
+  preview_exists?: boolean;
+  raps_exists?: boolean;
+  geojson_exists?: boolean;
+  geotiff_relpath?: string | null;
+  preview_relpath?: string | null;
+  raps_relpath?: string | null;
+  geojson_relpath?: string | null;
+  qc?: Record<string, unknown> | null;
+};
+
 export type MagneticProducts = {
   geo_id: string;
   supported_operations: string[];
@@ -351,18 +367,8 @@ export type MagneticProducts = {
     summary?: string;
     units?: string;
   }>;
-  products: Array<{
-    operation: string;
-    title?: string;
-    summary?: string;
-    units?: string;
-    geotiff_exists?: boolean;
-    preview_exists?: boolean;
-    raps_exists?: boolean;
-    geotiff_relpath?: string | null;
-    preview_relpath?: string | null;
-    raps_relpath?: string | null;
-  }>;
+  products: MagneticProductEntry[];
+  candidate_lineaments?: Record<string, unknown> | null;
   processing_history?: unknown[];
   gridding_reconciliation?: Record<string, unknown>;
   gridding_provenance?: Record<string, unknown>;
@@ -390,6 +396,31 @@ export type MagneticProducts = {
   grid_spacing_y?: number | null;
   not_hazard_labels?: boolean;
 };
+
+/** Authenticated fetch of a derived product (PNG / GeoJSON / GeoTIFF). */
+export async function fetchGeologicalDerived(
+  geoId: string,
+  filename: string,
+): Promise<Blob> {
+  const headers = await geologicalAuthHeaders();
+  let response: Response;
+  try {
+    response = await fetch(geologicalDerivedUrl(geoId, filename), { headers });
+  } catch {
+    throw connectionError();
+  }
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as GeologicalError;
+    throw new Error(
+      geologicalHttpErrorMessage(
+        response.status,
+        body,
+        "Could not download derived geological product",
+      ),
+    );
+  }
+  return response.blob();
+}
 
 export async function listGeologicalMagnetic(geoId: string) {
   return geoGet<MagneticProducts>(`/datasets/${geoId}/magnetic`);

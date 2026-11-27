@@ -57,18 +57,6 @@ function InlineDot({ className }: { className?: string }) {
   );
 }
 
-/** Slim indeterminate bar: says "working" without implying a percentage. */
-function IndeterminateBar() {
-  return (
-    <div
-      className="relative h-1 w-full overflow-hidden rounded-full bg-meadow"
-      aria-hidden
-    >
-      <span className="absolute inset-y-0 left-0 w-2/5 animate-pulse rounded-full bg-leaf motion-reduce:animate-none" />
-    </div>
-  );
-}
-
 /** Shows ONE step at a time, then moves to the next. */
 function AssessmentBody({
   presentation,

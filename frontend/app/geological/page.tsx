@@ -20,6 +20,7 @@ export default function GeologicalListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [lastUploadedId, setLastUploadedId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [assetKind, setAssetKind] = useState<"point_grid_csv" | "vector_lineament">(
     "point_grid_csv",
@@ -99,11 +100,12 @@ export default function GeologicalListPage() {
       });
       const geoId = created.dataset.geo_id;
       await uploadGeologicalFile(geoId, file, setProgress);
+      setLastUploadedId(geoId);
       setSuccess(
         file.name.toLowerCase().includes("abeokuta") ||
           file.name.toLowerCase().includes("260")
-          ? `Uploaded as ${geoId}. Open it and click “Apply Abeokuta TMI metadata” (X=easting, Y=northing, Z=TMI; source EPSG:32632 → processing EPSG:32631 → display EPSG:4326).`
-          : `Uploaded as ${geoId}. Open it to declare columns, source CRS, and measurement type before validation.`,
+          ? `Uploaded as ${geoId}. Open the dataset and click “Apply Abeokuta TMI metadata” (X=easting, Y=northing, Z=TMI; source EPSG:32632 → processing EPSG:32631 → display EPSG:4326). Stay in Geological — do not create a Stage 2.5 entry under Datasets.`
+          : `Uploaded as ${geoId}. Open the dataset to declare columns, source CRS, and measurement type before validation. Stay in Geological — Datasets is only for Stage 2.5 training packages.`,
       );
       setDisplayName("");
       setFile(null);
@@ -231,7 +233,20 @@ export default function GeologicalListPage() {
       </form>
 
       {error && <p className="mt-4 text-sm text-amber-900">{error}</p>}
-      {success && <p className="mt-4 text-sm text-leaf">{success}</p>}
+      {success && (
+        <div className="mt-4 space-y-2 rounded-xl border border-leaf/30 bg-leaf/10 px-3 py-3 text-sm text-moss">
+          <p>{success}</p>
+          {lastUploadedId && (
+            <Link
+              href={`/geological/${lastUploadedId}`}
+              className="inline-flex rounded-lg bg-moss px-3 py-1.5 text-xs text-chalk"
+              data-testid="open-uploaded-geological-dataset"
+            >
+              Open dataset workspace
+            </Link>
+          )}
+        </div>
+      )}
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <label className="text-xs">
