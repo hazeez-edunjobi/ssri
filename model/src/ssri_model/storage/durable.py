@@ -107,6 +107,74 @@ def registry_object_key(filename: str) -> str:
     return f"training/models/{Path(filename).name}"
 
 
+# Lagos engineering clips mirrored to the shared production bucket. Keys must
+# match the uploaded R2 objects exactly. Digests are the verified local files;
+# materialization never uploads or overwrites remote objects.
+GEOPHYSICS_PROCESSED_PREFIX = "geophysics/processed/"
+REQUIRED_GEOPHYSICS_ASSETS: tuple[dict[str, str | int], ...] = (
+    {
+        "filename": "lagos_gravity_wgm2012_bouguer.tif",
+        "object_key": "geophysics/processed/lagos_gravity_wgm2012_bouguer.tif",
+        "expected_sha256": (
+            "1dd310bece474230a938002c80f9a78d44a37e0e9eaf677ca0e347a5d8c377a6"
+        ),
+        "expected_bytes": 14113,
+    },
+    {
+        "filename": "lagos_magnetic_emag2v3_uc4km.tif",
+        "object_key": "geophysics/processed/lagos_magnetic_emag2v3_uc4km.tif",
+        "expected_sha256": (
+            "0d28e751a2d6ffda8f6480ce5e6e20ff2d6ca0b07db38161bd3c7e710b48736d"
+        ),
+        "expected_bytes": 15166,
+    },
+)
+
+
+def geophysics_object_key(filename: str) -> str:
+    """Stable object key for a processed geophysics GeoTIFF."""
+    name = Path(filename).name
+    if not name or ".." in name:
+        raise ValueError("unsafe geophysics filename for object key")
+    return f"{GEOPHYSICS_PROCESSED_PREFIX}{name}"
+
+
+def geophysics_processed_dir() -> Path:
+    """Local directory for materialized geophysics GeoTIFFs.
+
+    Production contract: ``/data/geophysics/processed`` (same tree as
+    ``SSRI_API_OUTPUT_ROOT=/data/outputs``). Relative/dev checkouts fall back
+    to ``SSRI_DATA_ROOT`` or the repository ``data/geophysics/processed``.
+    """
+    explicit = (os.getenv("SSRI_GEOPHYSICS_PROCESSED_DIR") or "").strip()
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    data_root = (os.getenv("SSRI_DATA_ROOT") or "").strip()
+    if data_root:
+        return (Path(data_root).expanduser().resolve() / "geophysics" / "processed")
+    container = Path("/data/geophysics/processed")
+    if Path("/data").is_dir():
+        return container
+    # model/src/ssri_model/storage/durable.py → repo root is parents[4]
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidate = parent / "data" / "geophysics" / "processed"
+        if candidate.is_dir() or (parent / "infra").is_dir():
+            return candidate
+    return container
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while True:
+            chunk = handle.read(1024 * 1024)
+            if not chunk:
+                break
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
@@ -423,6 +491,235 @@ def ensure_registry_metadata_local(
             materialize_object_to_path(key, dest, storage=storage)
         except FileNotFoundError:
             continue
+
+
+def _validate_geophysics_geotiff(path: Path) -> dict[str, Any]:
+    """Confirm a materialized file is a single-band GeoTIFF with CRS metadata."""
+    import rasterio
+
+    with rasterio.open(path) as dataset:
+        if dataset.count < 1:
+            raise ValueError(f"{path.name} has no raster bands")
+        if dataset.crs is None:
+            raise ValueError(f"{path.name} is missing CRS metadata")
+        return {
+            "bands": int(dataset.count),
+            "crs": str(dataset.crs),
+            "dtype": str(dataset.dtypes[0]),
+            "nodata": (
+                float(dataset.nodata) if dataset.nodata is not None else None
+            ),
+            "width": int(dataset.width),
+            "height": int(dataset.height),
+        }
+
+
+def _asset_local_ok(path: Path, *, expected_sha256: str, expected_bytes: int) -> bool:
+    if not path.is_file():
+        return False
+    size = path.stat().st_size
+    if expected_bytes and size != int(expected_bytes):
+        return False
+    return sha256_file(path) == expected_sha256
+
+
+def ensure_geophysics_assets_local(
+    *,
+    storage: ObjectStorage | None = None,
+    processed_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Idempotently materialize required geophysics GeoTIFFs under ``/data/geophysics/processed``.
+
+    Downloads missing or digest-mismatched files from object storage. Never
+    uploads or overwrites remote objects. Safe to call on every API/worker
+    startup and on ``/ready``.
+    """
+    root = Path(processed_dir) if processed_dir is not None else geophysics_processed_dir()
+    root.mkdir(parents=True, exist_ok=True)
+    remote = is_remote_object_backend() or storage is not None
+    assets: list[dict[str, Any]] = []
+    materialized = 0
+    errors: list[str] = []
+
+    for spec in REQUIRED_GEOPHYSICS_ASSETS:
+        filename = str(spec["filename"])
+        object_key = str(spec["object_key"])
+        expected_sha = str(spec["expected_sha256"])
+        expected_bytes = int(spec["expected_bytes"])
+        dest = root / filename
+        entry: dict[str, Any] = {
+            "filename": filename,
+            "object_key": object_key,
+            "path_basename": filename,
+            "present": False,
+            "sha256_ok": False,
+            "valid_geotiff": False,
+            "materialized": False,
+            "bytes": None,
+            "detail": "",
+        }
+        try:
+            if _asset_local_ok(
+                dest, expected_sha256=expected_sha, expected_bytes=expected_bytes
+            ):
+                meta = _validate_geophysics_geotiff(dest)
+                entry.update(
+                    {
+                        "present": True,
+                        "sha256_ok": True,
+                        "valid_geotiff": True,
+                        "bytes": dest.stat().st_size,
+                        "raster": meta,
+                        "detail": "local cache matches expected digest",
+                    }
+                )
+                assets.append(entry)
+                continue
+
+            if not remote:
+                if dest.is_file():
+                    entry["present"] = True
+                    entry["bytes"] = dest.stat().st_size
+                    entry["detail"] = (
+                        "local file present but digest/size mismatch and "
+                        "object storage is not configured"
+                    )
+                    errors.append(f"{filename}: digest mismatch without remote backend")
+                else:
+                    entry["detail"] = "missing locally; object storage not configured"
+                    errors.append(f"{filename}: missing")
+                assets.append(entry)
+                continue
+
+            # Rematerialize from R2 (read-only). Never put_object.
+            materialize_object_to_path(object_key, dest, storage=storage)
+            materialized += 1
+            entry["materialized"] = True
+            entry["present"] = dest.is_file()
+            entry["bytes"] = dest.stat().st_size if dest.is_file() else None
+            if not _asset_local_ok(
+                dest, expected_sha256=expected_sha, expected_bytes=expected_bytes
+            ):
+                actual = sha256_file(dest) if dest.is_file() else None
+                entry["detail"] = (
+                    "materialized object digest does not match expected "
+                    f"local engineering clip (expected={expected_sha[:12]}… "
+                    f"actual={(actual or 'missing')[:12]}…)"
+                )
+                errors.append(f"{filename}: sha256 mismatch after materialize")
+                assets.append(entry)
+                continue
+            meta = _validate_geophysics_geotiff(dest)
+            entry.update(
+                {
+                    "sha256_ok": True,
+                    "valid_geotiff": True,
+                    "raster": meta,
+                    "detail": "materialized from object storage",
+                }
+            )
+        except FileNotFoundError:
+            entry["detail"] = f"object not found in storage: {object_key}"
+            errors.append(entry["detail"])
+        except Exception as exc:  # noqa: BLE001 — readiness must stay informative
+            entry["detail"] = f"{type(exc).__name__}: {exc}"
+            errors.append(f"{filename}: {entry['detail']}")
+        assets.append(entry)
+
+    available = all(
+        a.get("present") and a.get("sha256_ok") and a.get("valid_geotiff") for a in assets
+    )
+    logger.info(
+        "geophysics_assets available=%s materialized=%s root=%s errors=%s",
+        available,
+        materialized,
+        root,
+        len(errors),
+    )
+    return {
+        "available": available,
+        "processed_dir_configured": str(root),
+        "materialized_count": materialized,
+        "assets": assets,
+        "errors": errors,
+        "detail": (
+            "Required Lagos gravity and magnetic GeoTIFFs are readable."
+            if available
+            else (
+                "Required geophysics GeoTIFFs are missing or invalid after "
+                "durable recovery. "
+                + ("; ".join(errors) if errors else "unknown failure")
+            )
+        ),
+    }
+
+
+def verify_remote_geophysics_objects(
+    *,
+    storage: ObjectStorage | None = None,
+) -> dict[str, Any]:
+    """Read-only check that required geophysics objects exist in object storage.
+
+    Compares remote SHA-256 to the verified local engineering-clip digests.
+    Never uploads or deletes remote objects.
+    """
+    if not is_remote_object_backend() and storage is None:
+        return {
+            "ok": False,
+            "backend": object_storage_backend(),
+            "assets": [],
+            "detail": "object storage backend is not remote",
+        }
+    errors = validate_object_storage_configuration()
+    if errors and is_remote_object_backend() and storage is None:
+        raise IncompleteObjectStorageConfigError("; ".join(errors))
+    store = storage or build_object_storage_from_env()
+    assets: list[dict[str, Any]] = []
+    all_ok = True
+    for spec in REQUIRED_GEOPHYSICS_ASSETS:
+        object_key = str(spec["object_key"])
+        expected_sha = str(spec["expected_sha256"])
+        expected_bytes = int(spec["expected_bytes"])
+        entry: dict[str, Any] = {
+            "object_key": object_key,
+            "exists": False,
+            "bytes": None,
+            "sha256": None,
+            "sha256_ok": False,
+        }
+        try:
+            if not store.exists(object_key):
+                all_ok = False
+                entry["detail"] = "missing"
+                assets.append(entry)
+                continue
+            payload = store.get_bytes(object_key)
+            digest = sha256_bytes(payload)
+            entry.update(
+                {
+                    "exists": True,
+                    "bytes": len(payload),
+                    "sha256": digest,
+                    "sha256_ok": digest == expected_sha and len(payload) == expected_bytes,
+                    "detail": "ok" if digest == expected_sha else "digest_mismatch",
+                }
+            )
+            if not entry["sha256_ok"]:
+                all_ok = False
+        except Exception as exc:  # noqa: BLE001
+            all_ok = False
+            entry["detail"] = f"{type(exc).__name__}: {exc}"
+        assets.append(entry)
+    return {
+        "ok": all_ok,
+        "backend": object_storage_backend(),
+        "assets": assets,
+        "detail": (
+            "Remote geophysics objects match expected digests."
+            if all_ok
+            else "One or more remote geophysics objects are missing or mismatched."
+        ),
+    }
 
 
 def mirror_assessment_payload(

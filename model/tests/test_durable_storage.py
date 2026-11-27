@@ -148,3 +148,88 @@ def test_incomplete_config_raises_on_mirror(
         mirror_file_to_object_storage(
             path, "training/models/m/best.pt", content_type="application/octet-stream"
         )
+
+
+def test_ensure_geophysics_assets_materializes_from_object_storage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Render wipe recovery: missing local GeoTIFFs rematerialize from R2 keys."""
+    import numpy as np
+    import rasterio
+    from rasterio.transform import from_origin
+
+    from ssri_model.storage.durable import (
+        REQUIRED_GEOPHYSICS_ASSETS,
+        ensure_geophysics_assets_local,
+        sha256_bytes,
+        verify_remote_geophysics_objects,
+    )
+
+    monkeypatch.setenv("SSRI_OBJECT_STORAGE_BACKEND", "r2")
+    monkeypatch.setenv("SSRI_OBJECT_STORAGE_BUCKET", "ssri")
+    monkeypatch.setenv(
+        "SSRI_OBJECT_STORAGE_ENDPOINT", "https://example.r2.cloudflarestorage.com"
+    )
+    monkeypatch.setenv("SSRI_OBJECT_STORAGE_ACCESS_KEY", "ak")
+    monkeypatch.setenv("SSRI_OBJECT_STORAGE_SECRET_KEY", "sk")
+
+    store = LocalObjectStorage(root=tmp_path / "objects")
+    processed = tmp_path / "geophysics" / "processed"
+    # Build tiny valid GeoTIFFs and place under the expected object keys with
+    # matching digests by patching REQUIRED specs for this test.
+    payloads: dict[str, bytes] = {}
+    patched_assets = []
+    for spec in REQUIRED_GEOPHYSICS_ASSETS:
+        filename = str(spec["filename"])
+        path = tmp_path / "src" / filename
+        path.parent.mkdir(parents=True, exist_ok=True)
+        transform = from_origin(2.5, 7.5, 1.0 / 30.0, 1.0 / 30.0)
+        with rasterio.open(
+            path,
+            "w",
+            driver="GTiff",
+            height=2,
+            width=2,
+            count=1,
+            dtype="float32",
+            crs="EPSG:4326",
+            transform=transform,
+            nodata=-9999.0,
+        ) as dst:
+            dst.write(np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32), 1)
+        payload = path.read_bytes()
+        digest = sha256_bytes(payload)
+        key = str(spec["object_key"])
+        store.put_bytes(key, payload, content_type="image/tiff")
+        payloads[key] = payload
+        patched_assets.append(
+            {
+                "filename": filename,
+                "object_key": key,
+                "expected_sha256": digest,
+                "expected_bytes": len(payload),
+            }
+        )
+
+    import ssri_model.storage.durable as durable
+
+    monkeypatch.setattr(durable, "REQUIRED_GEOPHYSICS_ASSETS", tuple(patched_assets))
+
+    remote = verify_remote_geophysics_objects(storage=store)
+    assert remote["ok"] is True
+    assert all(a["sha256_ok"] for a in remote["assets"])
+
+    # Simulate empty Render disk.
+    assert not processed.exists() or not any(processed.glob("*.tif"))
+    result = ensure_geophysics_assets_local(storage=store, processed_dir=processed)
+    assert result["available"] is True
+    assert result["materialized_count"] == 2
+    for spec in patched_assets:
+        dest = processed / str(spec["filename"])
+        assert dest.is_file()
+        assert sha256_bytes(dest.read_bytes()) == spec["expected_sha256"]
+
+    # Idempotent second pass must not re-download.
+    again = ensure_geophysics_assets_local(storage=store, processed_dir=processed)
+    assert again["available"] is True
+    assert again["materialized_count"] == 0

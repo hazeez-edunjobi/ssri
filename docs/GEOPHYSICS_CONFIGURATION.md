@@ -59,6 +59,19 @@ the key. The secret must come from `env_file`.
 
 Geophysics has **no** automatic product fallback.
 
+## Durable recovery (Render / R2)
+
+Required Lagos clips may be stored in the existing production bucket under:
+
+- `geophysics/processed/lagos_gravity_wgm2012_bouguer.tif`
+- `geophysics/processed/lagos_magnetic_emag2v3_uc4km.tif`
+
+API lifespan, Celery worker init, and `GET /api/v1/ready` call
+`ensure_geophysics_assets_local()` to materialize these into
+`/data/geophysics/processed/` when missing. Recovery is **read-only** toward
+object storage (never overwrites uploaded objects). Production readiness
+returns 503 until both files are present, digest-matched, and valid GeoTIFFs.
+
 ## FeatureStack provenance
 
 Manifest `sources` records the **actual** providers used:

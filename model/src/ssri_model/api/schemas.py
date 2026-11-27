@@ -191,6 +191,8 @@ class ReadinessResponse(BaseModel):
     demo_mode: bool = False
     # Promoted Stage 2.5 registry status (no filesystem paths exposed).
     model_registry: dict[str, object] | None = None
+    # Durable Lagos gravity/magnetic GeoTIFF recovery status (no absolute paths).
+    geophysics: dict[str, object] | None = None
 
 
 class BatchStatusResponseBody(BaseModel):

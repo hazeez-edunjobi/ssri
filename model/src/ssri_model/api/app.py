@@ -96,6 +96,13 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        try:
+            from ssri_model.storage.durable import ensure_geophysics_assets_local
+
+            ensure_geophysics_assets_local()
+        except Exception:
+            # Readiness re-checks and reports; do not block process boot on soft fail.
+            pass
         yield
         state = getattr(app.state, "ssri", None)
         if isinstance(state, AppState) and state.infrastructure is not None:

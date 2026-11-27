@@ -77,13 +77,22 @@ class GeophysicsConfig:
         never the process CWD alone (which is ``/app`` inside containers).
         """
         source = (os.getenv("SSRI_GRAVITY_SOURCE") or "wgm2012_bouguer").strip().lower()
+        # Container defaults match durable R2 materialization targets and Compose.
+        default_gravity = "/data/geophysics/processed/lagos_gravity_wgm2012_bouguer.tif"
+        default_magnetic = "/data/geophysics/processed/lagos_magnetic_emag2v3_uc4km.tif"
+        gravity_raw = (os.getenv("GRAVITY_DATA_PATH") or "").strip() or (
+            default_gravity if Path(default_gravity).is_file() else None
+        )
+        magnetic_raw = (os.getenv("MAGNETIC_DATA_PATH") or "").strip() or (
+            default_magnetic if Path(default_magnetic).is_file() else None
+        )
         return cls(
             gravity_data_path=_optional_resolved_path(
-                os.getenv("GRAVITY_DATA_PATH"),
+                gravity_raw,
                 env_var="GRAVITY_DATA_PATH",
             ),
             magnetic_data_path=_optional_resolved_path(
-                os.getenv("MAGNETIC_DATA_PATH"),
+                magnetic_raw,
                 env_var="MAGNETIC_DATA_PATH",
             ),
             eigen6c4_data_path=_optional_resolved_path(

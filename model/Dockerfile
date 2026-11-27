@@ -53,7 +53,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 1000 app \
     && useradd --uid 1000 --gid app --create-home app \
-    && mkdir -p /data/outputs /data/auth /data/jobs \
+    && mkdir -p /data/outputs /data/auth /data/jobs /data/geophysics/processed \
     && chown -R app:app /data
 
 WORKDIR /app

@@ -259,12 +259,21 @@ def execute_job_record(job_id: str) -> None:
 
 def register_worker_signals() -> None:
     """Register Celery worker lifecycle hooks."""
+    from celery.signals import worker_process_init, worker_shutting_down
+
     app = get_celery_app()
+
+    @worker_process_init.connect  # type: ignore[untyped-decorator]
+    def _on_worker_process_init(**__: object) -> None:
+        try:
+            from ssri_model.storage.durable import ensure_geophysics_assets_local
+
+            ensure_geophysics_assets_local()
+        except Exception:
+            pass
 
     @app.on_after_finalize.connect  # type: ignore[untyped-decorator]
     def _register_shutdown_handler(**_: object) -> None:
-        from celery.signals import worker_shutting_down
-
         @worker_shutting_down.connect  # type: ignore[untyped-decorator]
         def _on_shutdown(**__: object) -> None:
             request_worker_shutdown()
