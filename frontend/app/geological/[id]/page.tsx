@@ -607,6 +607,10 @@ export default function GeologicalDetailPage() {
           directionBins={bins}
           lineamentCrs={lineamentCrs}
           tmiPreview={tmiPreview}
+          griddingProvenance={
+            (magnetic?.gridding_provenance as Record<string, unknown> | null) ||
+            null
+          }
           valueRangeLabel={valueRangeLabel}
         />
 
