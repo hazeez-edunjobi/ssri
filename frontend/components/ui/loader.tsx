@@ -27,31 +27,43 @@ export type LoaderProps = {
   "data-testid"?: string;
 };
 
-function OrbitMark({ className }: { className?: string }) {
+/** One simple ring. Respects reduced motion (falls back to a static arc). */
+function Spinner({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "relative inline-flex h-9 w-9 items-center justify-center",
+        "inline-block h-7 w-7 rounded-full border-[3px] border-meadow border-t-leaf",
+        "animate-spin motion-reduce:animate-none",
         className,
       )}
+      style={{ animationDuration: "0.9s" }}
       aria-hidden
-    >
-      <span className="absolute inset-0 rounded-full border border-meadow" />
-      <span className="ssri-loader-orbit absolute inset-0 rounded-full border-2 border-transparent border-t-leaf border-r-leaf/40" />
-      <span className="h-2 w-2 rounded-full bg-leaf" />
-    </span>
+    />
   );
 }
 
-function InlinePulse({ className }: { className?: string }) {
+function InlineDot({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "ssri-loader-pulse inline-block h-1.5 w-1.5 rounded-full bg-leaf",
+        "inline-block h-2 w-2 rounded-full bg-leaf",
+        "animate-pulse motion-reduce:animate-none",
         className,
       )}
       aria-hidden
     />
+  );
+}
+
+/** Slim indeterminate bar: says "working" without implying a percentage. */
+function IndeterminateBar() {
+  return (
+    <div
+      className="relative h-1 w-full overflow-hidden rounded-full bg-meadow"
+      aria-hidden
+    >
+      <span className="absolute inset-y-0 left-0 w-2/5 animate-pulse rounded-full bg-leaf motion-reduce:animate-none" />
+    </div>
   );
 }
 
@@ -63,22 +75,22 @@ function AssessmentBody({
   onCancel?: () => void;
 }) {
   return (
-    <div className="space-y-5" data-testid="assessment-loader-body">
-      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-start">
-        <OrbitMark className="mt-1 h-11 w-11 shrink-0" />
+    <div
+      className="space-y-5 rounded-2xl border border-meadow bg-white/60 p-5"
+      data-testid="assessment-loader-body"
+    >
+      <div className="flex items-start gap-4">
+        <Spinner className="mt-0.5 shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-leaf">
-            Assessment in progress
-          </p>
-          <h3 className="mt-1 font-display text-xl text-bark sm:text-lg">
+          <h3 className="font-display text-lg text-bark">
             {presentation.title}
           </h3>
-          <p className="mt-2 text-sm leading-relaxed text-stone">
+          <p className="mt-1 text-sm leading-relaxed text-stone">
             {presentation.description}
           </p>
           {presentation.mode === "indeterminate" && (
             <p
-              className="mt-3 font-mono text-xs text-moss"
+              className="mt-2 text-sm text-moss"
               data-testid="assessment-loader-status"
             >
               {presentation.statusLabel}
@@ -88,7 +100,7 @@ function AssessmentBody({
       </div>
 
       {presentation.mode === "staged" ? (
-        <ol className="space-y-2" data-testid="assessment-loader-stages">
+        <ol className="space-y-0.5" data-testid="assessment-loader-stages">
           {presentation.stages.map((stage) => {
             const done = presentation.completedStageIds.includes(stage.id);
             const current = presentation.currentStageId === stage.id;
@@ -96,31 +108,36 @@ function AssessmentBody({
               <li
                 key={stage.id}
                 className={cn(
-                  "flex items-start gap-2.5 rounded-xl px-2 py-1.5 text-sm",
-                  current && "bg-meadow/40",
+                  "flex items-start gap-3 rounded-xl px-3 py-2",
+                  current && "bg-meadow/50",
                 )}
                 data-testid={`assessment-loader-stage-${stage.id}`}
                 data-state={current ? "current" : done ? "done" : "pending"}
               >
                 <span
                   className={cn(
-                    "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
-                    current && "ssri-loader-pulse bg-leaf",
+                    "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                    current && "bg-leaf animate-pulse motion-reduce:animate-none",
                     done && !current && "bg-moss",
                     !done && !current && "bg-meadow",
                   )}
+                  aria-hidden
                 />
                 <span className="min-w-0">
                   <span
                     className={cn(
-                      "block text-[13px]",
-                      current ? "text-moss" : done ? "text-stone" : "text-stone/55",
+                      "block text-sm",
+                      current
+                        ? "font-medium text-bark"
+                        : done
+                          ? "text-moss"
+                          : "text-stone/60",
                     )}
                   >
                     {stage.label}
                   </span>
                   {current && (
-                    <span className="mt-0.5 block text-[11px] text-stone">
+                    <span className="mt-0.5 block text-xs text-stone">
                       {stage.description}
                     </span>
                   )}
@@ -130,31 +147,19 @@ function AssessmentBody({
           })}
         </ol>
       ) : (
-        <ul
-          className="space-y-1.5 border-t border-meadow/80 pt-4"
-          data-testid="assessment-loader-honest-stages"
-        >
-          {ASSESSMENT_LOADING_STAGES.map((stage) => (
-            <li
-              key={stage.id}
-              className="flex items-center gap-2 text-[11px] text-stone/70"
-            >
-              <InlinePulse className="opacity-40" />
-              <span>{stage.label}</span>
-            </li>
-          ))}
-          <li className="pt-1 text-[11px] text-stone">
-            Stages remain unconfirmed until the API reports progress. No completion
-            is assumed.
-          </li>
-        </ul>
+        <div className="space-y-3" data-testid="assessment-loader-honest-stages">
+          <IndeterminateBar />
+          <p className="text-xs text-stone">
+            {ASSESSMENT_LOADING_STAGES.map((s) => s.label).join(", ")}
+          </p>
+        </div>
       )}
 
       {onCancel && (
         <button
           type="button"
           onClick={onCancel}
-          className="text-[11px] text-moss underline underline-offset-2"
+          className="rounded-md text-sm text-moss underline underline-offset-2 hover:text-bark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf"
           data-testid="assessment-loader-cancel"
         >
           Cancel assessment
@@ -181,9 +186,7 @@ export function Loader({
   "data-testid": testId,
 }: LoaderProps) {
   const presentation =
-    variant === "assessment"
-      ? presentAssessmentLoading(progress)
-      : null;
+    variant === "assessment" ? presentAssessmentLoading(progress) : null;
 
   if (error) {
     return (
@@ -200,7 +203,7 @@ export function Loader({
           <button
             type="button"
             onClick={onRetry}
-            className="mt-2 font-semibold text-moss underline"
+            className="mt-2 font-semibold text-moss underline hover:text-bark"
             data-testid="loader-retry"
           >
             Retry
@@ -211,12 +214,7 @@ export function Loader({
   }
 
   const resolvedTitle =
-    title ??
-    (variant === "assessment"
-      ? presentation?.title
-      : variant === "page"
-        ? "Loading"
-        : "Loading");
+    title ?? (variant === "assessment" ? presentation?.title : "Loading");
   const resolvedDescription =
     description ??
     (variant === "assessment" ? presentation?.description : undefined);
@@ -228,31 +226,27 @@ export function Loader({
       <div
         className={cn(
           "flex gap-3",
-          variant === "inline" && "items-center",
-          variant !== "inline" && "flex-col items-center text-center",
-          variant === "page" && "justify-center",
+          variant === "inline"
+            ? "items-center"
+            : "flex-col items-center text-center",
         )}
       >
-        {variant === "inline" ? <InlinePulse /> : <OrbitMark />}
-        <div className={cn(variant === "inline" && "min-w-0")}>
-          {stage && (
-            <p className="font-mono text-[10px] uppercase tracking-widest text-leaf">
-              {stage}
-            </p>
-          )}
+        {variant === "inline" ? <InlineDot /> : <Spinner />}
+        <div className="min-w-0">
+          {stage && <p className="text-xs font-medium text-leaf">{stage}</p>}
           {resolvedTitle && (
             <p
               className={cn(
                 "text-sm text-bark",
                 variant === "page" && "font-display text-lg",
-                variant === "inline" && "font-mono text-xs text-stone",
+                variant === "inline" && "text-xs text-stone",
               )}
             >
               {resolvedTitle}
             </p>
           )}
           {resolvedDescription && (
-            <p className="mt-1 max-w-md text-xs leading-relaxed text-stone">
+            <p className="mt-1 max-w-md text-sm leading-relaxed text-stone">
               {resolvedDescription}
             </p>
           )}
@@ -266,7 +260,7 @@ export function Loader({
         "ssri-loader",
         variant === "page" &&
           "flex min-h-[40vh] w-full flex-col items-center justify-center px-6 py-16",
-        variant === "section" && "w-full py-8",
+        variant === "section" && "flex w-full justify-center py-10",
         variant === "inline" && "inline-flex items-center",
         variant === "assessment" && "mt-5 w-full",
         className,
@@ -299,7 +293,7 @@ export function ContentSkeleton({
       {Array.from({ length: rows }, (_, index) => (
         <div
           key={index}
-          className="h-16 animate-pulse rounded-2xl border border-meadow/70 bg-meadow/30"
+          className="h-16 animate-pulse rounded-2xl bg-meadow/40 motion-reduce:animate-none"
         />
       ))}
     </div>
@@ -316,11 +310,9 @@ export function MapSkeleton({ className }: { className?: string }) {
       data-testid="map-skeleton"
       aria-hidden
     >
-      <div className="space-y-2 text-center">
-        <OrbitMark className="mx-auto" />
-        <p className="font-mono text-[10px] uppercase tracking-widest text-stone">
-          Preparing map
-        </p>
+      <div className="flex flex-col items-center gap-2">
+        <Spinner />
+        <p className="text-sm text-stone">Preparing map</p>
       </div>
     </div>
   );
