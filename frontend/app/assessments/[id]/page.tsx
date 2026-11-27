@@ -15,6 +15,7 @@ import {
   formatHazardLine,
   formatHistoryCoords,
 } from "@/lib/assessmentHistory";
+import { ContentSkeleton, Loader } from "@/components/ui/loader";
 
 function AssessmentDetailWorkspace() {
   const params = useParams();
@@ -78,25 +79,23 @@ function AssessmentDetailWorkspace() {
       </p>
 
       {loading && (
-        <p className="mt-8 text-sm text-stone" data-testid="assessment-detail-loading">
-          Loading assessment…
-        </p>
+        <Loader
+          variant="section"
+          title="Loading assessment"
+          description="Retrieving the persisted response and spatial references."
+          skeleton={<ContentSkeleton rows={3} />}
+          data-testid="assessment-detail-loading"
+        />
       )}
 
       {!loading && error && (
-        <div
-          className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm"
+        <Loader
+          variant="section"
+          error={error}
+          onRetry={() => void load()}
+          className="mt-6"
           data-testid="assessment-detail-error"
-        >
-          <p>{error}</p>
-          <button
-            type="button"
-            className="mt-3 font-semibold text-moss underline"
-            onClick={() => void load()}
-          >
-            Retry
-          </button>
-        </div>
+        />
       )}
 
       {!loading && !error && summary && (

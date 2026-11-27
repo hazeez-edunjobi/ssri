@@ -57,6 +57,7 @@ import { PresentationScenarioPicker } from "@/components/PresentationScenarioPic
 import { ProductCapabilities } from "@/components/product/ProductCapabilities";
 import { LandPhoto } from "@/components/theme/LandPhoto";
 import { RequireSession, useRequiredSession } from "@/components/auth/RequireSession";
+import { MapSkeleton } from "@/components/ui/loader";
 import { buildConditioningGroups, geologicalContextLines } from "@/lib/conditioning";
 import { apiHealthLabel } from "@/lib/apiHealthStatus";
 import {
@@ -1435,7 +1436,14 @@ function AssessmentWorkspace() {
             })}
             className="mt-4 w-full rounded-lg bg-leaf px-4 py-2 text-sm font-medium text-chalk disabled:opacity-40"
           >
-            {loading ? "Assessing…" : "Run assessment"}
+            {loading ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <span className="ssri-loader-pulse h-1.5 w-1.5 rounded-full bg-chalk" />
+                Assessing
+              </span>
+            ) : (
+              "Run assessment"
+            )}
           </button>
           {!hasAssessmentModelAccess(modelStatus, checkpoint, {
             presentationDemo,
@@ -1525,8 +1533,9 @@ function AssessmentWorkspace() {
           className="h-full w-full"
         />
         {!mapReady && (
-          <div className="absolute inset-0 flex items-center justify-center bg-mist">
-            <span className="font-mono text-xs text-stone">Loading map…</span>
+          <div className="absolute inset-0 z-10 bg-mist">
+            <MapSkeleton className="h-full" />
+            <span className="sr-only">Loading map</span>
           </div>
         )}
         <div

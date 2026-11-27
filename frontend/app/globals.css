@@ -59,6 +59,32 @@
   }
 }
 
+@keyframes ssri-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ssri-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ssri-loader-orbit {
+  animation: ssri-orbit 1.1s linear infinite;
+}
+
+.ssri-loader-pulse {
+  animation: ssri-pulse 1.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -67,6 +93,11 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .ssri-loader-orbit,
+  .ssri-loader-pulse {
+    animation: none !important;
   }
 }
 

@@ -15,6 +15,7 @@ import {
   formatHistoryCoords,
   historyEmptyMessage,
 } from "@/lib/assessmentHistory";
+import { ContentSkeleton, Loader } from "@/components/ui/loader";
 
 const PAGE_SIZE = 25;
 
@@ -81,25 +82,23 @@ function AssessmentHistoryWorkspace() {
       )}
 
       {loading && (
-        <p className="mt-8 text-sm text-stone" data-testid="assessments-loading">
-          Loading assessment history…
-        </p>
+        <Loader
+          variant="section"
+          title="Loading assessment history"
+          description="Fetching the operational archive of persisted assessments."
+          skeleton={<ContentSkeleton rows={4} />}
+          data-testid="assessments-loading"
+        />
       )}
 
       {!loading && error && (
-        <div
-          className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-950"
+        <Loader
+          variant="section"
+          error={error}
+          onRetry={() => void load(offset)}
+          className="mt-6"
           data-testid="assessments-error"
-        >
-          <p>{error}</p>
-          <button
-            type="button"
-            className="mt-3 font-semibold text-moss underline"
-            onClick={() => void load(offset)}
-          >
-            Retry
-          </button>
-        </div>
+        />
       )}
 
       {!loading && !error && items.length === 0 && (

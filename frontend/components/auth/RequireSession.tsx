@@ -7,6 +7,7 @@ import {
   localAcceptanceSessionAllowed,
 } from "@/lib/localAcceptanceSession";
 import { getSupabase, supabaseConfig } from "@/lib/supabase";
+import { Loader } from "@/components/ui/loader";
 
 type SessionValue = { email: string | null };
 
@@ -24,15 +25,15 @@ export function RequireSession({
   nextPath: string;
 }) {
   const router = useRouter();
-  const [email, setEmail] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
   const configured = supabaseConfig().configured;
   const localAcceptance = localAcceptanceSessionAllowed();
+  const [email, setEmail] = useState<string | null>(() =>
+    localAcceptance ? LOCAL_ACCEPTANCE_EMAIL : null,
+  );
+  const [ready, setReady] = useState(() => localAcceptance);
 
   useEffect(() => {
     if (localAcceptance) {
-      setEmail(LOCAL_ACCEPTANCE_EMAIL);
-      setReady(true);
       return;
     }
     const supabase = getSupabase();
@@ -66,7 +67,14 @@ export function RequireSession({
 
   if (!ready) {
     return (
-      <main className="min-h-screen bg-mist px-6 py-16 text-sm text-stone">Loading session…</main>
+      <main className="min-h-screen bg-mist">
+        <Loader
+          variant="page"
+          title="Checking session"
+          description="Confirming your signed-in workspace before continuing."
+          data-testid="session-loading"
+        />
+      </main>
     );
   }
 

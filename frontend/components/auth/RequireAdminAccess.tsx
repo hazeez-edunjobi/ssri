@@ -8,6 +8,7 @@ import { canAccessAdminUi } from "@/lib/operatorAccess";
 import { platformGet } from "@/lib/platformApi";
 import { getSupabase, supabaseConfig } from "@/lib/supabase";
 import { PlatformShell } from "@/components/platform/PlatformShell";
+import { Loader } from "@/components/ui/loader";
 
 type Me = { profile: { role: string; email?: string; display_name?: string } };
 
@@ -92,9 +93,12 @@ export function RequireAdminAccess({ children }: { children: React.ReactNode }) 
   if (!ready) {
     return (
       <PlatformShell>
-        <p className="text-sm text-stone" data-testid="admin-access-loading">
-          Checking admin access…
-        </p>
+        <Loader
+          variant="section"
+          title="Checking admin access"
+          description="Confirming profiles.role = admin before opening this page."
+          data-testid="admin-access-loading"
+        />
       </PlatformShell>
     );
   }

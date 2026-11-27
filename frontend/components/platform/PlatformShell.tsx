@@ -12,6 +12,7 @@ import {
 import { getSupabase, supabaseConfig } from "@/lib/supabase";
 import type { UnsplashKey } from "@/lib/visuals";
 import { cn } from "@/lib/utils";
+import { Loader } from "@/components/ui/loader";
 
 const LINKS = [
   { href: "/workspace", label: "Dashboard" },
@@ -94,16 +95,16 @@ export function PlatformShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [ready, setReady] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
   const configured = supabaseConfig().configured;
   const localAcceptance = localAcceptanceSessionAllowed();
+  const [ready, setReady] = useState(() => localAcceptance);
+  const [email, setEmail] = useState<string | null>(() =>
+    localAcceptance ? LOCAL_ACCEPTANCE_EMAIL : null,
+  );
   const banner = bannerFor(pathname || "/workspace");
 
   useEffect(() => {
     if (localAcceptance) {
-      setEmail(LOCAL_ACCEPTANCE_EMAIL);
-      setReady(true);
       return;
     }
     const supabase = getSupabase();
@@ -141,7 +142,14 @@ export function PlatformShell({
 
   if (!ready) {
     return (
-      <main className="min-h-screen bg-mist px-6 py-16 text-sm text-stone">Loading session…</main>
+      <main className="min-h-screen bg-mist">
+        <Loader
+          variant="page"
+          title="Checking session"
+          description="Confirming your signed-in workspace before continuing."
+          data-testid="platform-shell-loading"
+        />
+      </main>
     );
   }
 

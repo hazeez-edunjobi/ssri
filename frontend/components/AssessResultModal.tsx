@@ -17,6 +17,8 @@ import { ASSESSMENT_PREVIEW_LABEL } from "@/lib/activeModelStatus";
 import { PresentationDemoProgress } from "@/components/PresentationDemoProgress";
 import { buildAssessmentReportHtml } from "@/lib/report";
 import { presentHazardIntervals } from "@/lib/uncertaintyIntervals";
+import { Loader } from "@/components/ui/loader";
+import type { BackendAssessmentProgress } from "@/lib/assessmentLoading";
 
 /**
  * Deterministic palette (one accent per surface). Indexed by position so it
@@ -86,6 +88,8 @@ type AssessResultModalProps = {
   } | null;
   settings?: ShellSettings | null;
   onCancelLoading?: () => void;
+  /** Optional backend progress; omit for honest indeterminate processing. */
+  loadingProgress?: BackendAssessmentProgress | null;
   onClose: () => void;
   onViewMap: () => void;
 };
@@ -101,6 +105,7 @@ export function AssessResultModal({
   projectedPoint,
   settings,
   onCancelLoading,
+  loadingProgress = null,
   onClose,
   onViewMap,
 }: AssessResultModalProps) {
@@ -112,10 +117,12 @@ export function AssessResultModal({
     onCloseRef.current = onClose;
   }, [onClose]);
   useEffect(() => {
-    if (!open) {
+    if (open) return;
+    const timer = window.setTimeout(() => {
       setGeotiffBusy(false);
       setGeotiffError(null);
-    }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [open]);
 
   // Escape dismisses the dialog and focus returns to whatever was focused
@@ -251,18 +258,21 @@ export function AssessResultModal({
           />
         )}
         {loading && !presentationDemo && (
-          <p className="mt-6 font-mono text-sm text-stone" data-testid="assess-result-loading">
-            Acquiring features and running inference…
-          </p>
+          <Loader
+            variant="assessment"
+            progress={loadingProgress}
+            onCancel={onCancelLoading}
+            data-testid="assess-result-loading"
+          />
         )}
 
         {!loading && error && (
-          <div
-            className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-900"
+          <Loader
+            variant="section"
+            error={error}
+            className="mt-4"
             data-testid="assess-result-error"
-          >
-            {error}
-          </div>
+          />
         )}
 
         {!loading && result && (

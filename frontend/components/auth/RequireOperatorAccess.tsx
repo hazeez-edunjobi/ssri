@@ -14,6 +14,7 @@ import {
 } from "@/lib/operatorAccess";
 import { platformGet } from "@/lib/platformApi";
 import { getSupabase, supabaseConfig } from "@/lib/supabase";
+import { Loader } from "@/components/ui/loader";
 
 type Me = { profile: { role: string } };
 
@@ -127,8 +128,13 @@ export function RequireOperatorAccess({
 
   if (!ready) {
     return (
-      <main className="min-h-screen bg-mist px-6 py-16 text-sm text-stone" data-testid="operator-access-loading">
-        Checking operator access…
+      <main className="min-h-screen bg-mist">
+        <Loader
+          variant="page"
+          title="Checking operator access"
+          description="Confirming admin role, operator API key, or local acceptance before continuing."
+          data-testid="operator-access-loading"
+        />
       </main>
     );
   }

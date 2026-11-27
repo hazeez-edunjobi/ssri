@@ -37,7 +37,10 @@ export default function SubsidenceValidationPage() {
   }, []);
 
   useEffect(() => {
-    reload();
+    const timer = window.setTimeout(() => {
+      void reload();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [reload]);
 
   const report = data?.report ?? {};
